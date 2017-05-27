@@ -1,7 +1,7 @@
 {
     "name": "cs-script",
     "displayName": "CS-Script",
-    "description": "cs-script",
+    "description": "CS-Script",
     "version": "0.0.1",
     "publisher": "oleg-shilo",
     "engines": {
@@ -48,6 +48,10 @@
         "postinstall": "node ./node_modules/vscode/bin/install",
         "test": "node ./node_modules/vscode/bin/test"
     },
+    "dependencies": {
+        "vscode": "^1.0.0"
+    }
+    ,
     "devDependencies": {
         "typescript": "^2.0.3",
         "vscode": "^1.0.0",
