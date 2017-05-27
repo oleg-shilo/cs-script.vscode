@@ -1,77 +1,65 @@
-# CS-Script VSCode Extension
+# cs-script README
 
-Currently the extension is at the early development stage and it is just not ready yet for the distribution. However, as a temporary and partial equivalent of the upcoming extension you can configure VSCode to execute and debug the scripts without waiting for the extension release. Below are the step-by-step instructions on how to configure VSCode for the execution and debugging C# scripts with CS-Script. So far the solution has been tested on Windows but it should work on Linux straight away, though it may require specifying `mono` as a runtime in `code-runner.executorMap` value of the settings file.  
+This is the README for your extension "cs-script". After writing up a brief description, we recommend including the following sections.
 
-Below is the minimal set of extensions that is required for this technique to work: 
+## Features
 
-![](images/dependencies.png)
+Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
 
-## Script execution
+For example if there is an image subfolder under your extension project workspace:
 
-Implementing on-fly project structure in VSCode is difficult. VSCode still uses a folder instead of a project file as a project specification. This paradigm contradicts with CS-Script's execution promise ("file run") - "free standing script run"
+\!\[feature X\]\(images/feature-x.png\)
 
-So far running the script has been achieved via "Code Runner" extension. This extension follows "file run" paradigm. The following is the set of steps that need to be performed to configure CS-Script execution in VSCode:
+> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
 
-* Install "Code Runner" extension:
-* Update user settings (`settings.json`) to create a code-runner task for *.cs files to run with cs-script:
-    ```js
-    {
-         "code-runner.executorMap": {
-            // "csharp": "%CSSCRIPT_DIR%/cscs -config:none -nl"
-            "csharp": "cscs -config:none -nl"
-          },
-          "code-runner.saveFileBeforeRun": true,
-          "code-runner.clearPreviousOutput": true
-    }
-    ```
-* Optionally map new task (from prev step) with "ctrl+f5" shortcut:
-    ```js
-    // Place your key bindings in this file to overwrite the defaults
-    [
-        {
-            "key": "ctrl+f5",
-            "command": "code-runner.run"
-        },
-        ...
-    ```
-* Optionally map new task (from prev step) with "ctrl+f5" shortcut.
-* Open script file and execute it (e.g. "ctrl+f5")
-    ![](images/vscode_run.gif)   
+## Requirements
 
-## Debugging
+If you have any requirements or dependencies, add a section describing those and how to install and configure them.
 
-Debugging scripts is done with Mono debugger. Thus you need to install Mono Debug extension.
+## Extension Settings
 
-You also need to create and load the folder containing the corresponding `launch.json` config file with the debugging instructions: 
+Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
 
-```js
-{
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Launch",
-            "type": "mono",
-            "request": "launch",
-            "program": "${workspaceRoot}/cscs.exe",
-            "args": ["-nl", "-d", "-l", "-ac:0", "-config:none", "${file}"],
-            "cwd": "${workspaceRoot}",
-            "runtimeExecutable": null,
-            "env": {}
-        },
-        {
-            "name": "Attach",
-            "type": "mono",
-            "request": "attach",
-            "address": "localhost",
-            "port": 55555
-        }
-    ]
-}
-```
+For example:
 
-You can download the pre-configured folder [cs-script.dev.7z](dev/cs-script.dev.7z). Extract it and load in VSCode. Apart from `launch.json` it also contains a copy of CS-Script engine (`cscs.exe`) as well as a test script (`test.cs`).
+This extension contributes the following settings:
 
-IMPORTANT: in order for this solution to work you need to load folder (cs-script.dev) in VSCode it creates a workspace as `Mono Debug` extension can only work within a workspace. This limitation is going to be removed when CS-Script extension is released.
+* `myExtension.enable`: enable/disable this extension
+* `myExtension.thing`: set to `blah` to do something
 
-![](images/vscode_debug.gif)   
+## Known Issues
 
+Calling out known issues can help limit users opening duplicate issues against your extension.
+
+## Release Notes
+
+Users appreciate release notes as you update your extension.
+
+### 1.0.0
+
+Initial release of ...
+
+### 1.0.1
+
+Fixed issue #.
+
+### 1.1.0
+
+Added features X, Y, and Z.
+
+-----------------------------------------------------------------------------------------------------------
+
+## Working with Markdown
+
+**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
+
+* Split the editor (`Cmd+\` on OSX or `Ctrl+\` on Windows and Linux)
+* Toggle preview (`Shift+CMD+V` on OSX or `Shift+Ctrl+V` on Windows and Linux)
+* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (OSX) to see a list of Markdown snippets
+
+### For more information
+
+* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
+* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+
+**Enjoy!**
