@@ -20,20 +20,20 @@
         "debugging"
     ],
     "bugs": {
-		"url": "https://github.com/oleg-shilo/cs-script.vscode/issues",
-		"email": "oshilo@gmail.com"
-	},
-	"homepage": "https://github.com/oleg-shilo/cs-script.vscode/blob/master/README.md",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/oleg-shilo/cs-script.vscode.git"
+        "url": "https://github.com/oleg-shilo/cs-script.vscode/issues",
+        "email": "oshilo@gmail.com"
+    },
+    "homepage": "https://github.com/oleg-shilo/cs-script.vscode/blob/master/README.md",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/oleg-shilo/cs-script.vscode.git"
     },
     "activationEvents": [
-         "onCommand:cs-script.debug",
-         "onCommand:cs-script.run",
-         "onCommand:cs-script.print_project",
-         "onCommand:cs-script.load_project",
-         "onCommand:cs-script.check"
+        "onCommand:cs-script.debug",
+        "onCommand:cs-script.run",
+        "onCommand:cs-script.print_project",
+        "onCommand:cs-script.load_project",
+        "onCommand:cs-script.check"
     ],
     "main": "./out/src/extension",
     "contributes": {
@@ -58,6 +58,28 @@
                 "command": "cs-script.check",
                 "title": "cs-script: check"
             }
+        ],
+        "keybindings": [
+            {
+                "key": "alt+f5",
+                "command": "cs-script.debug"
+            },
+            {
+                "key": "ctrl+f5",
+                "command": "cs-script.run"
+            },
+            {
+                "key": "f7",
+                "command": "cs-script.check"
+            },
+            {
+                "key": "ctrl+f7",
+                "command": "cs-script.load_project"
+            },
+            {
+                "key": "alt+f7",
+                "command": "cs-script.print_project"
+            }
         ]
     },
     "scripts": {
@@ -68,8 +90,7 @@
     },
     "dependencies": {
         "vscode": "^1.0.0"
-    }
-    ,
+    },
     "devDependencies": {
         "typescript": "^2.0.3",
         "vscode": "^1.0.0",

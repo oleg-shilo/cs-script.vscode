@@ -4,7 +4,7 @@ Currently the extension is at the early development stage and it is just not rea
 
 Below is the minimal set of extensions that is required for this technique to work: 
 
-![](https://github.com/oleg-shilo/cs-script.vscode/tree/master/images/dependencies.png)
+![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/dependencies.png)
 
 ## Script execution
 
@@ -36,7 +36,7 @@ So far running the script has been achieved via "Code Runner" extension. This ex
     ```
 * Optionally map new task (from prev step) with "ctrl+f5" shortcut.
 * Open script file and execute it (e.g. "ctrl+f5")
-    ![](https://github.com/oleg-shilo/cs-script.vscode/tree/master/images/vscode_run.gif)   
+    ![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_run.gif)   
 
 ## Debugging
 
@@ -73,5 +73,5 @@ You can download the pre-configured folder [cs-script.dev.7z](dev/cs-script.dev.
 
 IMPORTANT: in order for this solution to work you need to load folder (cs-script.dev) in VSCode it creates a workspace as `Mono Debug` extension can only work within a workspace. This limitation is going to be removed when CS-Script extension is released.
 
-![](https://github.com/oleg-shilo/cs-script.vscode/tree/master/images/vscode_debug.gif)   
+![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_debug.gif)   
 
