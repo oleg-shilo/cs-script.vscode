@@ -4,12 +4,30 @@
     "description": "CS-Script",
     "version": "0.0.1",
     "publisher": "oleg-shilo",
+    "icon": "images/css_logo.png",
     "engines": {
         "vscode": "^1.12.0"
     },
     "categories": [
+        "Languages",
         "Other"
     ],
+    "keywords": [
+        "C#",
+        "C# script",
+        "CS-Script",
+        "scripting",
+        "debugging"
+    ],
+    "bugs": {
+		"url": "https://github.com/oleg-shilo/cs-script.vscode/issues",
+		"email": "oshilo@gmail.com"
+	},
+	"homepage": "https://github.com/oleg-shilo/cs-script.vscode/blob/master/README.md",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/oleg-shilo/cs-script.vscode.git"
+    },
     "activationEvents": [
          "onCommand:cs-script.debug",
          "onCommand:cs-script.run",
