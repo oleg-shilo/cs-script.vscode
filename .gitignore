@@ -1,2 +1,8 @@
 out
 node_modules
+/.vscode
+/vsc-extension-quickstart.md
+/*.cmd
+/images/css_logo_256_256.png
+/images/css_logo_256_256.pdn
+/.local
