@@ -1,9 +1,9 @@
 {
     "name": "cs-script",
-    "displayName": "cs-script",
+    "displayName": "CS-Script",
     "description": "cs-script",
     "version": "0.0.1",
-    "publisher": "Oleg Shilo",
+    "publisher": "oleg-shilo",
     "engines": {
         "vscode": "^1.12.0"
     },
