@@ -1,8 +1,8 @@
 {
     "name": "cs-script",
     "displayName": "CS-Script",
-    "description": "CS-Script",
-    "version": "0.0.1",
+    "description": "Execution, debugging and editing C# code that targets .NET and Mono (no .NET Core required) ",
+    "version": "1.0.0",
     "publisher": "oleg-shilo",
     "icon": "images/css_logo.png",
     "engines": {
@@ -10,6 +10,7 @@
     },
     "categories": [
         "Languages",
+        "Debuggers",    
         "Other"
     ],
     "keywords": [
@@ -91,6 +92,10 @@
     "dependencies": {
         "vscode": "^1.0.0"
     },
+    "extensionDependencies": [
+        "ms-vscode.mono-debug"
+    ],
+    "license": "SEE LICENSE IN LICENSE.md",
     "devDependencies": {
         "typescript": "^2.0.3",
         "vscode": "^1.0.0",

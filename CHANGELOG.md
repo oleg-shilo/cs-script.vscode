@@ -1,7 +1,9 @@
 # Change Log
-All notable changes to the "cs-script" extension will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+## 1.0.0
+- Support for C# script execution (with cscs.exe)
+- Support for C# script syntax checking (with cscs.exe)
+- Support for C# script debugging (with _Mono Debug_ extension)
+- Integration with VSCode IntelliSense (with _OmniSharp_ extension)
+- Printing C# script dependencies ('print project' command)
 
-## [Unreleased]
-- Initial release
