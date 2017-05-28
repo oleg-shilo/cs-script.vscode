@@ -4,9 +4,12 @@ out/test/**
 test/**
 dev/**
 src/**
+vsix/**
+images/*.gif
+images/*.pdn
+images/dependencies.png
 **/*.map
 .gitignore
 tsconfig.json
 vsc-extension-quickstart.md
-New Script.cs
 *.cmd
