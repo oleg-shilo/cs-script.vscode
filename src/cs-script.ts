@@ -14,6 +14,10 @@ let csproj_template = __dirname + "/../../bin/script.csproj";
 let outputChannel = vscode.window.createOutputChannel('Code');
 let last_process = null;
 
+// it is extremely important to keep project file name in sync with the activation event trigger in manifest file )"workspaceContains:script.csproj")
+let script_proj_name = 'script.csproj';
+let startup_file_key = 'cs-script.open_file_at_startup';
+
 // -----------------------------------
 export function load_project() {
     // bpasero commented on Apr 5, 2016
@@ -43,7 +47,7 @@ export function load_project() {
             editor.document.save();
             generate_proj_file(proj_dir, editor.document.fileName);
         }
-        
+
         setTimeout(() => outputChannel.clear(), 700);
     }
     else {
@@ -55,11 +59,19 @@ export function load_project() {
             outputChannel.appendLine("Loading OmniSharp project...");
 
             editor.document.save();
+
             generate_proj_file(proj_dir, editor.document.fileName);
+
+            // When folder is opened the whole execution context is recreated. It's like restarting VSCode.
+            // Thus any attempt to openFile after calling openFolder from the same routine will lead to the folder being opened
+            // but not the file.
+            // As a work around indicate that the file needs to be opened at startup.
+            // set_startup_file(ext_context, editor.document.fileName);
+            ext_context.globalState.update(startup_file_key, editor.document.fileName);
 
             if (settings.show_load_proj_info) {
 
-                let info_msg = "In order to activate intellisense OmniSharp project will be initialized.\n\nAfter it's done execute 'LoadProject' command again to load the script.";
+                let info_msg = "In order to activate intellisense an OmniSharp project will be initialized and \nthe current script file will be loaded in its context.\n\n";
                 let ok_dont_show_again = "OK, Don't show this message again";
                 let ok = "OK";
 
@@ -88,7 +100,7 @@ export function load_project() {
 }
 
 export function parse_proj_dir(proj_dir: string): string {
-    let proj_file = path.join(proj_dir, 'script.csproj');
+    let proj_file = path.join(proj_dir, script_proj_name);
     let prefix = '<Compile Include="';
     let suffix = '"/>';
     for (let line of fs.readFileSync(proj_file, 'utf8').split(os.EOL)) {
@@ -103,7 +115,7 @@ export function parse_proj_dir(proj_dir: string): string {
 }
 
 function generate_proj_file(proj_dir: string, scriptFile: string): void {
-    let proj_file = path.join(proj_dir, 'script.csproj');
+    let proj_file = path.join(proj_dir, script_proj_name);
     var command = 'mono "' + cscs_exe + '" -config:none -nl -l -proj -ac:1 "' + scriptFile + '"';
 
     Utils.Run(command, (code, output) => {
@@ -260,6 +272,13 @@ export function run() {
 // -----------------------------------
 export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     ext_context = context;
+
+    let file = ext_context.globalState.get('cs-script.open_file_at_startup', '');
+    if (file != null) {
+        ext_context.globalState.update(startup_file_key, '');
+        commands.executeCommand('vscode.open', Uri.file(file));
+    }
+
     return utils.ActivateDiagnostics(context);
 };
 // -----------------------------------

@@ -1,6 +1,6 @@
 The MIT License (MIT)
 
-Copyright (c) 2017Oleg Shilo
+Copyright (c) 2017 Oleg Shilo
 
 Permission is hereby granted, 
 free of charge, to any person obtaining a copy

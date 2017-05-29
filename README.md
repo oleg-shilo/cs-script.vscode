@@ -73,7 +73,7 @@ _**Enabling IntelliSense**_<br>
 _Command: `cs-script: load project`<br>_
 Open the C# file and execute "load project" command (ctrl+F7):
 
-_Note: currently VSCode project model does not allow programmatic opening of a project/folder and a file. Thus initially you need to trigger "load project" command twice to achieve the desired outcome. First tome to load the folder and second time to load the file. But after the project/folder is loaded activating a C# IntelliSense is a single step operation. This minor limitation is going to be addressed in teh future releases._   
+_Note: currently VSCode project model does not allow programmatic opening of a project/folder and a file. Thus initially you need to trigger "load project" command twice to achieve the desired outcome. First time to load the folder and second time to load the file. But after the project/folder is loaded activating a C# IntelliSense is always a single step operation. This minor limitation is going to be addressed in the future releases. Providing VSCode team will cooperate._   
 
 ![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_projB.gif)
 

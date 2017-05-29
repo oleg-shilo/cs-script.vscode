@@ -30,6 +30,7 @@
         "url": "https://github.com/oleg-shilo/cs-script.vscode.git"
     },
     "activationEvents": [
+        "workspaceContains:script.csproj",
         "onCommand:cs-script.debug",
         "onCommand:cs-script.run",
         "onCommand:cs-script.print_project",
