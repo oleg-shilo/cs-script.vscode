@@ -13,6 +13,13 @@ The extension is powered by the [CS-Script engine](https://github.com/oleg-shilo
 The extension provides a very thin layer of own functionality. Its primary responsibility is bringing together OmniSharp IntelliSense services, a full scale debugger (curtesy of "Mono Debug" team) and CS-Script seamless C# script execution all. This page contains only a light overview of the extension functionality. The complete description can be found at the [project Wiki](https://github.com/oleg-shilo/cs-script.vscode/wiki).
 <hr>
 
+## Minimal set of dependencies (third-party extensions)
+
+![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/dependencies.png)
+<hr>
+
+
+
 ## Functionality
 
 - _**Editing**_ <br>
