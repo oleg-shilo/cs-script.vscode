@@ -25,6 +25,7 @@ export function create_dir(dir: string): void {
     mkdirp.sync(dir, allRWEPermissions);
 }
 
+
 export class ErrorInfo {
     public file: string;
     public description: string;
@@ -32,29 +33,47 @@ export class ErrorInfo {
     public severity: vscode.DiagnosticSeverity;
 
     public static parse(data: string): ErrorInfo {
-        // E:\Galos\Projects\VSCode\test2.cs(19,11): error CS1525: Unexpected symbol `.', expecting `,', `;', or `='
+        // E:\dev\Projects\VSCode\test2.cs(19,11): error CS1525: Unexpected symbol `.', expecting `,', `;', or `='
+        // csscript.CompilerException: c:\Users\user\Desktop\New Script.cs(12,17): error CS0029: Cannot implicitly convert type `string' to `int'
+
         let result = new ErrorInfo();
         try {
+
+            let cs_script_prefixes = ["csscript.CompilerException: ", "file:"];
+            cs_script_prefixes.forEach(element => {
+                if (data.startsWith(element))
+                    data = data.replace(element, '').trim();
+            });
+
             let parts = data.split(/\):/g, 2);
 
-            if (parts.length != 2) return null;
-            result.description = parts[1].trim();
+            if (parts.length != 2) {
+                if (fs.existsSync(parts[0])) {
+                    result.file = parts[0];
+                    result.range = new vscode.Range(0, 0, 0, 0);
+                }
+                else {
+                    return null;
+                }
+            }
+            else {
+                result.description = parts[1].trim();
 
-            parts = parts[0].split('(');
-            result.file = parts[0];
+                parts = parts[0].split('(');
+                result.file = parts[0];
 
-            let nums = parts[1].split(',', 2).map(x => Number(x));
-            result.range = new vscode.Range(nums[0], nums[1], nums[0], nums[1]);
+                let nums = parts[1].split(',', 2).map(x => Number(x));
+                result.range = new vscode.Range(nums[0] - 1, nums[1] - 1, nums[0] - 1, nums[1] - 1);
 
-            parts = result.description.split(' ');
-            result.description = parts.slice(1).join(' ');
-            if (parts[0] == "error")
-                result.severity = vscode.DiagnosticSeverity.Error;
-            else if (parts[0] == "warning")
-                result.severity = vscode.DiagnosticSeverity.Warning;
-            if (parts[0] == "info")
-                result.severity = vscode.DiagnosticSeverity.Information;
-
+                parts = result.description.split(' ');
+                result.description = parts.slice(1).join(' ');
+                if (parts[0] == "error")
+                    result.severity = vscode.DiagnosticSeverity.Error;
+                else if (parts[0] == "warning")
+                    result.severity = vscode.DiagnosticSeverity.Warning;
+                if (parts[0] == "info")
+                    result.severity = vscode.DiagnosticSeverity.Information;
+            }
         } catch (e) {
             return null;
         }
@@ -71,7 +90,14 @@ export class ErrorInfo {
     }
 }
 
+export class VSCodeSettings {
+    public static get<T>(section_value: string, defaultValue?: T): T {
+        let tokens = section_value.split('.')
+        return vscode.workspace.getConfiguration(tokens[0]).get(tokens[1], defaultValue);
+    }
+}
 
+// Writable extension settings
 export class Settings {
 
     public show_load_proj_info: boolean = true;
@@ -162,7 +188,7 @@ export class Utils {
 }
 
 export function actual_output(element, index, array) {
-    // igore mono test output that comes from older releases(s)  (known Mono issue)
+    // ignore mono test output that comes from older releases(s)  (known Mono issue)
     return (!element.startsWith('failed to get 100ns ticks'));
 }
 
@@ -170,7 +196,7 @@ interface String {
     lines(): string[];
 }
 
-// use eval as having the prototype extended directly trihggers false VSCode TS validator error
+// use eval as having the prototype extended directly triggers false VSCode TS validator error
 eval(`
 String.prototype.lines = function() {
     return this.split(/\\r?\\n/g)

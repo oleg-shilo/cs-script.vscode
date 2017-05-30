@@ -36,10 +36,10 @@ suite("Extension Tests", () => {
         assert.equal("E:\\Projects\\VSCode\\test2.cs", error.file);
         assert.equal("CS1525: Unexpected symbol `.', expecting `,', `;', or `='", error.description);
         assert.equal(vscode.DiagnosticSeverity.Warning, error.severity);
-        assert.equal(19, error.range.start.line);
-        assert.equal(11, error.range.start.character);
-        assert.equal(19, error.range.end.line);
-        assert.equal(11, error.range.end.character);
+        assert.equal(error.range.start.line, 18);
+        assert.equal(error.range.start.character, 11);
+        assert.equal(error.range.end.line, 18);
+        assert.equal(error.range.end.character, 11);
     });
 
     test("Can handle invalid input", () => {
@@ -47,6 +47,13 @@ suite("Extension Tests", () => {
         let error = ErrorInfo.parse(build_out);
 
         assert.equal(null, error);
+    });
+    
+    test("Can handle file ref input", () => {
+        let proj_out = "file:"+ __filename;
+        let info = ErrorInfo.parse(proj_out);
+
+        assert.equal(info.file, __filename);
     });
 
     test("Can extract script name from project file", () => {

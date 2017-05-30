@@ -5,8 +5,8 @@ import * as utils from "./utils";
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { exec } from 'child_process';
-import { Uri, commands, DiagnosticCollection, DiagnosticSeverity } from "vscode";
-import { ErrorInfo, Utils, diagnosticCollection, create_dir, actual_output, settings } from "./utils";
+import { Uri, commands, DiagnosticCollection, DiagnosticSeverity, TextEditorSelectionChangeKind, Selection } from "vscode";
+import { ErrorInfo, Utils, diagnosticCollection, create_dir, actual_output, settings, VSCodeSettings } from "./utils";
 
 let ext_context: vscode.ExtensionContext;
 let cscs_exe = __dirname + "/../../bin/cscs.exe";
@@ -27,7 +27,7 @@ export function load_project() {
     // 
     // The described above limitation makes it impossible to open a folder and then open a file 
     // from a single routine. Thus on the first 'load_project' prepare and open the folder. And on the 
-    // second request loade the project primary source foile (script)
+    // second request load the project primary source file (script)
 
     // Note: os.tmpdir() for some reason returns lower cased root so Utils.IsSamePath needs to be used 
     let proj_dir = path.join(os.tmpdir(), 'CSSCRIPT', 'VSCode', 'cs-script.vscode');
@@ -192,10 +192,6 @@ export function check() {
     });
 }
 // -----------------------------------
-export function on_start() {
-    console.log('on_start!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-}
-// -----------------------------------
 export function debug() {
     // todo
     // - check if document is saved or untitled (and probably save it)
@@ -249,7 +245,7 @@ export function run() {
     var startTime = new Date();
     process = exec(command);
     process.stdout.on('data', data => {
-        // igore mono test output that comes from older releases(s)  (known Mono issue)
+        // ignore mono test output that comes from older releases(s)  (known Mono issue)
         if (!data.startsWith('failed to get 100ns ticks'))
             outputChannel.append(data);
     });
@@ -270,8 +266,57 @@ export function run() {
     });
 }
 // -----------------------------------
+
+// intercepting Modifier_MouseClick https://github.com/Microsoft/vscode/issues/3130
+
+function onActiveEditorChange(editor: vscode.TextEditor) {
+    if (editor != null) {
+        const position = editor.selection.active;
+
+        var start = position.with(2, 0);
+        var end = position.with(2, 5);
+        var newSelection = new vscode.Selection(start, end);
+        editor.selection = newSelection;
+
+        // console.log('Active doc: ' + editor.document.fileName);
+    }
+}
+
+function onActiveEditorSelectionChange(event: vscode.TextEditorSelectionChangeEvent) {
+    // clicking file links in output is broken: https://github.com/Microsoft/vscode-go/issues/1002
+    // another reason is that C# compiler output <file>(<line>,<col>) is incompatible with VSCode 
+    // clickable output <file>:<line>:<col>
+
+    if (event.kind == TextEditorSelectionChangeKind.Mouse &&
+        event.textEditor.document.fileName.startsWith("extension-output-") &&
+        event.textEditor.selection.isEmpty) {
+
+        let enabled = VSCodeSettings.get("cs-script.single_click_navigate_from_output", true);
+
+        if (enabled) {
+            let line = event.textEditor.document.lineAt(event.textEditor.selection.start.line).text;
+
+            let info = ErrorInfo.parse(line);
+            if (info != null) {
+                commands.executeCommand('vscode.open', Uri.file(info.file))
+                    .then(value => {
+                        let editor = vscode.window.activeTextEditor;
+                        const position = editor.selection.active;
+
+                        var start = position.with(info.range.start.line, info.range.start.character);
+                        var newSelection = new vscode.Selection(start, start);
+                        editor.selection = newSelection;
+                    });
+            }
+        }
+    }
+}
+
 export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     ext_context = context;
+
+    vscode.window.onDidChangeActiveTextEditor(onActiveEditorChange);
+    vscode.window.onDidChangeTextEditorSelection(onActiveEditorSelectionChange);
 
     let file = ext_context.globalState.get('cs-script.open_file_at_startup', '');
     if (file != null) {

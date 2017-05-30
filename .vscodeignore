@@ -1,4 +1,5 @@
 .vscode/**
+.local/**
 .vscode-test/**
 out/test/**
 test/**
@@ -11,5 +12,6 @@ images/dependencies.png
 **/*.map
 .gitignore
 tsconfig.json
+settings.json
 vsc-extension-quickstart.md
 *.cmd

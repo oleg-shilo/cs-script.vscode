@@ -88,7 +88,7 @@ _Note: currently VSCode project model does not allow programmatic opening of a p
 
 ## Limitations
 _**Project structure**_<br>
-VSCode is a subject to a serious limitation - the project model is based on a folder and doesn't allow any customization. To put it simple, VSCode executes/debugs folders while CS-Script files. While the extension completely overcomes this limitation for execution and debugging, but Intellisense support is only enabled when OmniSharp project is loaded. To make it easier _CS-Script.VSCode_ allows generation and loading required OmniSharp project in a single-step ('load project' command). Though in the future the solution most likely will be extended to overcome this limitation as well.
+VSCode is a subject to a serious limitation - the project model is based on a folder and doesn't allow any customization. To put it simple, VSCode executes/debugs folders while CS-Script files. While the extension completely overcomes this limitation for execution and debugging, the Intellisense support is only enabled when OmniSharp project is loaded. To make it easier _CS-Script.VSCode_ allows generation and loading required OmniSharp project in a single-step (`load project` command or `ctrl+7`). Though in the future the solution most likely will be extended to overcome this limitation as well.
 
 _**C# 7**_<br>
 The initial release of the extension used default Mono runtime, which comes with VSCode. Currently it doesn't support C# 7. But the support will be automatically enabled from the moment the Mono version present on the system supports C#7. 
