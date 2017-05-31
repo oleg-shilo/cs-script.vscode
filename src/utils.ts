@@ -16,6 +16,10 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     diagnosticCollection = vscode.languages.createDiagnosticCollection('c#');
     context.subscriptions.push(diagnosticCollection);
     ext_context = context;
+    
+    if (!fs.existsSync(context.storagePath)) {
+        fs.mkdirSync(context.storagePath);
+    }
     settings = Settings.Load();
     return diagnosticCollection;
 }
@@ -107,7 +111,7 @@ export class Settings {
 
     public Save(file?: string) {
 
-        let file_path = path.join(ext_context.extensionPath, 'settings.json');
+        let file_path = path.join(ext_context.storagePath, 'settings.json');
 
         if (file != null) file_path = file;
         else if (this._file != null) file_path = this._file;
@@ -117,7 +121,7 @@ export class Settings {
 
     public static Load(file?: string) {
 
-        let file_path = path.join(ext_context.extensionPath, 'settings.json');
+        let file_path = path.join(ext_context.storagePath, 'settings.json');
         if (file != null) file_path = file;
 
         let settings: Settings;

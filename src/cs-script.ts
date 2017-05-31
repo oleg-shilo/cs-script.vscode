@@ -214,6 +214,20 @@ export function about() {
     });
 }
 // -----------------------------------
+export function engine_help() {
+
+    var editor = vscode.window.activeTextEditor;
+    var file = editor.document.fileName;
+
+    var command = 'mono "' + cscs_exe + '" -help';
+
+    Utils.Run(command, (code, output) => {
+        let readme = path.join(ext_context.storagePath, 'cs-script.help.txt')
+        fs.writeFileSync(readme, output, 'utf8');
+        commands.executeCommand('vscode.open', Uri.file(readme));
+    });
+}
+// -----------------------------------
 export function build_exe() {
 
     var editor = vscode.window.activeTextEditor;
