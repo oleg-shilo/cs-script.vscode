@@ -35,6 +35,7 @@
         "onCommand:cs-script.run",
         "onCommand:cs-script.print_project",
         "onCommand:cs-script.load_project",
+        "onCommand:cs-script.about",
         "onCommand:cs-script.check"
     ],
     "main": "./out/src/extension",
@@ -49,6 +50,47 @@
                     "description": "Allow navigation to the file location on a single click (on error info) in the output panel."
                 }
             }
+        },
+        "menus": {
+            "editor/title": [
+                {
+                    "when": "resourceLangId == csharp",
+                    "command": "cs-script.debug",
+                    "group": "cs-script"
+                },
+                {
+                    "when": "resourceLangId == csharp",
+                    "command": "cs-script.print_project",
+                    "group": "cs-script"
+                },
+                {
+                    "when": "resourceLangId == csharp",
+                    "command": "cs-script.load_project",
+                    "group": "cs-script"
+                }
+            ],
+            "editor/context": [
+                {
+                    "when": "resourceLangId == csharp",
+                    "command": "cs-script.run",
+                    "group": "cs-script"
+                },
+                {
+                    "when": "resourceLangId == csharp",
+                    "command": "cs-script.debug",
+                    "group": "cs-script"
+                },
+                {
+                    "when": "resourceLangId == csharp",
+                    "command": "cs-script.print_project",
+                    "group": "cs-script"
+                },
+                {
+                    "when": "resourceLangId == csharp",
+                    "command": "cs-script.about",
+                    "group": "cs-script"
+                }
+            ]
         },
         "commands": [
             {
@@ -70,6 +112,10 @@
             {
                 "command": "cs-script.check",
                 "title": "cs-script: check"
+            },
+            {
+                "command": "cs-script.about",
+                "title": "cs-script: about"
             }
         ],
         "keybindings": [

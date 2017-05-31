@@ -16,20 +16,14 @@ export function activate(context: vscode.ExtensionContext) {
 
     cs_script.ActivateDiagnostics(context);
 
-    // let disposable = vscode.commands.registerCommand('type', (args) => {
-    //     // vscode.window.showInformationMessage(args.text);
-
-    //     // vscode.commands.executeCommand('default:type', {
-    //     //     text: args.text
-    //     // });
-    // });
-    // context.subscriptions.push(disposable);
+    context.globalState.update('version', '1.0.1');
 
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.debug', cs_script.debug));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.run', cs_script.run));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.print_project', cs_script.print_project));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.load_project', cs_script.load_project));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.check', cs_script.check));
+    context.subscriptions.push(vscode.commands.registerCommand('cs-script.about', cs_script.about));
 };
 
 

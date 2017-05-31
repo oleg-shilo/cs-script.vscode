@@ -52,7 +52,7 @@ export function load_project() {
     }
     else {
         if (editor == null) {
-            vscode.window.showErrorMessage('No active document found. Please open a C# docuemnt and try again.');
+            vscode.window.showErrorMessage('No active document found. Please open a C# document and try again.');
         } else {
 
             outputChannel.clear();
@@ -189,6 +189,28 @@ export function check() {
         });
 
         Utils.SentToDiagnostics(errors);
+    });
+}
+// -----------------------------------
+export function about() {
+
+    var editor = vscode.window.activeTextEditor;
+    var file = editor.document.fileName;
+
+    editor.document.save();
+    outputChannel.show(true);
+    outputChannel.clear();
+    outputChannel.appendLine('Checking...');
+
+    // vscode.languages.getLanguages().then(l => console.log('languages', l));
+
+    var command = 'mono "' + cscs_exe + '" -ver';
+
+    Utils.Run(command, (code, output) => {
+        outputChannel.clear();
+        outputChannel.appendLine('CS-Script.VSCode - v'+ext_context.globalState.get('version', ''));
+        outputChannel.appendLine('-------------------------------------------------------');
+        outputChannel.append(output);
     });
 }
 // -----------------------------------
