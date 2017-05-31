@@ -24,6 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.load_project', cs_script.load_project));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.check', cs_script.check));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.about', cs_script.about));
+    context.subscriptions.push(vscode.commands.registerCommand('cs-script.build_exe', cs_script.build_exe));
 };
 
 

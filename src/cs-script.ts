@@ -208,9 +208,33 @@ export function about() {
 
     Utils.Run(command, (code, output) => {
         outputChannel.clear();
-        outputChannel.appendLine('CS-Script.VSCode - v'+ext_context.globalState.get('version', ''));
+        outputChannel.appendLine('CS-Script.VSCode - v' + ext_context.globalState.get('version', ''));
         outputChannel.appendLine('-------------------------------------------------------');
         outputChannel.append(output);
+    });
+}
+// -----------------------------------
+export function build_exe() {
+
+    var editor = vscode.window.activeTextEditor;
+    var file = editor.document.fileName;
+
+    editor.document.save();
+    outputChannel.show(true);
+    outputChannel.clear();
+    outputChannel.appendLine('Building executable from the script "' + file + '"');
+    outputChannel.appendLine("---------------------");
+
+    let ext = path.extname(file);
+    let exe_file = file.replace(ext, '.exe');
+
+    var command = 'mono "' + cscs_exe + '" -nl -l -e "' + file + '"';
+
+    Utils.Run(command, (code, output) => {
+        outputChannel.appendLine(output);
+        if (fs.existsSync(exe_file))
+            outputChannel.appendLine('The script is converted into executable ' + exe_file);
+        outputChannel.appendLine("\n[Done]");
     });
 }
 // -----------------------------------
