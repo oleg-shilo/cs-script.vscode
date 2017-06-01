@@ -16,7 +16,7 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     diagnosticCollection = vscode.languages.createDiagnosticCollection('c#');
     context.subscriptions.push(diagnosticCollection);
     ext_context = context;
-    
+
     if (!fs.existsSync(context.storagePath)) {
         fs.mkdirSync(context.storagePath);
     }
@@ -24,9 +24,29 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     return diagnosticCollection;
 }
 
-export function create_dir(dir: string): void {
-    const allRWEPermissions = parseInt("0777", 8);
-    mkdirp.sync(dir, allRWEPermissions);
+export function prepare_new_script(): string {
+    let template_file = path.join(ext_context.storagePath, 'new_script.tmpl');
+
+    let template =
+        'using System;' + os.EOL +
+        '$backup_comment$' + os.EOL +
+        'class Script' + os.EOL +
+        '{' + os.EOL +
+        '    static void Main(string[] args)' + os.EOL +
+        '    {' + os.EOL +
+        '        Console.WriteLine("Hello...");' + os.EOL +
+        '    }' + os.EOL +
+        '}';
+
+    if (!fs.existsSync(template_file))
+        fs.writeFileSync(template_file, template, 'utf8');
+
+    try {
+        template = fs.readFileSync(template_file, 'utf8');
+    } catch (error) {
+    }
+
+    return template
 }
 
 

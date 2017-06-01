@@ -33,6 +33,7 @@
         "workspaceContains:script.csproj",
         "onCommand:cs-script.debug",
         "onCommand:cs-script.run",
+        "onCommand:cs-script.new_script",
         "onCommand:cs-script.print_project",
         "onCommand:cs-script.load_project",
         "onCommand:cs-script.about",
@@ -56,35 +57,39 @@
         "commands": [
             {
                 "command": "cs-script.debug",
-                "title": "CS-Script: debug"
+                "title": "CS-Script: Debug"
             },
             {
                 "command": "cs-script.run",
-                "title": "CS-Script: run"
+                "title": "CS-Script: Run"
             },
             {
                 "command": "cs-script.print_project",
-                "title": "CS-Script: show project"
+                "title": "CS-Script: Show project"
             },
             {
                 "command": "cs-script.load_project",
-                "title": "CS-Script: load project"
+                "title": "CS-Script: Load project"
+            },
+            {
+                "command": "cs-script.new_script",
+                "title": "CS-Script: New script"
             },
             {
                 "command": "cs-script.build_exe",
-                "title": "CS-Script: build exe"
+                "title": "CS-Script: Build exe"
             },
             {
                 "command": "cs-script.check",
-                "title": "CS-Script: check"
+                "title": "CS-Script: Check syntax"
             },
             {
                 "command": "cs-script.engine_help",
-                "title": "CS-Script: help"
+                "title": "CS-Script: Help"
             },
             {
                 "command": "cs-script.about",
-                "title": "CS-Script: about"
+                "title": "CS-Script: About"
             }
         ],
         "menus": {
@@ -111,6 +116,11 @@
                 },
                 {
                     "when": "resourceLangId == csharp",
+                    "command": "cs-script.new_script",
+                    "group": "cs-script.2"
+                },
+                {
+                    "when": "resourceLangId == csharp",
                     "command": "cs-script.build_exe",
                     "group": "cs-script.2"
                 }
@@ -119,17 +129,22 @@
                 {
                     "when": "resourceLangId == csharp",
                     "command": "cs-script.run",
-                    "group": "cs-script"
+                    "group": "cs-script.0"
                 },
                 {
                     "when": "resourceLangId == csharp",
                     "command": "cs-script.debug",
-                    "group": "cs-script"
+                    "group": "cs-script.0"
+                },
+                {
+                    "when": "resourceLangId == csharp",
+                    "command": "cs-script.about",
+                    "group": "cs-script.1"
                 },
                 {
                     "when": "resourceLangId == csharp",
                     "command": "cs-script.check",
-                    "group": "cs-script"
+                    "group": "cs-script.0"
                 }
             ]
         },

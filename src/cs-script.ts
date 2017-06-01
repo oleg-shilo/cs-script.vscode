@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { exec } from 'child_process';
 import { Uri, commands, DiagnosticCollection, DiagnosticSeverity, TextEditorSelectionChangeKind, Selection } from "vscode";
-import { ErrorInfo, Utils, diagnosticCollection, create_dir, actual_output, settings, VSCodeSettings } from "./utils";
+import { ErrorInfo, Utils, diagnosticCollection, actual_output, settings, VSCodeSettings } from "./utils";
 
 let ext_context: vscode.ExtensionContext;
 let cscs_exe = __dirname + "/../../bin/cscs.exe";
@@ -131,7 +131,7 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
                 includes += '<Compile Include="' + line.substr(5) + '"/>' + os.EOL;
         });
 
-        create_dir(proj_dir);
+        fs.mkdirSync(proj_dir);
 
         let content = fs.readFileSync(csproj_template, 'utf8')
             .replace('<Reference Include="$ASM$"/>', refs)
@@ -226,6 +226,52 @@ export function engine_help() {
         fs.writeFileSync(readme, output, 'utf8');
         commands.executeCommand('vscode.open', Uri.file(readme));
     });
+}
+// -----------------------------------
+export function new_script() {
+    var new_file_path = path.join(ext_context.storagePath, 'new_script.cs')
+
+    let backup_file = null;
+    if (fs.existsSync(new_file_path))
+        backup_file = new_file_path + '.bak';
+
+    if (backup_file && fs.existsSync(backup_file)) {
+        fs.unlinkSync(backup_file);
+        fs.renameSync(new_file_path, backup_file);
+    }
+
+    let backup_comment = '';
+    if (backup_file)
+        backup_comment =
+            '// The previous content of this file has been saved into \n' +
+            '// ' + backup_file + ' \n';
+
+    let content = utils.prepare_new_script().replace('$backup_comment$', backup_comment)
+
+    fs.writeFileSync(new_file_path, content);
+
+    if (fs.existsSync(new_file_path))
+        commands.executeCommand('vscode.open', Uri.file(new_file_path));
+}
+// -----------------------------------
+export function Syntax() {
+
+    // var net = require('net');
+
+    // var client = new net.Socket();
+    // client.connect(1337, '127.0.0.1', function () {
+    //     console.log('Connected');
+    //     client.write('Hello, server! Love, Client.');
+    // });
+
+    // client.on('data', function (data) {
+    //     console.log('Received: ' + data);
+    //     client.destroy(); // kill client after server's response
+    // });
+
+    // client.on('close', function () {
+    //     console.log('Connection closed');
+    // });
 }
 // -----------------------------------
 export function build_exe() {
