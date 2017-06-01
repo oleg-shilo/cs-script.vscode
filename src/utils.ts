@@ -12,20 +12,50 @@ let ext_context: vscode.ExtensionContext
 export let settings: Settings;
 export let diagnosticCollection: vscode.DiagnosticCollection;
 
+export function create_dir(dir: string): void {
+    // fs.mkdirSync can only create the top level dir but mkdirp creates all child sub-dirs that do not exist  
+    const allRWEPermissions = parseInt("0777", 8);
+    mkdirp.sync(dir, allRWEPermissions);
+}
+
+
+let _user_dir: string;
+
+export function user_dir(): string {
+    
+    // ext_context.storagePath cannot be used as it is undefined if no workspace loaded
+
+    // vscode:
+    // Windows %APPDATA%\Code\User\settings.json
+    // Mac $HOME/Library/Application Support/Code/User/settings.json
+    // Linux $HOME/.config/Code/User/settings.json
+
+    if (!_user_dir) {
+        if (os.platform() == 'win32') {
+            _user_dir = path.join(process.env.APPDATA, 'Code', 'User', 'cs-script.user', 'bin');
+        }
+        else if (os.platform() == 'darwin') {
+            _user_dir = path.join(process.env.HOME, 'Library', 'Application Support', 'Code', 'User', 'cs-script.user');
+        }
+        else {
+            _user_dir = path.join(process.env.HOME, '.config', 'Code', 'User', 'cs-script.user');
+        }
+    }
+
+    create_dir(_user_dir);
+    return _user_dir;
+}
+
 export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     diagnosticCollection = vscode.languages.createDiagnosticCollection('c#');
     context.subscriptions.push(diagnosticCollection);
     ext_context = context;
-
-    if (!fs.existsSync(context.storagePath)) {
-        fs.mkdirSync(context.storagePath);
-    }
     settings = Settings.Load();
     return diagnosticCollection;
 }
 
 export function prepare_new_script(): string {
-    let template_file = path.join(ext_context.storagePath, 'new_script.tmpl');
+    let template_file = path.join(user_dir(), 'new_script.tmpl');
 
     let template =
         'using System;' + os.EOL +
@@ -131,7 +161,7 @@ export class Settings {
 
     public Save(file?: string) {
 
-        let file_path = path.join(ext_context.storagePath, 'settings.json');
+        let file_path = path.join(user_dir(), 'settings.json');
 
         if (file != null) file_path = file;
         else if (this._file != null) file_path = this._file;
@@ -141,7 +171,7 @@ export class Settings {
 
     public static Load(file?: string) {
 
-        let file_path = path.join(ext_context.storagePath, 'settings.json');
+        let file_path = path.join(user_dir(), 'settings.json');
         if (file != null) file_path = file;
 
         let settings: Settings;

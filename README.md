@@ -15,6 +15,7 @@ The extension provides a very thin layer of own functionality. Its primary respo
 
 ## Minimal set of dependencies (third-party extensions)
 Latest Mono from http://www.mono-project.com/download/ and the following VSCode extensions:
+
 ![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/dependencies.png)
 <hr>
 

@@ -33,6 +33,7 @@
         "workspaceContains:script.csproj",
         "onCommand:cs-script.debug",
         "onCommand:cs-script.run",
+        "onCommand:cs-script.run_in_terminal",
         "onCommand:cs-script.new_script",
         "onCommand:cs-script.print_project",
         "onCommand:cs-script.load_project",
@@ -62,6 +63,10 @@
             {
                 "command": "cs-script.run",
                 "title": "CS-Script: Run"
+            },
+            {
+                "command": "cs-script.run_in_terminal",
+                "title": "CS-Script: Run in terminal"
             },
             {
                 "command": "cs-script.print_project",
@@ -102,6 +107,11 @@
                 {
                     "when": "resourceLangId == csharp",
                     "command": "cs-script.run",
+                    "group": "cs-script.1"
+                },
+                {
+                    "when": "resourceLangId == csharp",
+                    "command": "cs-script.run_in_terminal",
                     "group": "cs-script.1"
                 },
                 {

@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { exec } from 'child_process';
 import { Uri, commands, DiagnosticCollection, DiagnosticSeverity, TextEditorSelectionChangeKind, Selection } from "vscode";
-import { ErrorInfo, Utils, diagnosticCollection, actual_output, settings, VSCodeSettings } from "./utils";
+import { ErrorInfo, Utils, diagnosticCollection, actual_output, settings, VSCodeSettings, user_dir, create_dir } from "./utils";
 
 let ext_context: vscode.ExtensionContext;
 let cscs_exe = __dirname + "/../../bin/cscs.exe";
@@ -131,7 +131,7 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
                 includes += '<Compile Include="' + line.substr(5) + '"/>' + os.EOL;
         });
 
-        fs.mkdirSync(proj_dir);
+        create_dir(proj_dir);
 
         let content = fs.readFileSync(csproj_template, 'utf8')
             .replace('<Reference Include="$ASM$"/>', refs)
@@ -214,6 +214,94 @@ export function about() {
     });
 }
 // -----------------------------------
+
+let terminal: vscode.Terminal = null;
+export function run_in_terminal() {
+
+    var editor = vscode.window.activeTextEditor;
+    var file = editor.document.fileName;
+
+    if (terminal == null)
+        terminal = vscode.window.createTerminal('Ext Terminal cs-script');
+
+    let dir = path.dirname(file);
+
+    terminal.show(false);
+    terminal.sendText(`cd "${dir}"`);
+    if (os.platform() == 'win32')
+        terminal.sendText("cls");
+    terminal.sendText(`mono "${cscs_exe}" -nl -l "${file}"`);
+}
+
+function test_activate(context: vscode.ExtensionContext) {
+    let terminalStack: vscode.Terminal[] = [];
+
+    context.subscriptions.push(vscode.commands.registerCommand('terminalTest.createTerminal', () => {
+        terminalStack.push(vscode.window.createTerminal(`Ext Terminal #${terminalStack.length + 1}`));
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('terminalTest.hide', () => {
+        if (terminalStack.length === 0) {
+            vscode.window.showErrorMessage('No active terminals');
+        }
+        getLatestTerminal().hide();
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand('terminalTest.show', () => {
+        if (terminalStack.length === 0) {
+            vscode.window.showErrorMessage('No active terminals');
+        }
+        getLatestTerminal().show();
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand('terminalTest.showPreserveFocus', () => {
+        if (terminalStack.length === 0) {
+            vscode.window.showErrorMessage('No active terminals');
+        }
+        getLatestTerminal().show(true);
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand('terminalTest.sendText', () => {
+        if (terminalStack.length === 0) {
+            vscode.window.showErrorMessage('No active terminals');
+        }
+        getLatestTerminal().sendText("echo 'Hello world!'");
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand('terminalTest.sendTextNoNewLine', () => {
+        if (terminalStack.length === 0) {
+            vscode.window.showErrorMessage('No active terminals');
+        }
+        getLatestTerminal().sendText("echo 'Hello world!'", false);
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand('terminalTest.dispose', () => {
+        if (terminalStack.length === 0) {
+            vscode.window.showErrorMessage('No active terminals');
+        }
+        getLatestTerminal().dispose();
+        terminalStack.pop();
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand('terminalTest.createAndSend', () => {
+        terminalStack.push(vscode.window.createTerminal(`Ext Terminal #${terminalStack.length + 1}`));
+        getLatestTerminal().sendText("echo 'Sent text immediately after creating'");
+    }));
+
+    // Below coming in version v1.6
+    context.subscriptions.push(vscode.commands.registerCommand('terminalTest.createZshLoginShell', () => {
+        terminalStack.push((<any>vscode.window).createTerminal(`Ext Terminal #${terminalStack.length + 1}`, '/bin/zsh', ['-l']));
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand('terminalTest.processId', () => {
+        (<any>getLatestTerminal()).processId.then((processId) => {
+            console.log(`Shell process ID: ${processId}`);
+        });
+    }));
+    if ('onDidCloseTerminal' in <any>vscode.window) {
+        (<any>vscode.window).onDidCloseTerminal((terminal) => {
+            console.log('Terminal closed', terminal);
+        });
+    }
+
+    function getLatestTerminal() {
+        return terminalStack[terminalStack.length - 1];
+    }
+}
+// -----------------------------------
 export function engine_help() {
 
     var editor = vscode.window.activeTextEditor;
@@ -222,14 +310,14 @@ export function engine_help() {
     var command = 'mono "' + cscs_exe + '" -help';
 
     Utils.Run(command, (code, output) => {
-        let readme = path.join(ext_context.storagePath, 'cs-script.help.txt')
+        let readme = path.join(user_dir(), 'cs-script.help.txt')
         fs.writeFileSync(readme, output, 'utf8');
         commands.executeCommand('vscode.open', Uri.file(readme));
     });
 }
 // -----------------------------------
 export function new_script() {
-    var new_file_path = path.join(ext_context.storagePath, 'new_script.cs')
+    var new_file_path = path.join(user_dir(), 'new_script.cs')
 
     let backup_file = null;
     if (fs.existsSync(new_file_path))
