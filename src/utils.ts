@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
-import { Uri, commands, DiagnosticCollection, DiagnosticSeverity } from "vscode";
+import { Uri, commands, DiagnosticCollection, DiagnosticSeverity, StatusBarAlignment, StatusBarItem } from "vscode";
 
 let ext_dir = path.join(__dirname, "..", "..");
 let exec = require('child_process').exec;
@@ -11,6 +11,8 @@ let mkdirp = require('mkdirp');
 let ext_context: vscode.ExtensionContext;
 let ext_version: string;
 let cscs_exe: string;
+let _user_dir: string;
+let statusBarItem: StatusBarItem;
 
 export let settings: Settings;
 export let diagnosticCollection: vscode.DiagnosticCollection;
@@ -51,8 +53,6 @@ export function copy_file_to(fileName: string, srcDir: string, destDir: string):
         .pipe(fs.createWriteStream(path.join(destDir, fileName)));
 }
 
-let _user_dir: string;
-
 export function user_dir(): string {
 
     // ext_context.storagePath cannot be used as it is undefined if no workspace loaded
@@ -80,16 +80,21 @@ export function user_dir(): string {
 
 export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     diagnosticCollection = vscode.languages.createDiagnosticCollection('c#');
+    statusBarItem = vscode.window.createStatusBarItem(StatusBarAlignment.Left);
     context.subscriptions.push(diagnosticCollection);
     ext_version = context.globalState.get('version').toString();
     ext_context = context;
     settings = Settings.Load();
+
     deploy_engine();
+
     return diagnosticCollection;
 }
 
 export function deploy_engine(): void {
     // all copy_file* calls are  async operations
+    statusBarItem.text = '$(versions) Deploying CS-Script...';
+    statusBarItem.show();
 
     copy_file_to("cscs.exe", path.join(ext_dir, 'bin'), user_dir());
 
@@ -98,13 +103,16 @@ export function deploy_engine(): void {
     // extension update would not be interfered with.
     let src_dir = path.join(ext_dir, 'bin', 'roslyn');
     let dest_dir = path.join(user_dir(), 'roslyn_' + ext_version);
-    
+
     if (!fs.existsSync(dest_dir)) {
         create_dir(dest_dir);
         fs.readdirSync(src_dir).forEach(file => {
             copy_file_to(file, src_dir, dest_dir); // async operation
+            statusBarItem.hide();
         });
     }
+    else
+       statusBarItem.hide();
 
     // delete old roslyn
     fs.readdir(user_dir(), (err, items) => {
