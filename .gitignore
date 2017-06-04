@@ -6,3 +6,4 @@ node_modules
 /images/css_logo_256_256.png
 /images/css_logo_256_256.pdn
 /.local
+/bin/*.cmd

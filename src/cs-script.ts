@@ -9,7 +9,7 @@ import { Uri, commands, DiagnosticCollection, DiagnosticSeverity, TextEditorSele
 import { ErrorInfo, Utils, diagnosticCollection, actual_output, settings, VSCodeSettings, user_dir, create_dir } from "./utils";
 
 let ext_context: vscode.ExtensionContext;
-let cscs_exe = __dirname + "/../../bin/cscs.exe";
+let cscs_exe = path.join(user_dir(), 'cscs.exe');
 let csproj_template = __dirname + "/../../bin/script.csproj";
 let outputChannel = vscode.window.createOutputChannel('Code');
 let last_process = null;
@@ -116,7 +116,7 @@ export function parse_proj_dir(proj_dir: string): string {
 
 function generate_proj_file(proj_dir: string, scriptFile: string): void {
     let proj_file = path.join(proj_dir, script_proj_name);
-    var command = 'mono "' + cscs_exe + '" -config:none -nl -l -proj -ac:1 "' + scriptFile + '"';
+    var command = 'mono "' + cscs_exe + '" -config:none -nl -l -proj:dbg -ac:1 "' + scriptFile + '"';
 
     Utils.Run(command, (code, output) => {
 
@@ -151,7 +151,7 @@ export function print_project() {
     outputChannel.clear();
     outputChannel.appendLine('Analyzing...');
 
-    var command = 'mono "' + cscs_exe + '" -config:none -nl -l -proj -ac:1 "' + file + '"';
+    var command = 'mono "' + cscs_exe + '" -config:none -nl -l -proj:dbg -ac:1 "' + file + '"';
 
     Utils.Run(command, (code, output) => {
         let lines: string[] = output.lines().filter(actual_output);

@@ -5,9 +5,12 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { Uri, commands, DiagnosticCollection, DiagnosticSeverity } from "vscode";
 
+let ext_dir = path.join(__dirname, "..", "..");
 let exec = require('child_process').exec;
 let mkdirp = require('mkdirp');
-let ext_context: vscode.ExtensionContext
+let ext_context: vscode.ExtensionContext;
+let ext_version: string;
+let cscs_exe: string;
 
 export let settings: Settings;
 export let diagnosticCollection: vscode.DiagnosticCollection;
@@ -18,11 +21,40 @@ export function create_dir(dir: string): void {
     mkdirp.sync(dir, allRWEPermissions);
 }
 
+export function delete_dir(dir: string): void {
+    try {
+
+        let files = fs.readdirSync(dir);
+        for (var i = 0; i < files.length; i++) {
+
+            let file_path = path.join(dir, files[i]);
+
+            if (fs.lstatSync(file_path).isFile())
+                try {
+                    fs.unlinkSync(file_path);
+                } catch (error) {
+                }
+        }
+
+        fs.rmdir(dir);
+
+    } catch (error) {
+    }
+}
+
+export function copy_file(src: string, dest: string): void {
+    fs.createReadStream(src).pipe(fs.createWriteStream(dest));
+}
+
+export function copy_file_to(fileName: string, srcDir: string, destDir: string): void {
+    fs.createReadStream(path.join(srcDir, fileName))
+        .pipe(fs.createWriteStream(path.join(destDir, fileName)));
+}
 
 let _user_dir: string;
 
 export function user_dir(): string {
-    
+
     // ext_context.storagePath cannot be used as it is undefined if no workspace loaded
 
     // vscode:
@@ -32,7 +64,7 @@ export function user_dir(): string {
 
     if (!_user_dir) {
         if (os.platform() == 'win32') {
-            _user_dir = path.join(process.env.APPDATA, 'Code', 'User', 'cs-script.user', 'bin');
+            _user_dir = path.join(process.env.APPDATA, 'Code', 'User', 'cs-script.user');
         }
         else if (os.platform() == 'darwin') {
             _user_dir = path.join(process.env.HOME, 'Library', 'Application Support', 'Code', 'User', 'cs-script.user');
@@ -49,9 +81,42 @@ export function user_dir(): string {
 export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     diagnosticCollection = vscode.languages.createDiagnosticCollection('c#');
     context.subscriptions.push(diagnosticCollection);
+    ext_version = context.globalState.get('version').toString();
     ext_context = context;
     settings = Settings.Load();
+    deploy_engine();
     return diagnosticCollection;
+}
+
+export function deploy_engine(): void {
+    // all copy_file* calls are  async operations
+
+    copy_file_to("cscs.exe", path.join(ext_dir, 'bin'), user_dir());
+
+    // Copy all roslyn related files
+    // Dest folder must be versioned as Roslyn server may stay in memory between the sessions so the
+    // extension update would not be interfered with.
+    let src_dir = path.join(ext_dir, 'bin', 'roslyn');
+    let dest_dir = path.join(user_dir(), 'roslyn_' + ext_version);
+    
+    if (!fs.existsSync(dest_dir)) {
+        create_dir(dest_dir);
+        fs.readdirSync(src_dir).forEach(file => {
+            copy_file_to(file, src_dir, dest_dir); // async operation
+        });
+    }
+
+    // delete old roslyn
+    fs.readdir(user_dir(), (err, items) => {
+        items.forEach(item => {
+            let dir = path.join(user_dir(), item);
+            let is_dir = fs.lstatSync(dir).isDirectory();
+            if (is_dir && item.startsWith('roslyn') && item != 'roslyn_' + ext_version) {
+                delete_dir(dir);
+            }
+        });
+    });
+
 }
 
 export function prepare_new_script(): string {

@@ -14,4 +14,4 @@ images/dependencies.png
 tsconfig.json
 settings.json
 vsc-extension-quickstart.md
-*.cmd
+**/*.cmd
