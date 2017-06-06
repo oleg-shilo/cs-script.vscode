@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { exec } from 'child_process';
 import { Uri, commands, DiagnosticCollection, DiagnosticSeverity, TextEditorSelectionChangeKind, Selection } from "vscode";
-import { ErrorInfo, Utils, diagnosticCollection, actual_output, settings, VSCodeSettings, user_dir, create_dir } from "./utils";
+import { ErrorInfo, Utils, diagnosticCollection, actual_output, settings, VSCodeSettings, user_dir, ensure_default_config, create_dir } from "./utils";
 
 let ext_context: vscode.ExtensionContext;
 let cscs_exe = path.join(user_dir(), 'cscs.exe');
@@ -88,7 +88,7 @@ export function load_project() {
                             settings.show_load_proj_info = false;
                             settings.Save();
 
-                            setTimeout(() => commands.executeCommand('vscode.openFolder', Uri.parse(proj_dir)), 100);
+                            setTimeout(() => commands.executeCommand('vscode.openFolder', Uri.parse(proj_dir), ), 100);
                         }
                     });
             }
@@ -116,7 +116,7 @@ export function parse_proj_dir(proj_dir: string): string {
 
 function generate_proj_file(proj_dir: string, scriptFile: string): void {
     let proj_file = path.join(proj_dir, script_proj_name);
-    var command = 'mono "' + cscs_exe + '" -config:none -nl -l -proj:dbg -ac:1 "' + scriptFile + '"';
+    var command = `mono "${cscs_exe}" -nl -l -proj:dbg "${scriptFile}"`;
 
     Utils.Run(command, (code, output) => {
 
@@ -151,7 +151,7 @@ export function print_project() {
     outputChannel.clear();
     outputChannel.appendLine('Analyzing...');
 
-    var command = 'mono "' + cscs_exe + '" -config:none -nl -l -proj:dbg -ac:1 "' + file + '"';
+    var command = `mono "${cscs_exe}" -nl -l -proj:dbg "${file}"`;
 
     Utils.Run(command, (code, output) => {
         let lines: string[] = output.lines().filter(actual_output);
@@ -171,7 +171,7 @@ export function check() {
     outputChannel.clear();
     outputChannel.appendLine('Checking...');
 
-    var command = 'mono "' + cscs_exe + '" -config:none -nl -l -check -ac:1 "' + file + '"';
+    var command = `mono "${cscs_exe}" -nl -l -check "${file}"`;
 
     Utils.Run(command, (code, output) => {
 
@@ -192,6 +192,12 @@ export function check() {
     });
 }
 // -----------------------------------
+export function css_config() {
+    utils.ensure_default_config(cscs_exe,
+        config_file =>
+            commands.executeCommand('vscode.open', Uri.file(config_file)));
+}
+// -----------------------------------
 export function about() {
 
     var editor = vscode.window.activeTextEditor;
@@ -204,7 +210,7 @@ export function about() {
 
     // vscode.languages.getLanguages().then(l => console.log('languages', l));
 
-    var command = 'mono "' + cscs_exe + '" -ver';
+    var command = `mono "${cscs_exe}" -ver`;
 
     Utils.Run(command, (code, output) => {
         outputChannel.clear();
@@ -307,7 +313,7 @@ export function engine_help() {
     var editor = vscode.window.activeTextEditor;
     var file = editor.document.fileName;
 
-    var command = 'mono "' + cscs_exe + '" -help';
+    var command = `mono "${cscs_exe}" -help`;
 
     Utils.Run(command, (code, output) => {
         let readme = path.join(user_dir(), 'cs-script.help.txt')
@@ -376,7 +382,7 @@ export function build_exe() {
     let ext = path.extname(file);
     let exe_file = file.replace(ext, '.exe');
 
-    var command = 'mono "' + cscs_exe + '" -nl -l -e "' + file + '"';
+    var command = `mono "${cscs_exe}" -nl -l -e "${file}"`;
 
     Utils.Run(command, (code, output) => {
         outputChannel.appendLine(output);
@@ -400,7 +406,11 @@ export function debug() {
         "type": "mono",
         "request": "launch",
         "program": cscs_exe,
-        "args": ["-nl", "-d", "-l", "-inmem:0", "-ac:2", "-config:none", editor.document.fileName]
+        // mono debugger requires non-inmemory asms and injection of the breakpoint ("-ac:2)
+        "args": ["-nl", "-d", "-l", "-inmem:0", "-ac:2", editor.document.fileName],
+        "env": {
+            "css_vscode_roslyn_dir": process.env.css_vscode_roslyn_dir
+        }
     };
 
     vscode.commands.executeCommand('vscode.startDebug', launchConfig).then(() => {
@@ -427,7 +437,8 @@ export function run() {
 
     var file = editor.document.fileName;
 
-    var command = 'mono "' + cscs_exe + '" -config:none -nl -l -ac:1 "' + file + '"';
+    var command = `mono "${cscs_exe}" -nl -l "${file}"`;
+
     if (showExecutionMessage) {
         outputChannel.appendLine('[Running] ' + command);
     }

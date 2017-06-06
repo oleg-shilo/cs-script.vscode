@@ -103,6 +103,7 @@ export function deploy_engine(): void {
     // extension update would not be interfered with.
     let src_dir = path.join(ext_dir, 'bin', 'roslyn');
     let dest_dir = path.join(user_dir(), 'roslyn_' + ext_version);
+    process.env.css_vscode_roslyn_dir = dest_dir;
 
     if (!fs.existsSync(dest_dir)) {
         create_dir(dest_dir);
@@ -110,9 +111,12 @@ export function deploy_engine(): void {
             copy_file_to(file, src_dir, dest_dir); // async operation
             statusBarItem.hide();
         });
+
     }
     else
-       statusBarItem.hide();
+        statusBarItem.hide();
+
+    ensure_default_config(path.join(user_dir(), 'cscs.exe'));
 
     // delete old roslyn
     fs.readdir(user_dir(), (err, items) => {
@@ -311,6 +315,33 @@ export class Utils {
         p.stdout.on('data', data => output += data);
         p.stderr.on('data', data => output += data);
         p.on('close', code => on_done(code, output));
+    }
+}
+
+export function ensure_default_config(cscs_exe: string, on_done?: (file: string) => void) {
+    let config_file = path.join(path.dirname(cscs_exe), 'css_config.xml')
+
+    if (!fs.existsSync(config_file)) {
+
+        var command = 'mono "' + cscs_exe + '" -config:default';
+
+        Utils.Run(command, (code, output) => {
+
+            let updated_config = output
+                .replace("</defaultArguments>", " -ac:1</defaultArguments>")
+                .replace("<useAlternativeCompiler></useAlternativeCompiler>", "<useAlternativeCompiler>" + path.join("%css_vscode_roslyn_dir%", "CSSCodeProvider.v4.6.dll") + "</useAlternativeCompiler>")
+                .replace("</defaultRefAssemblies>", path.join("%css_vscode_roslyn_dir%", "System.ValueTuple.dll") + "</defaultRefAssemblies>");
+
+            fs.writeFileSync(config_file, updated_config, 'utf8');
+
+            if (on_done)
+                on_done(config_file);
+        });
+
+    }
+    else {
+        if (on_done)
+            on_done(config_file);
     }
 }
 

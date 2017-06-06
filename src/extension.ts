@@ -25,6 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.print_project', cs_script.print_project));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.load_project', cs_script.load_project));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.check', cs_script.check));
+    context.subscriptions.push(vscode.commands.registerCommand('cs-script.css_config', cs_script.css_config));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.about', cs_script.about));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.new_script', cs_script.new_script));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.engine_help', cs_script.engine_help));

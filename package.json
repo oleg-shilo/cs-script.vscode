@@ -38,6 +38,7 @@
         "onCommand:cs-script.print_project",
         "onCommand:cs-script.load_project",
         "onCommand:cs-script.about",
+        "onCommand:cs-script.css_config",
         "onCommand:cs-script.build_exe",
         "onCommand:cs-script.engine_help",
         "onCommand:cs-script.check"
@@ -75,6 +76,10 @@
             {
                 "command": "cs-script.load_project",
                 "title": "CS-Script: Load project"
+            },
+            {
+                "command": "cs-script.css_config",
+                "title": "CS-Script: Engine Settings"
             },
             {
                 "command": "cs-script.new_script",
@@ -133,6 +138,16 @@
                     "when": "resourceLangId == csharp",
                     "command": "cs-script.build_exe",
                     "group": "cs-script.2"
+                },
+                {
+                    "when": "resourceLangId == csharp",
+                    "command": "cs-script.css_config",
+                    "group": "cs-script.3"
+                },
+                {
+                    "when": "resourceLangId == csharp",
+                    "command": "cs-script.about",
+                    "group": "cs-script.3"
                 }
             ],
             "editor/context": [
