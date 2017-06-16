@@ -2,7 +2,7 @@
     "name": "cs-script",
     "displayName": "CS-Script",
     "description": "Execution, debugging and editing C# code that targets .NET and Mono (no .NET Core required) ",
-    "version": "1.0.1",
+    "version": "1.2.0",
     "publisher": "oleg-shilo",
     "icon": "images/css_logo.png",
     "engines": {
@@ -53,21 +53,32 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Allow navigation to the file location on a single click (on error info) in the output panel."
+                },
+                "cs-script.dotnet_run_host_on_win": {
+                    "type": "boolean",
+                    "default": "false",
+                    "description": "Allows running scripts ('CS-Script: run' command) on Windows under .NET instead of Mono. Other command are not affected. Lets achieve a faster script loading on Windows."
                 }
             }
         },
         "commands": [
             {
                 "command": "cs-script.debug",
-                "title": "CS-Script: Debug"
+                "title": "CS-Script: Debug",
+                "icon": {
+                    "light": "./images/icons/debug.light.svg",
+                    "dark": "./images/icons/debug.svg"
+                }
             },
             {
                 "command": "cs-script.run",
-                "title": "CS-Script: Run"
+                "title": "CS-Script: Run",
+                "icon": "./images/icons/run.svg"
             },
             {
                 "command": "cs-script.run_in_terminal",
-                "title": "CS-Script: Run in terminal"
+                "title": "CS-Script: Run in terminal",
+                "icon": "./images/icons/run.terminal.svg"
             },
             {
                 "command": "cs-script.print_project",
@@ -75,7 +86,11 @@
             },
             {
                 "command": "cs-script.load_project",
-                "title": "CS-Script: Load project"
+                "title": "CS-Script: Load project",
+                "icon": {
+                    "light": "./images/icons/load.light.svg",
+                    "dark": "./images/icons/load.svg"
+                }
             },
             {
                 "command": "cs-script.css_config",
@@ -91,7 +106,8 @@
             },
             {
                 "command": "cs-script.check",
-                "title": "CS-Script: Check syntax"
+                "title": "CS-Script: Check syntax",
+                "icon": "./images/icons/check.svg"
             },
             {
                 "command": "cs-script.engine_help",
@@ -106,23 +122,28 @@
             "editor/title": [
                 {
                     "when": "resourceLangId == csharp",
-                    "command": "cs-script.debug",
-                    "group": "cs-script.1"
+                    "command": "cs-script.run",
+                    "group": "navigation@1"
                 },
                 {
                     "when": "resourceLangId == csharp",
-                    "command": "cs-script.run",
-                    "group": "cs-script.1"
+                    "command": "cs-script.debug",
+                    "group": "navigation@2"
                 },
                 {
                     "when": "resourceLangId == csharp",
                     "command": "cs-script.run_in_terminal",
-                    "group": "cs-script.1"
+                    "group": "navigation@2"
                 },
                 {
                     "when": "resourceLangId == csharp",
                     "command": "cs-script.load_project",
-                    "group": "cs-script.2"
+                    "group": "navigation@3"
+                },
+                {
+                    "when": "resourceLangId == csharp",
+                    "command": "cs-script.check",
+                    "group": "navigation@4"
                 },
                 {
                     "when": "resourceLangId == csharp",

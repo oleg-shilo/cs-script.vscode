@@ -116,7 +116,7 @@ export function parse_proj_dir(proj_dir: string): string {
 
 function generate_proj_file(proj_dir: string, scriptFile: string): void {
     let proj_file = path.join(proj_dir, script_proj_name);
-    var command = `mono "${cscs_exe}" -nl -l -proj:dbg "${scriptFile}"`;
+    let command = `mono "${cscs_exe}" -nl -l -proj:dbg "${scriptFile}"`;
 
     Utils.Run(command, (code, output) => {
 
@@ -143,15 +143,15 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
 // -----------------------------------
 export function print_project() {
 
-    var editor = vscode.window.activeTextEditor;
-    var file = editor.document.fileName;
+    let editor = vscode.window.activeTextEditor;
+    let file = editor.document.fileName;
 
     editor.document.save();
     outputChannel.show(true);
     outputChannel.clear();
     outputChannel.appendLine('Analyzing...');
 
-    var command = `mono "${cscs_exe}" -nl -l -proj:dbg "${file}"`;
+    let command = `mono "${cscs_exe}" -nl -l -proj:dbg "${file}"`;
 
     Utils.Run(command, (code, output) => {
         let lines: string[] = output.lines().filter(actual_output);
@@ -163,15 +163,15 @@ export function print_project() {
 // -----------------------------------
 export function check() {
 
-    var editor = vscode.window.activeTextEditor;
-    var file = editor.document.fileName;
+    let editor = vscode.window.activeTextEditor;
+    let file = editor.document.fileName;
 
     editor.document.save();
     outputChannel.show(true);
     outputChannel.clear();
     outputChannel.appendLine('Checking...');
 
-    var command = `mono "${cscs_exe}" -nl -l -check "${file}"`;
+    let command = `mono "${cscs_exe}" -nl -l -check "${file}"`;
 
     Utils.Run(command, (code, output) => {
 
@@ -200,8 +200,8 @@ export function css_config() {
 // -----------------------------------
 export function about() {
 
-    var editor = vscode.window.activeTextEditor;
-    var file = editor.document.fileName;
+    let editor = vscode.window.activeTextEditor;
+    let file = editor.document.fileName;
 
     editor.document.save();
     outputChannel.show(true);
@@ -210,7 +210,7 @@ export function about() {
 
     // vscode.languages.getLanguages().then(l => console.log('languages', l));
 
-    var command = `mono "${cscs_exe}" -ver`;
+    let command = `mono "${cscs_exe}" -ver`;
 
     Utils.Run(command, (code, output) => {
         outputChannel.clear();
@@ -224,8 +224,9 @@ export function about() {
 let terminal: vscode.Terminal = null;
 export function run_in_terminal() {
 
-    var editor = vscode.window.activeTextEditor;
-    var file = editor.document.fileName;
+    let editor = vscode.window.activeTextEditor;
+    let file = editor.document.fileName;
+    editor.document.save();
 
     if (terminal == null)
         terminal = vscode.window.createTerminal('Ext Terminal cs-script');
@@ -310,10 +311,10 @@ function test_activate(context: vscode.ExtensionContext) {
 // -----------------------------------
 export function engine_help() {
 
-    var editor = vscode.window.activeTextEditor;
-    var file = editor.document.fileName;
+    let editor = vscode.window.activeTextEditor;
+    let file = editor.document.fileName;
 
-    var command = `mono "${cscs_exe}" -help`;
+    let command = `mono "${cscs_exe}" -help`;
 
     Utils.Run(command, (code, output) => {
         let readme = path.join(user_dir(), 'cs-script.help.txt')
@@ -323,7 +324,7 @@ export function engine_help() {
 }
 // -----------------------------------
 export function new_script() {
-    var new_file_path = path.join(user_dir(), 'new_script.cs')
+    let new_file_path = path.join(user_dir(), 'new_script.cs')
 
     let backup_file = null;
     if (fs.existsSync(new_file_path))
@@ -350,9 +351,9 @@ export function new_script() {
 // -----------------------------------
 export function Syntax() {
 
-    // var net = require('net');
+    // let net = require('net');
 
-    // var client = new net.Socket();
+    // let client = new net.Socket();
     // client.connect(1337, '127.0.0.1', function () {
     //     console.log('Connected');
     //     client.write('Hello, server! Love, Client.');
@@ -370,8 +371,8 @@ export function Syntax() {
 // -----------------------------------
 export function build_exe() {
 
-    var editor = vscode.window.activeTextEditor;
-    var file = editor.document.fileName;
+    let editor = vscode.window.activeTextEditor;
+    let file = editor.document.fileName;
 
     editor.document.save();
     outputChannel.show(true);
@@ -382,7 +383,7 @@ export function build_exe() {
     let ext = path.extname(file);
     let exe_file = file.replace(ext, '.exe');
 
-    var command = `mono "${cscs_exe}" -nl -l -e "${file}"`;
+    let command = `mono "${cscs_exe}" -nl -l -e "${file}"`;
 
     Utils.Run(command, (code, output) => {
         outputChannel.appendLine(output);
@@ -400,7 +401,7 @@ export function debug() {
     // - clear dbg output
     // - ensure running via mono (at least on Linux) - CONFIG BASED
 
-    var editor = vscode.window.activeTextEditor;
+    let editor = vscode.window.activeTextEditor;
     let launchConfig = {
         "name": "Launch",
         "type": "mono",
@@ -409,7 +410,7 @@ export function debug() {
         // mono debugger requires non-inmemory asms and injection of the breakpoint ("-ac:2)
         "args": ["-nl", "-d", "-l", "-inmem:0", "-ac:2", editor.document.fileName],
         "env": {
-            "css_vscode_roslyn_dir": process.env.css_vscode_roslyn_dir
+            // "css_vscode_roslyn_dir": process.env.css_vscode_roslyn_dir
         }
     };
 
@@ -428,16 +429,23 @@ export function run() {
     // - ensure running via mono (at least on Linux) - CONFIG BASED
 
     outputChannel.appendLine("data");
-    var editor = vscode.window.activeTextEditor;
+    let editor = vscode.window.activeTextEditor;
 
-    var exec = require('child_process').exec;
-    var showExecutionMessage = true;
+    let exec = require('child_process').exec;
+    let showExecutionMessage = true;
 
     outputChannel.clear();
 
-    var file = editor.document.fileName;
+    let file = editor.document.fileName;
 
-    var command = `mono "${cscs_exe}" -nl -l "${file}"`;
+    let command = `mono "${cscs_exe}" -nl -l "${file}"`;
+
+
+    if (os.platform() == 'win32') {
+        let run_as_dotnet = VSCodeSettings.get("cs-script.dotnet_run_host_on_win", false);
+        if(run_as_dotnet)
+            command = `"${cscs_exe}" -nl -l "${file}"`;
+    }
 
     if (showExecutionMessage) {
         outputChannel.appendLine('[Running] ' + command);
@@ -447,7 +455,7 @@ export function run() {
     outputChannel.show(true);
     outputChannel.clear();
 
-    var startTime = new Date();
+    let startTime = new Date();
     process = exec(command);
     process.stdout.on('data', data => {
         // ignore mono test output that comes from older releases(s)  (known Mono issue)
@@ -461,8 +469,8 @@ export function run() {
 
     process.on('close', code => {
         //         _this._isRunning = false;
-        var endTime = new Date();
-        var elapsedTime = (endTime.getTime() - startTime.getTime()) / 1000;
+        let endTime = new Date();
+        let elapsedTime = (endTime.getTime() - startTime.getTime()) / 1000;
         outputChannel.appendLine('');
         if (showExecutionMessage) {
             outputChannel.appendLine('[Done] exited with code=' + code + ' in ' + elapsedTime + ' seconds');
@@ -478,9 +486,9 @@ function onActiveEditorChange(editor: vscode.TextEditor) {
     if (editor != null) {
         const position = editor.selection.active;
 
-        var start = position.with(2, 0);
-        var end = position.with(2, 5);
-        var newSelection = new vscode.Selection(start, end);
+        let start = position.with(2, 0);
+        let end = position.with(2, 5);
+        let newSelection = new vscode.Selection(start, end);
         editor.selection = newSelection;
 
         // console.log('Active doc: ' + editor.document.fileName);
@@ -508,8 +516,8 @@ function onActiveEditorSelectionChange(event: vscode.TextEditorSelectionChangeEv
                         let editor = vscode.window.activeTextEditor;
                         const position = editor.selection.active;
 
-                        var start = position.with(info.range.start.line, info.range.start.character);
-                        var newSelection = new vscode.Selection(start, start);
+                        let start = position.with(info.range.start.line, info.range.start.character);
+                        let newSelection = new vscode.Selection(start, start);
                         editor.selection = newSelection;
                     });
             }
@@ -518,18 +526,24 @@ function onActiveEditorSelectionChange(event: vscode.TextEditorSelectionChangeEv
 }
 
 export function ActivateDiagnostics(context: vscode.ExtensionContext) {
-    ext_context = context;
+    try {
 
-    vscode.window.onDidChangeActiveTextEditor(onActiveEditorChange);
-    vscode.window.onDidChangeTextEditorSelection(onActiveEditorSelectionChange);
+        ext_context = context;
 
-    let file = ext_context.globalState.get('cs-script.open_file_at_startup', '');
-    if (file != null) {
-        ext_context.globalState.update(startup_file_key, '');
-        commands.executeCommand('vscode.open', Uri.file(file));
+        vscode.window.onDidChangeActiveTextEditor(onActiveEditorChange);
+        vscode.window.onDidChangeTextEditorSelection(onActiveEditorSelectionChange);
+
+        let file = ext_context.globalState.get('cs-script.open_file_at_startup', '');
+        if (file != null) {
+            ext_context.globalState.update(startup_file_key, '');
+            commands.executeCommand('vscode.open', Uri.file(file));
+        }
+
+        return utils.ActivateDiagnostics(context);
+    } catch (error) {
+        console.log(error);
+        // vscode.window.showErrorMessage(error);
     }
-
-    return utils.ActivateDiagnostics(context);
 };
 // -----------------------------------
 

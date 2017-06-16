@@ -7,6 +7,7 @@ import { Uri, commands, DiagnosticCollection, DiagnosticSeverity, StatusBarAlign
 
 let ext_dir = path.join(__dirname, "..", "..");
 let exec = require('child_process').exec;
+let execSync = require('child_process').execSync;
 let mkdirp = require('mkdirp');
 let ext_context: vscode.ExtensionContext;
 let ext_version: string;
@@ -88,6 +89,8 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
 
     deploy_engine();
 
+    setTimeout(preload_roslyn, 2000);
+
     return diagnosticCollection;
 }
 
@@ -97,38 +100,64 @@ export function deploy_engine(): void {
     statusBarItem.show();
 
     copy_file_to("cscs.exe", path.join(ext_dir, 'bin'), user_dir());
+    copy_file_to("CSSRoslynProvider.dll", path.join(ext_dir, 'bin'), user_dir());
 
+    if (os.platform() == 'win32')
+        deploy_roslyn();
+
+    statusBarItem.hide();
+
+    ensure_default_config(path.join(user_dir(), 'cscs.exe'));
+}
+
+export function deploy_roslyn(): void {
     // Copy all roslyn related files
     // Dest folder must be versioned as Roslyn server may stay in memory between the sessions so the
     // extension update would not be interfered with.
     let src_dir = path.join(ext_dir, 'bin', 'roslyn');
-    let dest_dir = path.join(user_dir(), 'roslyn_' + ext_version);
-    process.env.css_vscode_roslyn_dir = dest_dir;
+    let dest_dir = path.join(user_dir(), 'roslyn');
+    let ver_file = path.join(dest_dir, 'vscode.css_version.txt');
+
+    // process.env.css_vscode_roslyn_dir = dest_dir;
+
+    let uptodate = false;
+    if (fs.existsSync(dest_dir) && fs.existsSync(ver_file)) {
+        try {
+            let version = fs.readFileSync(ver_file, 'utf8');
+            uptodate = (version == ext_version);
+        } catch (error) {
+        }
+    }
+
+    if (fs.existsSync(dest_dir) && !uptodate) {
+        // var command = 'mono "' + path.join(user_dir(), 'cscs.exe') + '" -stop';
+        var command = '"' + path.join(ext_dir, 'bin', 'cscs.exe') + '" -stop';
+        execSync(command);
+
+        fs.renameSync(dest_dir, dest_dir + ".old." + new Date().getTime());
+        // delete old roslyn async
+        fs.readdir(user_dir(), (err, items) => {
+            items.forEach(item => {
+                try {
+                    let dir = path.join(user_dir(), item);
+                    let is_dir = fs.lstatSync(dir).isDirectory();
+                    if (is_dir && item.startsWith('roslyn') && item != 'roslyn') {
+                        delete_dir(dir);
+                    }
+                } catch (error) {
+                }
+            });
+        });
+    }
 
     if (!fs.existsSync(dest_dir)) {
         create_dir(dest_dir);
         fs.readdirSync(src_dir).forEach(file => {
             copy_file_to(file, src_dir, dest_dir); // async operation
-            statusBarItem.hide();
         });
 
+        fs.writeFileSync(ver_file, ver_file, 'utf8');
     }
-    else
-        statusBarItem.hide();
-
-    ensure_default_config(path.join(user_dir(), 'cscs.exe'));
-
-    // delete old roslyn
-    fs.readdir(user_dir(), (err, items) => {
-        items.forEach(item => {
-            let dir = path.join(user_dir(), item);
-            let is_dir = fs.lstatSync(dir).isDirectory();
-            if (is_dir && item.startsWith('roslyn') && item != 'roslyn_' + ext_version) {
-                delete_dir(dir);
-            }
-        });
-    });
-
 }
 
 export function prepare_new_script(): string {
@@ -318,21 +347,50 @@ export class Utils {
     }
 }
 
+export function preload_roslyn() {
+    try {
+        let exe = path.join(user_dir(), 'cscs.exe');
+        var command = 'mono "' + exe + '" -nl -preload';
+         Utils.Run(command, (code, output) => {
+            // console.log(output);
+         });
+    } catch (error) {
+
+    }
+}
 export function ensure_default_config(cscs_exe: string, on_done?: (file: string) => void) {
-    let config_file = path.join(path.dirname(cscs_exe), 'css_config.xml')
+
+    let config_file = path.join(path.dirname(cscs_exe), 'css_config.mono.xml');
 
     if (!fs.existsSync(config_file)) {
 
-        var command = 'mono "' + cscs_exe + '" -config:default';
+        // deployed file may still be unavailable so use the original one
+
+        let original_cscs_exe = path.join(ext_dir, 'bin', 'cscs.exe');
+        var command = 'mono "' + original_cscs_exe + '" -config:default';
 
         Utils.Run(command, (code, output) => {
 
+            // C:\Program Files (x86)\Mono\lib\mono\4.5\Facades</searchDirs>
+
             let updated_config = output
                 .replace("</defaultArguments>", " -ac:1</defaultArguments>")
-                .replace("<useAlternativeCompiler></useAlternativeCompiler>", "<useAlternativeCompiler>" + path.join("%css_vscode_roslyn_dir%", "CSSCodeProvider.v4.6.dll") + "</useAlternativeCompiler>")
-                .replace("</defaultRefAssemblies>", path.join("%css_vscode_roslyn_dir%", "System.ValueTuple.dll") + "</defaultRefAssemblies>");
+                .replace("</searchDirs>", "%MONO%/4.5/Facades</searchDirs>")
+                .replace("<useAlternativeCompiler></useAlternativeCompiler>", "<useAlternativeCompiler>CSSRoslynProvider.dll</useAlternativeCompiler>")
+                .replace("</defaultRefAssemblies>", "System.dll;System.ValueTuple.dll</defaultRefAssemblies>");
 
             fs.writeFileSync(config_file, updated_config, 'utf8');
+
+            if (os.platform() == 'win32') {
+                let config_file_win = path.join(path.dirname(cscs_exe), 'css_config.xml');
+                let updated_config = output
+                    .replace("</defaultArguments>", " -ac:1</defaultArguments>")
+                    .replace("</searchDirs>", "%cscs_exe_dir%/roslyn</searchDirs>")
+                    .replace("<useAlternativeCompiler></useAlternativeCompiler>", "<useAlternativeCompiler>CSSRoslynProvider.dll</useAlternativeCompiler>")
+                    .replace("</defaultRefAssemblies>", "System.dll;System.ValueTuple.dll</defaultRefAssemblies>");
+
+                fs.writeFileSync(config_file_win, updated_config, 'utf8');
+            }
 
             if (on_done)
                 on_done(config_file);
