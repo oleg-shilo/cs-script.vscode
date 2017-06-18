@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { exec } from 'child_process';
 import { Uri, commands, DiagnosticCollection, DiagnosticSeverity, TextEditorSelectionChangeKind, Selection } from "vscode";
-import { ErrorInfo, Utils, diagnosticCollection, actual_output, settings, VSCodeSettings, user_dir, ensure_default_config, create_dir } from "./utils";
+import { ErrorInfo, Utils, diagnosticCollection, lock, unlock, with_lock, actual_output, settings, VSCodeSettings, user_dir, ensure_default_config, create_dir } from "./utils";
 
 let ext_context: vscode.ExtensionContext;
 let cscs_exe = path.join(user_dir(), 'cscs.exe');
@@ -20,86 +20,95 @@ let startup_file_key = 'cs-script.open_file_at_startup';
 
 // -----------------------------------
 export function load_project() {
-    // bpasero commented on Apr 5, 2016
-    // https://github.com/Microsoft/vscode/issues/58
-    // "Note that opening a folder will replace the current running instance and this means
-    // the currently executing extension host will go down and restart."
-    // 
-    // The described above limitation makes it impossible to open a folder and then open a file 
-    // from a single routine. Thus on the first 'load_project' prepare and open the folder. And on the 
-    // second request load the project primary source file (script)
+    with_lock(() => {
+        unlock(); //release lock immediately as otherwise it can interfere with loading workspace
 
-    // Note: os.tmpdir() for some reason returns lower cased root so Utils.IsSamePath needs to be used 
-    let proj_dir = path.join(os.tmpdir(), 'CSSCRIPT', 'VSCode', 'cs-script.vscode');
-    let current_folder = vscode.workspace.rootPath;
-    let editor = vscode.window.activeTextEditor;
+        // bpasero commented on Apr 5, 2016
+        // https://github.com/Microsoft/vscode/issues/58
+        // "Note that opening a folder will replace the current running instance and this means
+        // the currently executing extension host will go down and restart."
+        // 
+        // The described above limitation makes it impossible to open a folder and then open a file 
+        // from a single routine. Thus on the first 'load_project' prepare and open the folder. And on the 
+        // second request load the project primary source file (script)
 
-    if (Utils.IsSamePath(vscode.workspace.rootPath, proj_dir)) { //already loaded
-        outputChannel.show(true);
-        outputChannel.clear();
-        outputChannel.appendLine("Loading script...");
+        // Note: os.tmpdir() for some reason returns lower cased root so Utils.IsSamePath needs to be used 
+        let proj_dir = path.join(os.tmpdir(), 'CSSCRIPT', 'VSCode', 'cs-script.vscode');
+        let current_folder = vscode.workspace.rootPath;
+        let editor = vscode.window.activeTextEditor;
 
-        if (editor == null) {
-            let scriptFile = parse_proj_dir(proj_dir);
-            commands.executeCommand('vscode.open', Uri.file(scriptFile));
-        }
-        else {
-            editor.document.save();
-            generate_proj_file(proj_dir, editor.document.fileName);
-        }
-
-        setTimeout(() => outputChannel.clear(), 700);
-    }
-    else {
-        if (editor == null) {
-            vscode.window.showErrorMessage('No active document found. Please open a C# document and try again.');
-        } else {
-
+        if (Utils.IsSamePath(vscode.workspace.rootPath, proj_dir)) { //already loaded
+            outputChannel.show(true);
             outputChannel.clear();
-            outputChannel.appendLine("Loading OmniSharp project...");
+            outputChannel.appendLine("Loading script...");
 
-            editor.document.save();
-
-            generate_proj_file(proj_dir, editor.document.fileName);
-
-            // When folder is opened the whole execution context is recreated. It's like restarting VSCode.
-            // Thus any attempt to openFile after calling openFolder from the same routine will lead to the folder being opened
-            // but not the file.
-            // As a work around indicate that the file needs to be opened at startup.
-            // set_startup_file(ext_context, editor.document.fileName);
-            ext_context.globalState.update(startup_file_key, editor.document.fileName);
-
-            if (settings.show_load_proj_info) {
-
-                let info_msg = "In order to activate intellisense an OmniSharp project will be initialized and \nthe current script file will be loaded in its context.\n\n";
-                let ok_dont_show_again = "OK, Don't show this message again";
-                let ok = "OK";
-
-                vscode.window.showInformationMessage(info_msg, { modal: true }, ok, ok_dont_show_again)
-                    .then(response => {
-                        if (response == ok) {
-                            setTimeout(() => commands.executeCommand('vscode.openFolder', Uri.parse(proj_dir)), 100);
-                        }
-                        else if (response == ok_dont_show_again) {
-                            // VSCode doesn't allow saving settings from the extension :(
-                            // let configuration = vscode.workspace.getConfiguration('cs-script');
-                            // configuration.set('show_load_proj_info', false);
-
-                            settings.show_load_proj_info = false;
-                            settings.Save();
-
-                            setTimeout(() => commands.executeCommand('vscode.openFolder', Uri.parse(proj_dir), ), 100);
-                        }
-                    });
+            if (editor == null) {
+                let scriptFile = parse_proj_dir(proj_dir);
+                commands.executeCommand('vscode.open', Uri.file(scriptFile));
             }
             else {
-                setTimeout(() => commands.executeCommand('vscode.openFolder', Uri.parse(proj_dir)), 100);
+                editor.document.save();
+                generate_proj_file(proj_dir, editor.document.fileName);
+            }
+
+            setTimeout(() => outputChannel.clear(), 700);
+        }
+        else {
+            if (editor == null) {
+                vscode.window.showErrorMessage('No active document found. Please open a C# document and try again.');
+            } else {
+
+                outputChannel.clear();
+                outputChannel.appendLine("Loading OmniSharp project...");
+
+                editor.document.save();
+
+                generate_proj_file(proj_dir, editor.document.fileName);
+
+                // When folder is opened the whole execution context is recreated. It's like restarting VSCode.
+                // Thus any attempt to openFile after calling openFolder from the same routine will lead to the folder being opened
+                // but not the file.
+                // As a work around indicate that the file needs to be opened at startup.
+                // set_startup_file(ext_context, editor.document.fileName);
+
+                // The feature reques has also been logged:
+                // https://github.com/Microsoft/vscode/issues/27990
+                // "There is no way to open a folder with a specific file opened and active" #27990
+                
+                ext_context.globalState.update(startup_file_key, editor.document.fileName);
+
+                if (settings.show_load_proj_info) {
+
+                    let info_msg = "In order to activate intellisense an OmniSharp project will be initialized and \nthe current script file will be loaded in its context.\n\n";
+                    let ok_dont_show_again = "OK, Don't show this message again";
+                    let ok = "OK";
+
+                    vscode.window.showInformationMessage(info_msg, { modal: true }, ok, ok_dont_show_again)
+                        .then(response => {
+                            if (response == ok) {
+                                setTimeout(() => commands.executeCommand('vscode.openFolder', Uri.parse(proj_dir)), 100);
+                            }
+                            else if (response == ok_dont_show_again) {
+                                // VSCode doesn't allow saving settings from the extension :(
+                                // let configuration = vscode.workspace.getConfiguration('cs-script');
+                                // configuration.set('show_load_proj_info', false);
+
+                                settings.show_load_proj_info = false;
+                                settings.Save();
+
+                                setTimeout(() => commands.executeCommand('vscode.openFolder', Uri.parse(proj_dir), ), 100);
+                            }
+                        });
+                }
+                else {
+                    setTimeout(() => commands.executeCommand('vscode.openFolder', Uri.parse(proj_dir)), 100);
+                }
             }
         }
-    }
+    });
 }
 
-export function parse_proj_dir(proj_dir: string): string {
+function parse_proj_dir(proj_dir: string): string {
     let proj_file = path.join(proj_dir, script_proj_name);
     let prefix = '<Compile Include="';
     let suffix = '"/>';
@@ -142,53 +151,59 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
 }
 // -----------------------------------
 export function print_project() {
+    with_lock(() => {
+        let editor = vscode.window.activeTextEditor;
+        let file = editor.document.fileName;
 
-    let editor = vscode.window.activeTextEditor;
-    let file = editor.document.fileName;
-
-    editor.document.save();
-    outputChannel.show(true);
-    outputChannel.clear();
-    outputChannel.appendLine('Analyzing...');
-
-    let command = `mono "${cscs_exe}" -nl -l -proj:dbg "${file}"`;
-
-    Utils.Run(command, (code, output) => {
-        let lines: string[] = output.lines().filter(actual_output);
-
+        editor.document.save();
+        outputChannel.show(true);
         outputChannel.clear();
-        lines.forEach((line, i) => outputChannel.appendLine(line));
+        outputChannel.appendLine('Analyzing...');
+
+        let command = `mono "${cscs_exe}" -nl -l -proj:dbg "${file}"`;
+
+        Utils.Run(command, (code, output) => {
+            let lines: string[] = output.lines().filter(actual_output);
+
+            outputChannel.clear();
+            lines.forEach((line, i) => outputChannel.appendLine(line));
+
+            unlock();
+        });
     });
 }
 // -----------------------------------
 export function check() {
+    with_lock(() => {
+        let editor = vscode.window.activeTextEditor;
+        let file = editor.document.fileName;
 
-    let editor = vscode.window.activeTextEditor;
-    let file = editor.document.fileName;
-
-    editor.document.save();
-    outputChannel.show(true);
-    outputChannel.clear();
-    outputChannel.appendLine('Checking...');
-
-    let command = `mono "${cscs_exe}" -nl -l -check "${file}"`;
-
-    Utils.Run(command, (code, output) => {
-
-        let lines = output.split(/\r?\n/g).filter(actual_output);
-
+        editor.document.save();
+        outputChannel.show(true);
         outputChannel.clear();
+        outputChannel.appendLine('Checking...');
 
-        let errors: ErrorInfo[] = [];
-        lines.forEach((line, i) => {
-            outputChannel.appendLine(line);
-            let error = ErrorInfo.parse(line);
-            if (error && (error.severity == DiagnosticSeverity.Error || error.severity == DiagnosticSeverity.Warning)) {
-                errors.push(error);
-            }
+        let command = `mono "${cscs_exe}" -nl -l -check "${file}"`;
+
+        Utils.Run(command, (code, output) => {
+
+            let lines = output.split(/\r?\n/g).filter(actual_output);
+
+            outputChannel.clear();
+
+            let errors: ErrorInfo[] = [];
+            lines.forEach((line, i) => {
+                outputChannel.appendLine(line);
+                let error = ErrorInfo.parse(line);
+                if (error && (error.severity == DiagnosticSeverity.Error || error.severity == DiagnosticSeverity.Warning)) {
+                    errors.push(error);
+                }
+            });
+
+            Utils.SentToDiagnostics(errors);
+
+            unlock();
         });
-
-        Utils.SentToDiagnostics(errors);
     });
 }
 // -----------------------------------
@@ -199,45 +214,51 @@ export function css_config() {
 }
 // -----------------------------------
 export function about() {
+    with_lock(() => {
+        let editor = vscode.window.activeTextEditor;
+        let file = editor.document.fileName;
 
-    let editor = vscode.window.activeTextEditor;
-    let file = editor.document.fileName;
-
-    editor.document.save();
-    outputChannel.show(true);
-    outputChannel.clear();
-    outputChannel.appendLine('Checking...');
-
-    // vscode.languages.getLanguages().then(l => console.log('languages', l));
-
-    let command = `mono "${cscs_exe}" -ver`;
-
-    Utils.Run(command, (code, output) => {
+        editor.document.save();
+        outputChannel.show(true);
         outputChannel.clear();
-        outputChannel.appendLine('CS-Script.VSCode - v' + ext_context.globalState.get('version', ''));
-        outputChannel.appendLine('-------------------------------------------------------');
-        outputChannel.append(output);
+        outputChannel.appendLine('Analyzing...');
+
+        // vscode.languages.getLanguages().then(l => console.log('languages', l));
+
+        let command = `mono "${cscs_exe}" -ver`;
+
+        Utils.Run(command, (code, output) => {
+            outputChannel.clear();
+            outputChannel.appendLine('CS-Script.VSCode - v' + ext_context.globalState.get('version', ''));
+            outputChannel.appendLine('-------------------------------------------------------');
+            outputChannel.append(output);
+
+            unlock();
+        });
     });
 }
 // -----------------------------------
 
 let terminal: vscode.Terminal = null;
 export function run_in_terminal() {
+    with_lock(() => {
+        let editor = vscode.window.activeTextEditor;
+        let file = editor.document.fileName;
+        editor.document.save();
 
-    let editor = vscode.window.activeTextEditor;
-    let file = editor.document.fileName;
-    editor.document.save();
+        if (terminal == null)
+            terminal = vscode.window.createTerminal('Ext Terminal cs-script');
 
-    if (terminal == null)
-        terminal = vscode.window.createTerminal('Ext Terminal cs-script');
+        let dir = path.dirname(file);
 
-    let dir = path.dirname(file);
+        terminal.show(false);
+        terminal.sendText(`cd "${dir}"`);
+        if (os.platform() == 'win32')
+            terminal.sendText("cls");
+        terminal.sendText(`mono "${cscs_exe}" -nl -l "${file}"`);
 
-    terminal.show(false);
-    terminal.sendText(`cd "${dir}"`);
-    if (os.platform() == 'win32')
-        terminal.sendText("cls");
-    terminal.sendText(`mono "${cscs_exe}" -nl -l "${file}"`);
+        unlock();
+    });
 }
 
 function test_activate(context: vscode.ExtensionContext) {
@@ -310,47 +331,54 @@ function test_activate(context: vscode.ExtensionContext) {
 }
 // -----------------------------------
 export function engine_help() {
+    with_lock(() => {
+        let editor = vscode.window.activeTextEditor;
+        let file = editor.document.fileName;
 
-    let editor = vscode.window.activeTextEditor;
-    let file = editor.document.fileName;
+        let command = `mono "${cscs_exe}" -help`;
 
-    let command = `mono "${cscs_exe}" -help`;
+        Utils.Run(command, (code, output) => {
+            let readme = path.join(user_dir(), 'cs-script.help.txt')
+            fs.writeFileSync(readme, output, 'utf8');
+            commands.executeCommand('vscode.open', Uri.file(readme));
 
-    Utils.Run(command, (code, output) => {
-        let readme = path.join(user_dir(), 'cs-script.help.txt')
-        fs.writeFileSync(readme, output, 'utf8');
-        commands.executeCommand('vscode.open', Uri.file(readme));
+            unlock();
+        });
     });
 }
 // -----------------------------------
 export function new_script() {
-    let new_file_path = path.join(user_dir(), 'new_script.cs')
+    with_lock(() => {
+        let new_file_path = path.join(user_dir(), 'new_script.cs')
 
-    let backup_file = null;
-    if (fs.existsSync(new_file_path))
-        backup_file = new_file_path + '.bak';
+        let backup_file = null;
+        if (fs.existsSync(new_file_path))
+            backup_file = new_file_path + '.bak';
 
-    if (backup_file && fs.existsSync(backup_file)) {
-        fs.unlinkSync(backup_file);
-        fs.renameSync(new_file_path, backup_file);
-    }
+        if (backup_file && fs.existsSync(backup_file)) {
+            fs.unlinkSync(backup_file);
+            fs.renameSync(new_file_path, backup_file);
+        }
 
-    let backup_comment = '';
-    if (backup_file)
-        backup_comment =
-            '// The previous content of this file has been saved into \n' +
-            '// ' + backup_file + ' \n';
+        let backup_comment = '';
+        if (backup_file)
+            backup_comment =
+                '// The previous content of this file has been saved into \n' +
+                '// ' + backup_file + ' \n';
 
-    let content = utils.prepare_new_script().replace('$backup_comment$', backup_comment)
+        let content = utils.prepare_new_script().replace('$backup_comment$', backup_comment)
 
-    fs.writeFileSync(new_file_path, content);
+        fs.writeFileSync(new_file_path, content);
 
-    if (fs.existsSync(new_file_path))
-        commands.executeCommand('vscode.open', Uri.file(new_file_path));
+        if (fs.existsSync(new_file_path))
+            commands.executeCommand('vscode.open', Uri.file(new_file_path));
+
+        unlock();
+    });
 }
 // -----------------------------------
 export function Syntax() {
-
+    //    with_lock(() => {
     // let net = require('net');
 
     // let client = new net.Socket();
@@ -367,115 +395,126 @@ export function Syntax() {
     // client.on('close', function () {
     //     console.log('Connection closed');
     // });
+    // unlock();
+    //    });
 }
 // -----------------------------------
 export function build_exe() {
+    with_lock(() => {
+        let editor = vscode.window.activeTextEditor;
+        let file = editor.document.fileName;
 
-    let editor = vscode.window.activeTextEditor;
-    let file = editor.document.fileName;
+        editor.document.save();
+        outputChannel.show(true);
+        outputChannel.clear();
+        outputChannel.appendLine('Building executable from the script "' + file + '"');
+        outputChannel.appendLine("---------------------");
 
-    editor.document.save();
-    outputChannel.show(true);
-    outputChannel.clear();
-    outputChannel.appendLine('Building executable from the script "' + file + '"');
-    outputChannel.appendLine("---------------------");
+        let ext = path.extname(file);
+        let exe_file = file.replace(ext, '.exe');
 
-    let ext = path.extname(file);
-    let exe_file = file.replace(ext, '.exe');
+        let command = `mono "${cscs_exe}" -nl -l -e "${file}"`;
 
-    let command = `mono "${cscs_exe}" -nl -l -e "${file}"`;
+        Utils.Run(command, (code, output) => {
+            outputChannel.appendLine(output);
+            if (fs.existsSync(exe_file))
+                outputChannel.appendLine('The script is converted into executable ' + exe_file);
+            outputChannel.appendLine("\n[Done]");
 
-    Utils.Run(command, (code, output) => {
-        outputChannel.appendLine(output);
-        if (fs.existsSync(exe_file))
-            outputChannel.appendLine('The script is converted into executable ' + exe_file);
-        outputChannel.appendLine("\n[Done]");
+            unlock();
+        });
     });
 }
 // -----------------------------------
 export function debug() {
-    // todo
-    // - check if document is saved or untitled (and probably save it)
-    // - check if process is already running
-    // - read cscs location from config
-    // - clear dbg output
-    // - ensure running via mono (at least on Linux) - CONFIG BASED
+    with_lock(() => {
+        // todo
+        // - check if document is saved or untitled (and probably save it)
+        // - check if process is already running
+        // - read cscs location from config
+        // - clear dbg output
+        // - ensure running via mono (at least on Linux) - CONFIG BASED
 
-    let editor = vscode.window.activeTextEditor;
-    let launchConfig = {
-        "name": "Launch",
-        "type": "mono",
-        "request": "launch",
-        "program": cscs_exe,
-        // mono debugger requires non-inmemory asms and injection of the breakpoint ("-ac:2)
-        "args": ["-nl", "-d", "-l", "-inmem:0", "-ac:2", editor.document.fileName],
-        "env": {
-            // "css_vscode_roslyn_dir": process.env.css_vscode_roslyn_dir
-        }
-    };
+        let editor = vscode.window.activeTextEditor;
+        let launchConfig = {
+            "name": "Launch",
+            "type": "mono",
+            "request": "launch",
+            "program": cscs_exe,
+            // mono debugger requires non-inmemory asms and injection of the breakpoint ("-ac:2)
+            "args": ["-nl", "-d", "-l", "-inmem:0", "-ac:2", editor.document.fileName],
+            "env": {
+                // "css_vscode_roslyn_dir": process.env.css_vscode_roslyn_dir
+            }
+        };
 
-    vscode.commands.executeCommand('vscode.startDebug', launchConfig).then(() => {
-    }, err => {
-        vscode.window.showInformationMessage('Error: ' + err.message);
+        vscode.commands.executeCommand('vscode.startDebug', launchConfig).then(() => {
+        }, err => {
+            vscode.window.showInformationMessage('Error: ' + err.message);
+        });
+
+        unlock();
     });
 }
 // -----------------------------------
 export function run() {
+    with_lock(() => {
 
-    // todo
-    // - check if document is saved or untitled (and probably save it)
-    // - check if process is already running
-    // - read cscs location from config
-    // - ensure running via mono (at least on Linux) - CONFIG BASED
+        // todo
+        // - check if document is saved or untitled (and probably save it)
+        // - check if process is already running
+        // - read cscs location from config
+        // - ensure running via mono (at least on Linux) - CONFIG BASED
 
-    outputChannel.appendLine("data");
-    let editor = vscode.window.activeTextEditor;
+        outputChannel.appendLine("data");
+        let editor = vscode.window.activeTextEditor;
 
-    let exec = require('child_process').exec;
-    let showExecutionMessage = true;
+        let exec = require('child_process').exec;
+        let showExecutionMessage = true;
 
-    outputChannel.clear();
+        outputChannel.clear();
 
-    let file = editor.document.fileName;
+        let file = editor.document.fileName;
 
-    let command = `mono "${cscs_exe}" -nl -l "${file}"`;
+        let command = `mono "${cscs_exe}" -nl -l "${file}"`;
 
 
-    if (os.platform() == 'win32') {
-        let run_as_dotnet = VSCodeSettings.get("cs-script.dotnet_run_host_on_win", false);
-        if(run_as_dotnet)
-            command = `"${cscs_exe}" -nl -l "${file}"`;
-    }
-
-    if (showExecutionMessage) {
-        outputChannel.appendLine('[Running] ' + command);
-    }
-
-    editor.document.save();
-    outputChannel.show(true);
-    outputChannel.clear();
-
-    let startTime = new Date();
-    process = exec(command);
-    process.stdout.on('data', data => {
-        // ignore mono test output that comes from older releases(s)  (known Mono issue)
-        if (!data.startsWith('failed to get 100ns ticks'))
-            outputChannel.append(data);
-    });
-
-    process.stderr.on('data', data => {
-        outputChannel.append(data);
-    });
-
-    process.on('close', code => {
-        //         _this._isRunning = false;
-        let endTime = new Date();
-        let elapsedTime = (endTime.getTime() - startTime.getTime()) / 1000;
-        outputChannel.appendLine('');
-        if (showExecutionMessage) {
-            outputChannel.appendLine('[Done] exited with code=' + code + ' in ' + elapsedTime + ' seconds');
-            outputChannel.appendLine('');
+        if (os.platform() == 'win32') {
+            let run_as_dotnet = VSCodeSettings.get("cs-script.dotnet_run_host_on_win", false);
+            if (run_as_dotnet)
+                command = `"${cscs_exe}" -nl -l "${file}"`;
         }
+
+        if (showExecutionMessage) {
+            outputChannel.appendLine('[Running] ' + command);
+        }
+
+        editor.document.save();
+        outputChannel.show(true);
+        outputChannel.clear();
+
+        let startTime = new Date();
+        process = exec(command);
+        process.stdout.on('data', data => {
+            // ignore mono test output that comes from older releases(s)  (known Mono issue)
+            if (!data.startsWith('failed to get 100ns ticks'))
+                outputChannel.append(data);
+        });
+
+        process.stderr.on('data', data => {
+            outputChannel.append(data);
+        });
+
+        process.on('close', code => {
+            let endTime = new Date();
+            let elapsedTime = (endTime.getTime() - startTime.getTime()) / 1000;
+            outputChannel.appendLine('');
+            if (showExecutionMessage) {
+                outputChannel.appendLine('[Done] exited with code=' + code + ' in ' + elapsedTime + ' seconds');
+                outputChannel.appendLine('');
+            }
+            unlock();
+        });
     });
 }
 // -----------------------------------

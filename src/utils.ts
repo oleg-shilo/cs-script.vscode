@@ -8,15 +8,55 @@ import { Uri, commands, DiagnosticCollection, DiagnosticSeverity, StatusBarAlign
 let ext_dir = path.join(__dirname, "..", "..");
 let exec = require('child_process').exec;
 let execSync = require('child_process').execSync;
+
 let mkdirp = require('mkdirp');
 let ext_context: vscode.ExtensionContext;
 let ext_version: string;
+let ver_file: string;
 let cscs_exe: string;
 let _user_dir: string;
 let statusBarItem: StatusBarItem;
 
+let _ready = true;
+let _busy = false;
 export let settings: Settings;
 export let diagnosticCollection: vscode.DiagnosticCollection;
+
+
+export function with_lock(callback: () => void): void {
+    if (lock())
+        try {
+            callback();
+        } catch (error) {
+            unlock();
+        }
+}
+
+export function lock(): boolean {
+    if (!_ready) {
+        vscode.window.showInformationMessage('CS-Script initialization is in progress.');
+        return false;
+    }
+
+    if (_busy) {
+        vscode.window.showInformationMessage('CS-Script is busy.');
+        return false;
+    }
+    _busy = true;
+    return true;
+}
+
+export function unlock(): void {
+    _busy = false;
+}
+
+// export function do(Func:): boolean {
+//     if (!_ready) {
+//         vscode.window.showInformationMessage('Error: CS-Script is not ready.');
+//         return false;
+//     }
+//     return true;
+// }
 
 export function create_dir(dir: string): void {
     // fs.mkdirSync can only create the top level dir but mkdirp creates all child sub-dirs that do not exist  
@@ -54,12 +94,17 @@ export function copy_file_to(fileName: string, srcDir: string, destDir: string):
         .pipe(fs.createWriteStream(path.join(destDir, fileName)));
 }
 
+export function copy_file_to_sync(fileName: string, srcDir: string, destDir: string): void {
+    const fse = require('fs-extra')
+    fse.copySync(path.join(srcDir, fileName), path.join(destDir, fileName));
+}
+
 export function user_dir(): string {
 
     // ext_context.storagePath cannot be used as it is undefined if no workspace loaded
 
     // vscode:
-    // Windows %APPDATA%\Code\User\settings.json
+    // Windows %appdata%\Code\User\settings.json
     // Mac $HOME/Library/Application Support/Code/User/settings.json
     // Linux $HOME/.config/Code/User/settings.json
 
@@ -85,29 +130,56 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     context.subscriptions.push(diagnosticCollection);
     ext_version = context.globalState.get('version').toString();
     ext_context = context;
+    ver_file = path.join(user_dir(), 'vscode.css_version.txt');
+
     settings = Settings.Load();
 
     deploy_engine();
 
-    setTimeout(preload_roslyn, 2000);
 
     return diagnosticCollection;
 }
 
+
 export function deploy_engine(): void {
     // all copy_file* calls are  async operations
-    statusBarItem.text = '$(versions) Deploying CS-Script...';
-    statusBarItem.show();
 
-    copy_file_to("cscs.exe", path.join(ext_dir, 'bin'), user_dir());
-    copy_file_to("CSSRoslynProvider.dll", path.join(ext_dir, 'bin'), user_dir());
+    let need_to_deploy = true;
+
+    if (fs.existsSync(ver_file)) {
+        try {
+            let version = fs.readFileSync(ver_file, 'utf8');
+            need_to_deploy = (version != ext_version);
+        } catch (error) {
+        }
+    }
+
+    if (need_to_deploy) {
+        statusBarItem.text = '$(versions) Deploying CS-Script...';
+        statusBarItem.show();
+        setTimeout(deploy_files, 100);
+    }
+    else {
+        setTimeout(preload_roslyn, 100);
+    }
+}
+
+function deploy_files(): void {
+    _ready = false;
+
+    copy_file_to_sync("cscs.exe", path.join(ext_dir, 'bin'), user_dir());
+    copy_file_to_sync("CSSRoslynProvider.dll", path.join(ext_dir, 'bin'), user_dir());
 
     if (os.platform() == 'win32')
         deploy_roslyn();
 
-    statusBarItem.hide();
+    fs.writeFileSync(ver_file, ext_version, 'utf8');
 
     ensure_default_config(path.join(user_dir(), 'cscs.exe'));
+
+    statusBarItem.hide();
+
+    _ready = true;
 }
 
 export function deploy_roslyn(): void {
@@ -116,20 +188,10 @@ export function deploy_roslyn(): void {
     // extension update would not be interfered with.
     let src_dir = path.join(ext_dir, 'bin', 'roslyn');
     let dest_dir = path.join(user_dir(), 'roslyn');
-    let ver_file = path.join(dest_dir, 'vscode.css_version.txt');
 
     // process.env.css_vscode_roslyn_dir = dest_dir;
 
-    let uptodate = false;
-    if (fs.existsSync(dest_dir) && fs.existsSync(ver_file)) {
-        try {
-            let version = fs.readFileSync(ver_file, 'utf8');
-            uptodate = (version == ext_version);
-        } catch (error) {
-        }
-    }
-
-    if (fs.existsSync(dest_dir) && !uptodate) {
+    if (fs.existsSync(dest_dir)) {
         // var command = 'mono "' + path.join(user_dir(), 'cscs.exe') + '" -stop';
         var command = '"' + path.join(ext_dir, 'bin', 'cscs.exe') + '" -stop';
         execSync(command);
@@ -150,14 +212,12 @@ export function deploy_roslyn(): void {
         });
     }
 
-    if (!fs.existsSync(dest_dir)) {
-        create_dir(dest_dir);
-        fs.readdirSync(src_dir).forEach(file => {
-            copy_file_to(file, src_dir, dest_dir); // async operation
-        });
+    create_dir(dest_dir);
 
-        fs.writeFileSync(ver_file, ver_file, 'utf8');
-    }
+    fs.readdirSync(src_dir).forEach(file => {
+        copy_file_to_sync(file, src_dir, dest_dir); // async operation
+    });
+
 }
 
 export function prepare_new_script(): string {
@@ -351,9 +411,9 @@ export function preload_roslyn() {
     try {
         let exe = path.join(user_dir(), 'cscs.exe');
         var command = 'mono "' + exe + '" -nl -preload';
-         Utils.Run(command, (code, output) => {
+        Utils.Run(command, (code, output) => {
             // console.log(output);
-         });
+        });
     } catch (error) {
 
     }
