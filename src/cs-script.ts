@@ -74,12 +74,12 @@ export function load_project() {
                 // The feature reques has also been logged:
                 // https://github.com/Microsoft/vscode/issues/27990
                 // "There is no way to open a folder with a specific file opened and active" #27990
-                
+
                 ext_context.globalState.update(startup_file_key, editor.document.fileName);
 
                 if (settings.show_load_proj_info) {
 
-                    let info_msg = "In order to activate intellisense an OmniSharp project will be initialized and \nthe current script file will be loaded in its context.\n\n";
+                    let info_msg = "In order to activate intellisense an OmniSharp project will be initialized and the current script file will be loaded in its context.\n\n";
                     let ok_dont_show_again = "OK, Don't show this message again";
                     let ok = "OK";
 
@@ -108,7 +108,7 @@ export function load_project() {
     });
 }
 
-function parse_proj_dir(proj_dir: string): string {
+export function parse_proj_dir(proj_dir: string): string {
     let proj_file = path.join(proj_dir, script_proj_name);
     let prefix = '<Compile Include="';
     let suffix = '"/>';
@@ -125,7 +125,10 @@ function parse_proj_dir(proj_dir: string): string {
 
 function generate_proj_file(proj_dir: string, scriptFile: string): void {
     let proj_file = path.join(proj_dir, script_proj_name);
-    let command = `mono "${cscs_exe}" -nl -l -proj:dbg "${scriptFile}"`;
+    let command = `"${cscs_exe}" -nl -l -proj:dbg "${scriptFile}"`;
+
+    if (!utils.isWin)
+        command = 'mono ' + command;
 
     Utils.Run(command, (code, output) => {
 
@@ -133,18 +136,32 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
         let refs = '';
         let includes = '';
 
+        let System_ValueTuple_dll = null;
+        if (utils.isWin) {
+            System_ValueTuple_dll = path.join(user_dir(), 'roslyn', 'System.ValueTuple.dll').pathNormalize();
+        }
+        else {
+            refs += '    <Reference Include="System.Runtime.dll" />' + os.EOL;
+            System_ValueTuple_dll = path.join(utils.omnisharp_dir, 'System.ValueTuple.dll').pathNormalize();
+        }
+
+        refs += '    <Reference Include="' + System_ValueTuple_dll + '" />' + os.EOL;
+
         lines.forEach((line, i) => {
             if (line.startsWith('ref:'))
-                refs += '<Reference Include="' + line.substr(4) + '" />' + os.EOL;
+            {
+                if (!line.trim().endsWith('System.ValueTuple.dll')) // System.ValueTuple.dll is already added from the Omnisharp package
+                    refs += '    <Reference Include="' + line.substr(4).pathNormalize() + '" />' + os.EOL;
+            }
             if (line.startsWith('file:'))
-                includes += '<Compile Include="' + line.substr(5) + '"/>' + os.EOL;
+                includes += '    <Compile Include="' + line.substr(5).pathNormalize() + '"/>' + os.EOL;
         });
 
         create_dir(proj_dir);
 
         let content = fs.readFileSync(csproj_template, 'utf8')
-            .replace('<Reference Include="$ASM$"/>', refs)
-            .replace('<Compile Include="$FILE$"/>', includes);
+            .replace('<Reference Include="$ASM$"/>', refs.trim())
+            .replace('<Compile Include="$FILE$"/>', includes.trim());
 
         fs.writeFileSync(proj_file, content, 'utf8');
     });
@@ -216,20 +233,15 @@ export function css_config() {
 export function about() {
     with_lock(() => {
         let editor = vscode.window.activeTextEditor;
-        let file = editor.document.fileName;
-
-        editor.document.save();
         outputChannel.show(true);
         outputChannel.clear();
         outputChannel.appendLine('Analyzing...');
-
-        // vscode.languages.getLanguages().then(l => console.log('languages', l));
 
         let command = `mono "${cscs_exe}" -ver`;
 
         Utils.Run(command, (code, output) => {
             outputChannel.clear();
-            outputChannel.appendLine('CS-Script.VSCode - v' + ext_context.globalState.get('version', ''));
+            outputChannel.appendLine('CS-Script.VSCode - v' + utils.ext_version);
             outputChannel.appendLine('-------------------------------------------------------');
             outputChannel.append(output);
 
@@ -404,7 +416,6 @@ export function build_exe() {
         let editor = vscode.window.activeTextEditor;
         let file = editor.document.fileName;
 
-        editor.document.save();
         outputChannel.show(true);
         outputChannel.clear();
         outputChannel.appendLine('Building executable from the script "' + file + '"');
@@ -427,6 +438,13 @@ export function build_exe() {
 }
 // -----------------------------------
 export function debug() {
+    let editor = vscode.window.activeTextEditor;
+    editor.document.save();
+    if (!fs.existsSync(editor.document.fileName)) {
+        vscode.window.showInformationMessage('Cannot find file "' + editor.document.fileName + '"');
+        return;
+    }
+
     with_lock(() => {
         // todo
         // - check if document is saved or untitled (and probably save it)
@@ -435,16 +453,18 @@ export function debug() {
         // - clear dbg output
         // - ensure running via mono (at least on Linux) - CONFIG BASED
 
-        let editor = vscode.window.activeTextEditor;
+        let extra_args = VSCodeSettings.get("cs-script.extra_args_for_debug", "-co:/debug:pdbonly");
+
         let launchConfig = {
             "name": "Launch",
             "type": "mono",
             "request": "launch",
             "program": cscs_exe,
             // mono debugger requires non-inmemory asms and injection of the breakpoint ("-ac:2)
-            "args": ["-nl", "-d", "-l", "-inmem:0", "-ac:2", editor.document.fileName],
+            "args": ["-nl", "-d", "-l", "-inmem:0", extra_args, "-ac:2", editor.document.fileName],
             "env": {
                 // "css_vscode_roslyn_dir": process.env.css_vscode_roslyn_dir
+                // "CSS_PROVIDER_TRACE": 'true'
             }
         };
 
@@ -520,7 +540,7 @@ export function run() {
 // -----------------------------------
 
 // intercepting Modifier_MouseClick https://github.com/Microsoft/vscode/issues/3130
-
+let current_doc = '';
 function onActiveEditorChange(editor: vscode.TextEditor) {
     if (editor != null) {
         const position = editor.selection.active;
@@ -531,9 +551,11 @@ function onActiveEditorChange(editor: vscode.TextEditor) {
         editor.selection = newSelection;
 
         // console.log('Active doc: ' + editor.document.fileName);
+        current_doc = editor.document.fileName;
     }
 }
 
+let output_line_last_click = -1;
 function onActiveEditorSelectionChange(event: vscode.TextEditorSelectionChangeEvent) {
     // clicking file links in output is broken: https://github.com/Microsoft/vscode-go/issues/1002
     // another reason is that C# compiler output <file>(<line>,<col>) is incompatible with VSCode 
@@ -544,23 +566,31 @@ function onActiveEditorSelectionChange(event: vscode.TextEditorSelectionChangeEv
         event.textEditor.selection.isEmpty) {
 
         let enabled = VSCodeSettings.get("cs-script.single_click_navigate_from_output", true);
+        let single_line_selection = event.textEditor.selection.start.line == event.textEditor.selection.end.line;
 
-        if (enabled) {
+        if (enabled && single_line_selection && output_line_last_click != event.textEditor.selection.start.line) {
             let line = event.textEditor.document.lineAt(event.textEditor.selection.start.line).text;
 
             let info = ErrorInfo.parse(line);
-            if (info != null) {
-                commands.executeCommand('vscode.open', Uri.file(info.file))
-                    .then(value => {
-                        let editor = vscode.window.activeTextEditor;
-                        const position = editor.selection.active;
 
-                        let start = position.with(info.range.start.line, info.range.start.character);
-                        let newSelection = new vscode.Selection(start, start);
-                        editor.selection = newSelection;
-                    });
+            if (info != null && fs.existsSync(info.file) && (info.file.endsWith('.cs') || info.file.endsWith('.txt'))) {
+
+                let already_active = (current_doc == info.file);
+                if (!already_active)
+                    setTimeout(() =>
+                        commands.executeCommand('vscode.open', Uri.file(info.file))
+                            .then(value => {
+                                let editor = vscode.window.activeTextEditor;
+                                const position = editor.selection.active;
+
+                                let start = position.with(info.range.start.line, info.range.start.character);
+                                let newSelection = new vscode.Selection(start, start);
+                                editor.selection = newSelection;
+                            }), 100);
+
             }
         }
+        output_line_last_click = event.textEditor.selection.start.line;
     }
 }
 
@@ -577,11 +607,10 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
             ext_context.globalState.update(startup_file_key, '');
             commands.executeCommand('vscode.open', Uri.file(file));
         }
-
         return utils.ActivateDiagnostics(context);
     } catch (error) {
         console.log(error);
-        // vscode.window.showErrorMessage(error);
+        vscode.window.showErrorMessage(String(error));
     }
 };
 // -----------------------------------

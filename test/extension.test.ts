@@ -10,7 +10,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as cs_script from '../src/cs-script';
-import {ErrorInfo} from '../src/utils';
+import { ErrorInfo } from '../src/utils';
+import * as utils from '../src/utils';
 
 // Defines a Mocha test suite to group tests of similar kind together
 suite("Extension Tests", () => {
@@ -23,10 +24,10 @@ suite("Extension Tests", () => {
         assert.equal("E:\\Projects\\VSCode\\test2.cs", error.file);
         assert.equal("CS1525: Unexpected symbol `.', expecting `,', `;', or `='", error.description);
         assert.equal(vscode.DiagnosticSeverity.Error, error.severity);
-        assert.equal(19, error.range.start.line);
-        assert.equal(11, error.range.start.character);
-        assert.equal(19, error.range.end.line);
-        assert.equal(11, error.range.end.character);
+        assert.equal(18, error.range.start.line);
+        assert.equal(10, error.range.start.character);
+        assert.equal(18, error.range.end.line);
+        assert.equal(10, error.range.end.character);
     });
 
     test("Can parse compile warning string", () => {
@@ -37,9 +38,9 @@ suite("Extension Tests", () => {
         assert.equal("CS1525: Unexpected symbol `.', expecting `,', `;', or `='", error.description);
         assert.equal(vscode.DiagnosticSeverity.Warning, error.severity);
         assert.equal(error.range.start.line, 18);
-        assert.equal(error.range.start.character, 11);
+        assert.equal(error.range.start.character, 10);
         assert.equal(error.range.end.line, 18);
-        assert.equal(error.range.end.character, 11);
+        assert.equal(error.range.end.character, 10);
     });
 
     test("Can handle invalid input", () => {
@@ -48,18 +49,56 @@ suite("Extension Tests", () => {
 
         assert.equal(null, error);
     });
-    
+
+    test("Can handle compare versions", () => {
+        assert.equal(utils.compare_versions('1.2.3.4', '1.2.3.4'), 0);
+        assert.equal(utils.compare_versions('001.2.3', '1.002.3-alpha'), 0);
+        
+        assert.equal(utils.compare_versions('1.2.3', '1.2.3.1'), -1);
+        assert.equal(utils.compare_versions('1.2.3.2', '1.2.3.1'), 1);
+
+        assert.equal(utils.compare_versions('2.2.3.4', '1.2.3.4'), 1);
+        assert.equal(utils.compare_versions('1.2.3.4', '2.2.3.4'), -1);
+
+        assert.equal(utils.compare_versions('1.3.3.4', '1.2.3.4'), 1);
+        assert.equal(utils.compare_versions('1.2.3.4', '1.3.3.4'), -1);
+       
+        assert.equal(utils.compare_versions('1.2.4.4', '1.2.3.4'), 1);
+        assert.equal(utils.compare_versions('1.2.3.4', '1.2.4.4'), -1);
+       
+        assert.equal(utils.compare_versions('1.2.3.5', '1.2.3.4'), 1);
+        assert.equal(utils.compare_versions('1.2.3.4', '1.2.3.5'), -1);
+    });
+
     test("Can handle file ref input", () => {
-        let proj_out = "file:"+ __filename;
+        let proj_out = "file:" + __filename;
         let info = ErrorInfo.parse(proj_out);
 
         assert.equal(info.file, __filename);
     });
 
-    test("Can extract script name from project file", () => {
-        // let proj_dir = path.join(os.tmpdir(), 'CSSCRIPT', 'VSCode', 'cs-script.vscode'); 
-        // let script = cs_script.parse_proj_dir(proj_dir);
-        // assert.ok(fs.existsSync(script));
+    test("Can split lines in the output", () => {
+        let output = `file:c:\\Users\\usr\\Desktop\\New Script.cs
+file:C:\\Users\\usr\\AppData\\Local\\Temp\\CSSCRIPT\\Cache\\dbg.cs
+ref:System
+ref:C:\\Program Files (x86)\\Mono\\lib\\mono/4.5/Facades\\System.ValueTuple.dll
+ref:C:\\Program Files (x86)\\Mono\\lib\\mono/4.5/Facades\\System.Linq.dll
+searcDir:c:\\Users\\usr\\Desktop
+searcDir:C:\\ProgramData\\chocolatey\\lib\\cs-script\\tools\\cs-script\\lib
+searcDir:C:\\ProgramData\\CS-Script\\inc
+searcDir:C:\\Program Files (x86)\\Mono\lib\\mono/4.5/Facades
+searcDir:C:\\Users\\usr\\AppData\\Roaming\\Code\\User\\cs-script.user\\lib
+searcDir:C:\\Program Files (x86)\\Mono\\lib\\mono\\4.5\\Facades`;
+
+        let lines = output.lines();
+
+        assert.equal(lines.length, 11);
     });
-    
+
+    test("Can extract script name from project file", () => {
+        let proj_dir = path.join(os.tmpdir(), 'CSSCRIPT', 'VSCode', 'cs-script.vscode'); 
+        let script = cs_script.parse_proj_dir(proj_dir);
+        assert.ok(fs.existsSync(script));
+    });
+
 });

@@ -17,8 +17,6 @@ export function activate(context: vscode.ExtensionContext) {
 
     cs_script.ActivateDiagnostics(context);
 
-    context.globalState.update('version', '1.0.1');
-
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.debug', cs_script.debug));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.run', cs_script.run));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.run_in_terminal', cs_script.run_in_terminal));
@@ -30,6 +28,28 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.new_script', cs_script.new_script));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.engine_help', cs_script.engine_help));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.build_exe', cs_script.build_exe));
+
+    context.subscriptions.push(vscode.commands.registerCommand("csharp.startSessionCommand", debugConfig => {
+        if (Object.keys(debugConfig).length === 0) {
+            return {
+                status: 'initialConfiguration'
+            };
+        }
+
+        // Attach any properties that weren't explicitly set.			
+        // debugConfig.cwd = debugConfig.cwd || "${workspaceRoot}";
+        // debugConfig.args = debugConfig.args || [];
+        // debugConfig.sdkPath = debugConfig.sdkPath || this.sdks.dart;
+        // debugConfig.debugSdkLibraries = debugConfig.debugSdkLibraries || config.debugSdkLibraries;
+        // debugConfig.debugExternalLibraries = debugConfig.debugExternalLibraries || config.debugExternalLibraries;
+        // if (debugConfig.checkedMode === undefined)
+        //     debugConfig.checkedMode = true;
+
+        // vs.commands.executeCommand('vscode.startDebug', debugConfig);
+        // return {
+        //     status: 'ok'
+        // };
+    }));
 };
 
 

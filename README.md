@@ -41,7 +41,8 @@ All CS-Script features:
 - _**Portability**_<br>
 The extension is supported on all OSs where VSCode can run.
 
-### **Roadmap**
+### **Road map (highlights)**
+Below are the road map highlights only. Some more detailed information are available in the last section of this document.
 - Add support fro C# 7 just out of box. (**_Done in v1.2.0_**)
 - Add toolbar buttons for most frequent CS-Script commands. (**_Done in v1.2.0_**)
 - Adding a [custom view](https://code.visualstudio.com/updates/v1_13#_custom-views) containing all script dependencies (e.g. imported scripts, DLLs)
@@ -61,6 +62,8 @@ When your C# script depend on other (source code or compiled) C# modules you can
 The following is the overview of the CS-Script functionality available with VS Code. The overview also highlights the major CS-Script featured:
 
 Note: the most frequently used CS-Script command can also be accessed directly via toolbar buttons without using 'command palette': 
+
+![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/toolbar.png)
 
 
 ## Usage
@@ -103,11 +106,11 @@ _**Project structure**_<br>
 VSCode is a subject to a serious limitation - the project model is based on a folder and doesn't allow any customization. To put it simple, VSCode executes/debugs folders while CS-Script files. While the extension completely overcomes this limitation for execution and debugging, the Intellisense support is only enabled when OmniSharp project is loaded. To make it easier _CS-Script.VSCode_ allows generation and loading required OmniSharp project in a single-step (`load project` command or `ctrl+7`). Though in the future the solution most likely will be extended to overcome this limitation as well.
 
 _**C# 7**_<br>
-The initial release of the extension used default Mono runtime, which comes with VSCode. Currently it doesn't support C# 7. But the support will be automatically enabled from the moment the Mono version present on the system supports C#7. 
+The extension comes with C# 7 support (via Roslyn) enabled by default. However Roslyn has an unfortunate limitation - it is extremely heavy and slow on startup. Thus it can take ~3-5 seconds to compile the fist script. Roslyn team did a good job by caching runtime instances of the compilers thus any consequent compilations will require only milliseconds to be accomplished. Unfortunately on Linux/Mono the same caching mechanism is not available so the compilation will consistently take up to 1.5 seconds (tested on VMWare Mint 18.1 4GB RAM on i7-5500U 2*2.40 GHz). Hopefully Roslyn team will extend runtime caching in the future releases of Mono. 
 
 <hr>
 
-## Road map
+## Road map (details)
 - Intelligence support for classless scripts. Currently classless scripts can only be executed and debugged but not "intellisensed": 
     ```C#
     using System;
@@ -117,8 +120,6 @@ The initial release of the extension used default Mono runtime, which comes with
         Console.WriteLine("Hello World!";
     }
     ```      
-- All currently hardcoded settings need to be moved to the user editable settings file.
-- Integration of the CS-Script setting (loading/editing). 
 - Support for non-C# CS-Script specific autocompletion and "Go to Definition". For example CS-Script directives:
     ```
     //css_include <script_path>  

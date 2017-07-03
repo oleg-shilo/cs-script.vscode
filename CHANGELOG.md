@@ -1,5 +1,16 @@
 # Change Log
 
+## 1.2.0
+- C# 7 support out of box
+- New commands:
+  * "help"
+  * "build exe"
+  * "new script"
+  * "run in terminal"
+  * "engine settings"
+- Added dedicated toolbar buttons for the most common CS-Script commands.
+- Revoked  extensionDependencies to the manifest file. Currently VSCode does not automatically installs specified dependencies but instead silently fails loading the extension if any dependency is not found. This all dependencies in the manifest file are removed so the extension can validate environment and clearly communicate the initialization failure reason(s).
+
 ## 1.0.1
 - Implemented work around to allow single-step loading of OmniSharp project for enabling IntellisSense.
 - Implemented navigation to the file location on a single click (on error info) in the output panel.

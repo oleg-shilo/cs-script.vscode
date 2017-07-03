@@ -11,17 +11,36 @@ let execSync = require('child_process').execSync;
 
 let mkdirp = require('mkdirp');
 let ext_context: vscode.ExtensionContext;
-let ext_version: string;
+let min_required_mono = '5.0.1';
 let ver_file: string;
 let cscs_exe: string;
 let _user_dir: string;
 let statusBarItem: StatusBarItem;
 
-let _ready = true;
+let _environment_compatible = false;
+let _environment_ready = false;
+let _ready = false;
 let _busy = false;
+
+export let ext_version: string;
+export let omnisharp_dir: string;
+export let isWin: boolean = (os.platform() == 'win32');
 export let settings: Settings;
 export let diagnosticCollection: vscode.DiagnosticCollection;
 
+declare global {
+    interface String {
+        lines(): string[];
+        pathNormalize(): string;
+    }
+}
+
+String.prototype.lines = function () {
+    return this.split(/\r?\n/g);
+}
+String.prototype.pathNormalize = function () {
+    return path.normalize(this).split(/[\\\/]/g).join(path.posix.sep);
+}
 
 export function with_lock(callback: () => void): void {
     if (lock())
@@ -33,6 +52,13 @@ export function with_lock(callback: () => void): void {
 }
 
 export function lock(): boolean {
+
+    if (!_environment_ready) {
+        if(_environment_compatible)
+            vscode.window.showErrorMessage(`Cannot detect required Mono version (${min_required_mono}). Install it from http://www.mono-project.com/download/`);
+        return false;
+    }
+
     if (!_ready) {
         vscode.window.showInformationMessage('CS-Script initialization is in progress.');
         return false;
@@ -50,14 +76,6 @@ export function unlock(): void {
     _busy = false;
 }
 
-// export function do(Func:): boolean {
-//     if (!_ready) {
-//         vscode.window.showInformationMessage('Error: CS-Script is not ready.');
-//         return false;
-//     }
-//     return true;
-// }
-
 export function create_dir(dir: string): void {
     // fs.mkdirSync can only create the top level dir but mkdirp creates all child sub-dirs that do not exist  
     const allRWEPermissions = parseInt("0777", 8);
@@ -68,7 +86,7 @@ export function delete_dir(dir: string): void {
     try {
 
         let files = fs.readdirSync(dir);
-        for (var i = 0; i < files.length; i++) {
+        for (let i = 0; i < files.length; i++) {
 
             let file_path = path.join(dir, files[i]);
 
@@ -125,61 +143,130 @@ export function user_dir(): string {
 }
 
 export function ActivateDiagnostics(context: vscode.ExtensionContext) {
+    console.log("Loading CS-Script extension from " + __dirname);
+
+    // check extension dependencies
+    if (vscode.extensions.getExtension('ms-vscode.csharp') == null){
+        let message = 'CS-Script: The required extension "C# for Visual Studio Code" is not found. Ensure it is installed.';
+        vscode.window.showErrorMessage(message);
+        throw message;
+    }
+    
+    if (vscode.extensions.getExtension('ms-vscode.mono-debug') == null){
+        let message = 'CS-Script: The required extension "Mono-Debug" is not found. Ensure it is installed.';
+        vscode.window.showErrorMessage(message);
+        throw message;
+    }
+
+    _environment_compatible = true;
+
     diagnosticCollection = vscode.languages.createDiagnosticCollection('c#');
     statusBarItem = vscode.window.createStatusBarItem(StatusBarAlignment.Left);
     context.subscriptions.push(diagnosticCollection);
-    ext_version = context.globalState.get('version').toString();
     ext_context = context;
+    ext_version = vscode.extensions.getExtension('oleg-shilo.cs-script').packageJSON.version
+    omnisharp_dir = path.join(vscode.extensions.getExtension('ms-vscode.csharp').extensionPath, 'bin', 'omnisharp');
     ver_file = path.join(user_dir(), 'vscode.css_version.txt');
-
     settings = Settings.Load();
 
+    check_environment();
     deploy_engine();
-
 
     return diagnosticCollection;
 }
 
-
 export function deploy_engine(): void {
-    // all copy_file* calls are  async operations
+    try {
+        // all copy_file* calls are  async operations
 
-    let need_to_deploy = true;
+        let need_to_deploy = true;
 
-    if (fs.existsSync(ver_file)) {
-        try {
-            let version = fs.readFileSync(ver_file, 'utf8');
-            need_to_deploy = (version != ext_version);
-        } catch (error) {
+        if (fs.existsSync(ver_file)) {
+            try {
+                let version = fs.readFileSync(ver_file, 'utf8');
+                need_to_deploy = (version != ext_version);
+            } catch (error) {
+            }
         }
+
+
+        if (need_to_deploy) {
+            statusBarItem.text = '$(versions) Deploying CS-Script...';
+            statusBarItem.show();
+            setTimeout(deploy_files, 100);
+        }
+        else {
+            ensure_default_config(path.join(user_dir(), 'cscs.exe'));
+            _ready = true;
+            setTimeout(preload_roslyn, 100);
+        }
+    } catch (error) {
+        console.log(error);
+        vscode.window.showErrorMessage('CS-Script: ' + String(error));
+    }
+}
+
+export function compare_versions(a: string, b: string): Number {
+    let parts_a = a.split('.');
+    let parts_b = b.split('.');
+
+    let i = 0;
+    for (; i < Math.min(parts_a.length, parts_b.length); i++) {
+        let v_a = parseInt(parts_a[i]);
+        let v_b = parseInt(parts_b[i]);
+        if (v_a > v_b)
+            return 1;
+        if (v_a < v_b)
+            return -1;
     }
 
-    if (need_to_deploy) {
-        statusBarItem.text = '$(versions) Deploying CS-Script...';
-        statusBarItem.show();
-        setTimeout(deploy_files, 100);
-    }
-    else {
-        setTimeout(preload_roslyn, 100);
+    if (parts_a.length > parts_b.length)
+        return 1;
+    if (parts_a.length < parts_b.length)
+        return -1;
+    else
+        return 0;
+}
+
+function check_environment(): void {
+    try {
+
+        let mono_found = true;
+
+        let command = 'mono --version';
+        let output: string = execSync(command).toString();
+
+        // Mono JIT compiler version 5.0.1 (Visual Studio built mono)
+        let firstLine = output.trim().lines()[0];
+        let detected_version = firstLine.split(' ')[4];
+
+        let same_or_newer = compare_versions(detected_version, min_required_mono) >= 0;
+        _environment_ready = same_or_newer;
+    } catch (error) {
+        console.log(error);
+        vscode.window.showErrorMessage('CS-Script: ' + String(error));
     }
 }
 
 function deploy_files(): void {
-    _ready = false;
+    try {
+        copy_file_to_sync("cscs.exe", path.join(ext_dir, 'bin'), user_dir());
+        copy_file_to_sync("CSSRoslynProvider.dll", path.join(ext_dir, 'bin'), user_dir());
 
-    copy_file_to_sync("cscs.exe", path.join(ext_dir, 'bin'), user_dir());
-    copy_file_to_sync("CSSRoslynProvider.dll", path.join(ext_dir, 'bin'), user_dir());
+        if (os.platform() == 'win32')
+            deploy_roslyn();
 
-    if (os.platform() == 'win32')
-        deploy_roslyn();
+        fs.writeFileSync(ver_file, ext_version, 'utf8');
 
-    fs.writeFileSync(ver_file, ext_version, 'utf8');
+        ensure_default_config(path.join(user_dir(), 'cscs.exe'));
 
-    ensure_default_config(path.join(user_dir(), 'cscs.exe'));
+        statusBarItem.hide();
 
-    statusBarItem.hide();
-
-    _ready = true;
+        _ready = true;
+    } catch (error) {
+        console.log(error);
+        vscode.window.showErrorMessage('CS-Script: ' + String(error));
+    }
 }
 
 export function deploy_roslyn(): void {
@@ -192,8 +279,8 @@ export function deploy_roslyn(): void {
     // process.env.css_vscode_roslyn_dir = dest_dir;
 
     if (fs.existsSync(dest_dir)) {
-        // var command = 'mono "' + path.join(user_dir(), 'cscs.exe') + '" -stop';
-        var command = '"' + path.join(ext_dir, 'bin', 'cscs.exe') + '" -stop';
+        // let command = 'mono "' + path.join(user_dir(), 'cscs.exe') + '" -stop';
+        let command = '"' + path.join(ext_dir, 'bin', 'cscs.exe') + '" -stop';
         execSync(command);
 
         fs.renameSync(dest_dir, dest_dir + ".old." + new Date().getTime());
@@ -410,7 +497,7 @@ export class Utils {
 export function preload_roslyn() {
     try {
         let exe = path.join(user_dir(), 'cscs.exe');
-        var command = 'mono "' + exe + '" -nl -preload';
+        let command = 'mono "' + exe + '" -nl -preload';
         Utils.Run(command, (code, output) => {
             // console.log(output);
         });
@@ -427,7 +514,7 @@ export function ensure_default_config(cscs_exe: string, on_done?: (file: string)
         // deployed file may still be unavailable so use the original one
 
         let original_cscs_exe = path.join(ext_dir, 'bin', 'cscs.exe');
-        var command = 'mono "' + original_cscs_exe + '" -config:default';
+        let command = 'mono "' + original_cscs_exe + '" -config:default';
 
         Utils.Run(command, (code, output) => {
 
@@ -436,8 +523,8 @@ export function ensure_default_config(cscs_exe: string, on_done?: (file: string)
             let updated_config = output
                 .replace("</defaultArguments>", " -ac:1</defaultArguments>")
                 .replace("</searchDirs>", "%MONO%/4.5/Facades</searchDirs>")
-                .replace("<useAlternativeCompiler></useAlternativeCompiler>", "<useAlternativeCompiler>CSSRoslynProvider.dll</useAlternativeCompiler>")
-                .replace("</defaultRefAssemblies>", "System.dll;System.ValueTuple.dll</defaultRefAssemblies>");
+                .replace("</defaultRefAssemblies>", "System.dll;System.ValueTuple.dll</defaultRefAssemblies>")
+                .replace("<useAlternativeCompiler></useAlternativeCompiler>", "<useAlternativeCompiler>CSSRoslynProvider.dll</useAlternativeCompiler>");
 
             fs.writeFileSync(config_file, updated_config, 'utf8');
 
@@ -446,8 +533,9 @@ export function ensure_default_config(cscs_exe: string, on_done?: (file: string)
                 let updated_config = output
                     .replace("</defaultArguments>", " -ac:1</defaultArguments>")
                     .replace("</searchDirs>", "%cscs_exe_dir%/roslyn</searchDirs>")
-                    .replace("<useAlternativeCompiler></useAlternativeCompiler>", "<useAlternativeCompiler>CSSRoslynProvider.dll</useAlternativeCompiler>")
-                    .replace("</defaultRefAssemblies>", "System.dll;System.ValueTuple.dll</defaultRefAssemblies>");
+                    // after .NET4.7 referencing System.dll;System.ValueTuple.dll is no longer required
+                    // .replace("</defaultRefAssemblies>", "System.dll;System.ValueTuple.dll</defaultRefAssemblies>") 
+                    .replace("<useAlternativeCompiler></useAlternativeCompiler>", "<useAlternativeCompiler>CSSRoslynProvider.dll</useAlternativeCompiler>");
 
                 fs.writeFileSync(config_file_win, updated_config, 'utf8');
             }
@@ -467,14 +555,3 @@ export function actual_output(element, index, array) {
     // ignore mono test output that comes from older releases(s)  (known Mono issue)
     return (!element.startsWith('failed to get 100ns ticks'));
 }
-
-interface String {
-    lines(): string[];
-}
-
-// use eval as having the prototype extended directly triggers false VSCode TS validator error
-eval(`
-String.prototype.lines = function() {
-    return this.split(/\\r?\\n/g)
-}
-`);
