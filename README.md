@@ -35,11 +35,20 @@ All CS-Script features:
     - Converting/Building a script into an assembly or a self contained executable.
     - Inclusion of the dependency scripts via CS-Script directives:
         - Importing other C# scripts
-        - Referencing assemblies either explicitly or implicitly via automatic resolving namesspaces into assemblies
+        - Referencing assemblies either explicitly or implicitly via automatic resolving namespaces into assemblies
         - Referencing NuGet packages
 
 - _**Portability**_<br>
 The extension is supported on all OSs where VSCode can run.
+
+### **Roadmap**
+- Add support fro C# 7 just out of box. (**_Done in v1.2.0_**)
+- Add toolbar buttons for most frequent CS-Script commands. (**_Done in v1.2.0_**)
+- Adding a [custom view](https://code.visualstudio.com/updates/v1_13#_custom-views) containing all script dependencies (e.g. imported scripts, DLLs)
+- Integrate CS-Script specific autocompletion with default C# one.
+- Integrate CS-Script run/debug commands with teh default launch actions. 
+- Allow fall-back autocompletion (similar to Sublime Text) when OmniSharp is not activated.
+- Allow OmniSharp autocompletion to be integrated without loading the folder. May not be possible due to the OmniSharp limitations.  
 
 <hr>
 
@@ -49,13 +58,15 @@ _CS-Script.VSCode_ allows convenient editing and execution of the C# code direct
 
 When your C# script depend on other (source code or compiled) C# modules you can express this in your code in a very simple way via `//css_*` directives. These directives are conceptually similar to Python `import *`, which appear on top of the script. CS-Script has only a handful directives that are easy to remember. And of course you can find the complete CS-Script documentation on GigHub: https://github.com/oleg-shilo/cs-script/wiki
 
-The following is the overview of the CS-Script functionality available with Sublime Text 3. The overview also highlights the major CS-Script featured:
+The following is the overview of the CS-Script functionality available with VS Code. The overview also highlights the major CS-Script featured:
+
+Note: the most frequently used CS-Script command can also be accessed directly via toolbar buttons without using 'command palette': 
 
 
 ## Usage
 
 _**Installing**_<br>
-While the extension is already published on VSCode marketplace it may take some time until it becomes publicly available. Until then you can install the extension from VSIX.
+While the extension is already published on VSCode marketplace it may take some time until it becomes publicly available. Until then you can install the extension from VSIX (from GitGub).
 
 _**Executing**_<br>
 _Command: `cs-script: run`<br>_
