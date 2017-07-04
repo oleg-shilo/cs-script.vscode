@@ -4,13 +4,13 @@ Execution, debugging and editing C# code that targets .NET and Mono (no .NET Cor
 <hr/>
 Currently VSCode support for C# is heavily oriented on development for .NET Core (e.g. ASP.NET Core). This imposes serious limitations on developers who is developing for desktop and server using C#. This project is aiming for filling this gap.
 
-The extension is powered by the [CS-Script engine](https://github.com/oleg-shilo/cs-script/blob/master/README.md) - popular Open Source script engine that delivers Pythons scripting experience but for C# syntax. CS-Script uses ECMA-compliant C# as a programming language and it can be hosted by the applications or run standalone. CS-Script is already a core of the plugins for some other popular editors/IDEs:
+The extension is powered by the [CS-Script engine](https://github.com/oleg-shilo/cs-script/blob/master/README.md) - popular Open Source script engine that delivers Python scripting experience but for C# syntax. CS-Script uses ECMA-compliant C# as a programming language and it can be hosted by applications or run standalone. CS-Script is already a core of the plugins for some other popular editors/IDEs:
 
 - Sublime Text 3 - [CS-Script.ST3](https://github.com/oleg-shilo/cs-script-sublime/blob/master/README.md) 
 - Notepad++  -  [CS-Script.Npp](https://github.com/oleg-shilo/cs-script.npp/blob/master/README.md)
 - Visual Studio 2015/2017 - [CS-Script.VSIX](https://github.com/oleg-shilo/CS-Script.VSIX/blob/master/README.md)
 
-The extension provides a very thin layer of own functionality. Its primary responsibility is bringing together OmniSharp IntelliSense services, a full scale debugger (curtesy of "Mono Debug" team) and CS-Script seamless C# script execution all. This page contains only a light overview of the extension functionality. The complete description can be found at the [project Wiki](https://github.com/oleg-shilo/cs-script.vscode/wiki).
+The extension provides a very thin layer of own functionality. Its primary responsibility is bringing together OmniSharp IntelliSense services, a full scale debugger (curtesy of "Mono Debug" team) and CS-Script seamless C# script execution. This page contains only a light overview of the extension functionality. The complete description can be found at the [project Wiki](https://github.com/oleg-shilo/cs-script.vscode/wiki).
 <hr>
 
 ## Minimal set of dependencies (third-party extensions)
@@ -24,7 +24,7 @@ Latest Mono from http://www.mono-project.com/download/ and the following VSCode 
 ## Functionality
 
 - _**Editing**_ <br>
-All C# editing upport available with OmniSharp, including Syntax Highlighting, IntelliSense, Go to Definition, Find All References, etc.
+All C# editing support available with OmniSharp, including Syntax Highlighting, IntelliSense, Go to Definition, Find All References, etc.
 
 - _**Debugging**_<br>
 Debugging support for .NET (Mono and Desktop CLR). This is something that currently  is impossible with other extensions.
@@ -46,9 +46,9 @@ Below are the road map highlights only. Some more detailed information are avail
 - Add support fro C# 7 just out of box. (**_Done in v1.2.0_**)
 - Add toolbar buttons for most frequent CS-Script commands. (**_Done in v1.2.0_**)
 - Adding a [custom view](https://code.visualstudio.com/updates/v1_13#_custom-views) containing all script dependencies (e.g. imported scripts, DLLs)
-- Integrate CS-Script specific autocompletion with default C# one.
-- Integrate CS-Script run/debug commands with teh default launch actions. 
-- Allow fall-back autocompletion (similar to Sublime Text) when OmniSharp is not activated.
+- Integrate CS-Script specific autocompletion with default C# autocompletion (OmniSharp).
+- Integrate CS-Script run/debug commands with the default launch actions. 
+- Allow fallback autocompletion (similar to Sublime Text) when OmniSharp is not activated.
 - Allow OmniSharp autocompletion to be integrated without loading the folder. May not be possible due to the OmniSharp limitations.  
 
 <hr>
@@ -74,21 +74,25 @@ While the extension is already published on VSCode marketplace it may take some 
 _**Executing**_<br>
 _Command: `cs-script: run`<br>_
 Open the C# file and execute "run" command (Ctrl+F5):
+
 ![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_run1.gif)
 
 _**Check for syntax errors**_<br>
 _Command: `cs-script: check`<br>_
 Open the C# file and execute "check" command (F7):
+
 ![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_check.gif)
 
 _**Debugging**_<br>
 _Command: `cs-script: debug`<br>_
 Open the C# file and execute "debug" command (F7):
+
 ![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_debug1.gif)
 
 _**Managing Dependencies**_<br>
 _Command: `cs-script: print project`<br>_
 Open the C# file and execute "print project" command (Alt+F7):
+
 ![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_projA.gif)
 
 _**Enabling IntelliSense**_<br>
