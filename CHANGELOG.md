@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.2.1
+- Fixed problem with generating debug info for Mono-Debug on Windows
+
 ## 1.2.0
 - C# 7 support out of box
 - New commands:
