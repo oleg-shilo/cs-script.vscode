@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <g>
+  <title>Layer 1</title>
+  <rect stroke="#999999" fill="#191919" stroke-width="2" x="1.047025" y="1.052587" width="27.108354" height="22.870239" id="svg_2"/>
+  <g stroke="null" id="svg_1">
+   <path stroke="#b2b2b2" id="path1" fill="#89D185" d="m16.419017,14.022026l14.781078,9.021346l-15.11246,8.538696l0.331382,-17.560042z"/>
+  </g>
+  <line fill="none" stroke="#999999" stroke-width="2" stroke-dasharray="null" stroke-linejoin="null" stroke-linecap="null" x1="1.505876" y1="6.272363" x2="27.846696" y2="6.272363" id="svg_9"/>
+ </g>
+</svg>
