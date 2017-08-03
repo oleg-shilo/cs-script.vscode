@@ -15,3 +15,5 @@ tsconfig.json
 settings.json
 vsc-extension-quickstart.md
 **/*.cmd
+**/*.7z
+**/*.zip

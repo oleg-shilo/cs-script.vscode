@@ -6,7 +6,7 @@
     "publisher": "oleg-shilo",
     "icon": "images/css_logo.png",
     "engines": {
-        "vscode": "^1.12.0"
+        "vscode": "^1.13.0"
     },
     "categories": [
         "Languages",
@@ -45,6 +45,14 @@
     ],
     "main": "./out/src/extension",
     "contributes": {
+        "views": {
+			"explorer": [
+				{
+					"id": "nodeDependencies",
+					"name": "CS-Script - Active"
+				}
+			]
+		},
         "configuration": {
             "type": "object",
             "title": "CS-Script configuration",
@@ -68,6 +76,14 @@
         },
         "commands": [
             {
+				"command": "nodeDependencies.refresh",
+				"title": "Refresh",
+                "icon": {
+                    "light": "./images/icons/refresh.light.svg",
+                    "dark": "./images/icons/refresh.svg"
+                }
+			},
+            {
                 "command": "cs-script.debug",
                 "title": "CS-Script: Debug",
                 "icon": {
@@ -78,12 +94,18 @@
             {
                 "command": "cs-script.run",
                 "title": "CS-Script: Run",
-                "icon": "./images/icons/run.svg"
+                "icon": {
+                    "light": "./images/icons/run.light.svg",
+                    "dark": "./images/icons/run.svg"
+                }
             },
             {
                 "command": "cs-script.run_in_terminal",
                 "title": "CS-Script: Run in terminal",
-                "icon": "./images/icons/run.terminal.svg"
+                "icon":  {
+                    "light": "./images/icons/run.terminal.light.svg",
+                    "dark": "./images/icons/run.terminal.svg"
+                }
             },
             {
                 "command": "cs-script.print_project",
@@ -112,7 +134,10 @@
             {
                 "command": "cs-script.check",
                 "title": "CS-Script: Check syntax",
-                "icon": "./images/icons/check.svg"
+                "icon": {
+                    "light": "./images/icons/check.light.svg",
+                    "dark": "./images/icons/check.svg"
+                }
             },
             {
                 "command": "cs-script.engine_help",
@@ -123,7 +148,22 @@
                 "title": "CS-Script: About"
             }
         ],
+
+
         "menus": {
+			"view/title": [
+				{
+					"command": "nodeDependencies.refresh",
+					"when": "view == nodeDependencies",
+					"group": "navigation"
+				}
+			],
+			"view/item/context": [
+				{
+                    "command": "nodeDependencies.refresh",
+                    "when": "view == nodeDependencies"
+				}
+			],
             "editor/title": [
                 {
                     "when": "resourceLangId == csharp",

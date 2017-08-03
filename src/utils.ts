@@ -483,6 +483,10 @@ export class Utils {
         });
     }
 
+    public static RunSynch(command: string) : string {
+        return execSync(command).toString();
+    }
+    
     public static Run(command: string, on_done: (number, string) => void) {
 
         let output: string = '';

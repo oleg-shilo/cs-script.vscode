@@ -17,6 +17,7 @@ let last_process = null;
 // it is extremely important to keep project file name in sync with the activation event trigger in manifest file )"workspaceContains:script.csproj")
 let script_proj_name = 'script.csproj';
 let startup_file_key = 'cs-script.open_file_at_startup';
+export let csproj_dir = path.join(os.tmpdir(), 'CSSCRIPT', 'VSCode', 'cs-script - OmniSharp');
 
 // -----------------------------------
 export function load_project() {
@@ -33,22 +34,23 @@ export function load_project() {
         // second request load the project primary source file (script)
 
         // Note: os.tmpdir() for some reason returns lower cased root so Utils.IsSamePath needs to be used 
-        let proj_dir = path.join(os.tmpdir(), 'CSSCRIPT', 'VSCode', 'cs-script.vscode');
+        // let proj_dir = path.join(os.tmpdir(), 'CSSCRIPT', 'VSCode', 'cs-script.vscode');
         let current_folder = vscode.workspace.rootPath;
         let editor = vscode.window.activeTextEditor;
 
-        if (Utils.IsSamePath(vscode.workspace.rootPath, proj_dir)) { //already loaded
+        if (Utils.IsSamePath(vscode.workspace.rootPath, csproj_dir)) { //already loaded
             outputChannel.show(true);
             outputChannel.clear();
             outputChannel.appendLine("Loading script...");
 
             if (editor == null) {
-                let scriptFile = parse_proj_dir(proj_dir);
+                let scriptFile = parse_proj_dir(csproj_dir);
                 commands.executeCommand('vscode.open', Uri.file(scriptFile));
             }
             else {
                 editor.document.save();
-                generate_proj_file(proj_dir, editor.document.fileName);
+                generate_proj_file(csproj_dir, editor.document.fileName);
+                commands.executeCommand('nodeDependencies.refresh');
             }
 
             setTimeout(() => outputChannel.clear(), 700);
@@ -63,7 +65,7 @@ export function load_project() {
 
                 editor.document.save();
 
-                generate_proj_file(proj_dir, editor.document.fileName);
+                generate_proj_file(csproj_dir, editor.document.fileName);
 
                 // When folder is opened the whole execution context is recreated. It's like restarting VSCode.
                 // Thus any attempt to openFile after calling openFolder from the same routine will lead to the folder being opened
@@ -86,7 +88,7 @@ export function load_project() {
                     vscode.window.showInformationMessage(info_msg, { modal: true }, ok, ok_dont_show_again)
                         .then(response => {
                             if (response == ok) {
-                                setTimeout(() => commands.executeCommand('vscode.openFolder', Uri.parse(proj_dir)), 100);
+                                setTimeout(() => commands.executeCommand('vscode.openFolder', Uri.parse(csproj_dir)), 100);
                             }
                             else if (response == ok_dont_show_again) {
                                 // VSCode doesn't allow saving settings from the extension :(
@@ -96,12 +98,12 @@ export function load_project() {
                                 settings.show_load_proj_info = false;
                                 settings.Save();
 
-                                setTimeout(() => commands.executeCommand('vscode.openFolder', Uri.parse(proj_dir), ), 100);
+                                setTimeout(() => commands.executeCommand('vscode.openFolder', Uri.parse(csproj_dir), ), 100);
                             }
                         });
                 }
                 else {
-                    setTimeout(() => commands.executeCommand('vscode.openFolder', Uri.parse(proj_dir)), 100);
+                    setTimeout(() => commands.executeCommand('vscode.openFolder', Uri.parse(csproj_dir)), 100);
                 }
             }
         }
@@ -148,8 +150,7 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
         refs += '    <Reference Include="' + System_ValueTuple_dll + '" />' + os.EOL;
 
         lines.forEach((line, i) => {
-            if (line.startsWith('ref:'))
-            {
+            if (line.startsWith('ref:')) {
                 if (!line.trim().endsWith('System.ValueTuple.dll')) // System.ValueTuple.dll is already added from the Omnisharp package
                     refs += '    <Reference Include="' + line.substr(4).pathNormalize() + '" />' + os.EOL;
             }
@@ -163,7 +164,7 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
             .replace('<Reference Include="$ASM$"/>', refs.trim())
             .replace('<Compile Include="$FILE$"/>', includes.trim());
 
-        fs.writeFileSync(proj_file, content, 'utf8');
+        fs.writeFileSync(proj_file, content, { encoding: 'utf8' });
     });
 }
 // -----------------------------------
@@ -188,6 +189,25 @@ export function print_project() {
             unlock();
         });
     });
+}
+// -----------------------------------
+export function get_project_tree_items() {
+    let lines: string[];
+
+    with_lock(() => {
+        let editor = vscode.window.activeTextEditor;
+        let file = editor.document.fileName;
+        // script_file: string
+
+        // if (file == script_file)
+        editor.document.save();
+
+        let output: string = Utils.RunSynch(`mono "${cscs_exe}" -nl -l -proj:dbg "${file}"`);
+        lines = output.lines().filter(actual_output);
+        unlock();
+    });
+
+return lines;
 }
 // -----------------------------------
 export function check() {
@@ -351,7 +371,7 @@ export function engine_help() {
 
         Utils.Run(command, (code, output) => {
             let readme = path.join(user_dir(), 'cs-script.help.txt')
-            fs.writeFileSync(readme, output, 'utf8');
+            fs.writeFileSync(readme, output, { encoding: 'utf8' });
             commands.executeCommand('vscode.open', Uri.file(readme));
 
             unlock();
@@ -596,9 +616,7 @@ function onActiveEditorSelectionChange(event: vscode.TextEditorSelectionChangeEv
 
 export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     try {
-
         ext_context = context;
-
         vscode.window.onDidChangeActiveTextEditor(onActiveEditorChange);
         vscode.window.onDidChangeTextEditorSelection(onActiveEditorSelectionChange);
 
