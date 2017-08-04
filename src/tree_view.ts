@@ -62,34 +62,36 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<Dependency> 
 		let nodes = [];
 		nodes.push(refsNode);
 
-		this.aggregateScriptItems().forEach(item => {
+		let items = this.aggregateScriptItems();
 
-			if (item.startsWith('file:')) {
-				let file = item.substr(5);
-				let role = "Primary";
+		if (items)
+			items.forEach(item => {
+				if (item.startsWith('file:')) {
+					let file = item.substr(5);
+					let role = "Primary";
 
-				if (nodes.length > 1)
-					role = "Imported";
+					if (nodes.length > 1)
+						role = "Imported";
 
-				let node = new Dependency(
-					path.basename(file),
-					vscode.TreeItemCollapsibleState.None,
-					{
-						command: 'vscode.open',
-						title: '',
-						tooltip: role + ' script: ' + file,
-						arguments: [Uri.file(file)],
-					},
-					null,
-					role.toLowerCase()
-				)
+					let node = new Dependency(
+						path.basename(file),
+						vscode.TreeItemCollapsibleState.None,
+						{
+							command: 'vscode.open',
+							title: '',
+							tooltip: role + ' script: ' + file,
+							arguments: [Uri.file(file)],
+						},
+						null,
+						role.toLowerCase()
+					)
 
-				nodes.push(node);
-			}
-			else if (item.startsWith('ref:'))
-				refsNode.children.push(item.substr(4));
+					nodes.push(node);
+				}
+				else if (item.startsWith('ref:'))
+					refsNode.children.push(item.substr(4));
 
-		});
+			});
 
 		return nodes;
 	}

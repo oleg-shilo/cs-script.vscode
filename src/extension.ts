@@ -16,13 +16,12 @@ export function activate(context: vscode.ExtensionContext) {
     // This line of code will only be executed once when your extension is activated
     // console.log('"cs-script" extension is now active...');
 
-    const nodeDependenciesProvider = new ProjectTreeProvider(cs_script.get_project_tree_items);
-    
-    vscode.window.registerTreeDataProvider('nodeDependencies', nodeDependenciesProvider);
-    vscode.commands.registerCommand('nodeDependencies.refresh', () => nodeDependenciesProvider.refresh());
-
     cs_script.ActivateDiagnostics(context);
+
+    const treeViewProvider = new ProjectTreeProvider(cs_script.get_project_tree_items);
+    vscode.window.registerTreeDataProvider('cs-script', treeViewProvider);
     
+    context.subscriptions.push(vscode.commands.registerCommand('cs-script.refresh_tree', () => treeViewProvider.refresh()));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.debug', cs_script.debug));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.run', cs_script.run));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.run_in_terminal', cs_script.run_in_terminal));

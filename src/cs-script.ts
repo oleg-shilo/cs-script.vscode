@@ -39,26 +39,34 @@ export function load_project() {
         let editor = vscode.window.activeTextEditor;
 
         if (Utils.IsSamePath(vscode.workspace.rootPath, csproj_dir)) { //already loaded
-            outputChannel.show(true);
-            outputChannel.clear();
-            outputChannel.appendLine("Loading script...");
-
-            if (editor == null) {
-                let scriptFile = parse_proj_dir(csproj_dir);
-                commands.executeCommand('vscode.open', Uri.file(scriptFile));
+            if (editor != null && !Utils.IsScript(editor.document.fileName)) {
+                vscode.window.showErrorMessage('The active document is not a C# code file. Please open a C# document and try again.');
             }
             else {
-                editor.document.save();
-                generate_proj_file(csproj_dir, editor.document.fileName);
-            }
+                outputChannel.show(true);
+                outputChannel.clear();
+                outputChannel.appendLine("Loading script...");
 
-            setTimeout(() => outputChannel.clear(), 700);
+                if (editor == null) {
+                    let scriptFile = parse_proj_dir(csproj_dir);
+                    commands.executeCommand('vscode.open', Uri.file(scriptFile));
+                }
+                else {
+                    editor.document.save();
+                    generate_proj_file(csproj_dir, editor.document.fileName);
+                }
+
+                setTimeout(() => outputChannel.clear(), 700);
+            }
         }
         else {
             if (editor == null) {
                 vscode.window.showErrorMessage('No active document found. Please open a C# document and try again.');
-            } else {
-
+            }
+            else if (!Utils.IsScript(editor.document.fileName)) {
+                vscode.window.showErrorMessage('The active document is not a C# code file. Please open a C# document and try again.');
+            }
+            else {
                 outputChannel.clear();
                 outputChannel.appendLine("Loading OmniSharp project...");
 
@@ -72,7 +80,7 @@ export function load_project() {
                 // As a work around indicate that the file needs to be opened at startup.
                 // set_startup_file(ext_context, editor.document.fileName);
 
-                // The feature reques has also been logged:
+                // The feature request has also been logged:
                 // https://github.com/Microsoft/vscode/issues/27990
                 // "There is no way to open a folder with a specific file opened and active" #27990
 
@@ -131,42 +139,43 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
     if (!utils.isWin)
         command = 'mono ' + command;
 
-    Utils.Run(command, (code, output) => {
+    let output = Utils.RunSynch(command);
+    // Utils.Run(command, (code, output) => {
 
-        let lines: string[] = output.trim().lines().filter(actual_output);
-        let refs = '';
-        let includes = '';
+    let lines: string[] = output.trim().lines().filter(actual_output);
+    let refs = '';
+    let includes = '';
 
-        let System_ValueTuple_dll = null;
-        if (utils.isWin) {
-            System_ValueTuple_dll = path.join(user_dir(), 'roslyn', 'System.ValueTuple.dll').pathNormalize();
+    let System_ValueTuple_dll = null;
+    if (utils.isWin) {
+        System_ValueTuple_dll = path.join(user_dir(), 'roslyn', 'System.ValueTuple.dll').pathNormalize();
+    }
+    else {
+        refs += '    <Reference Include="System.Runtime.dll" />' + os.EOL;
+        System_ValueTuple_dll = path.join(utils.omnisharp_dir, 'System.ValueTuple.dll').pathNormalize();
+    }
+
+    refs += '    <Reference Include="' + System_ValueTuple_dll + '" />' + os.EOL;
+
+    lines.forEach((line, i) => {
+        if (line.startsWith('ref:')) {
+            if (!line.trim().endsWith('System.ValueTuple.dll')) // System.ValueTuple.dll is already added from the Omnisharp package
+                refs += '    <Reference Include="' + line.substr(4).pathNormalize() + '" />' + os.EOL;
         }
-        else {
-            refs += '    <Reference Include="System.Runtime.dll" />' + os.EOL;
-            System_ValueTuple_dll = path.join(utils.omnisharp_dir, 'System.ValueTuple.dll').pathNormalize();
-        }
-
-        refs += '    <Reference Include="' + System_ValueTuple_dll + '" />' + os.EOL;
-
-        lines.forEach((line, i) => {
-            if (line.startsWith('ref:')) {
-                if (!line.trim().endsWith('System.ValueTuple.dll')) // System.ValueTuple.dll is already added from the Omnisharp package
-                    refs += '    <Reference Include="' + line.substr(4).pathNormalize() + '" />' + os.EOL;
-            }
-            if (line.startsWith('file:'))
-                includes += '    <Compile Include="' + line.substr(5).pathNormalize() + '"/>' + os.EOL;
-        });
-
-        create_dir(proj_dir);
-
-        let content = fs.readFileSync(csproj_template, 'utf8')
-            .replace('<Reference Include="$ASM$"/>', refs.trim())
-            .replace('<Compile Include="$FILE$"/>', includes.trim());
-
-        fs.writeFileSync(proj_file, content, { encoding: 'utf8' });
-
-        commands.executeCommand('nodeDependencies.refresh');
+        if (line.startsWith('file:'))
+            includes += '    <Compile Include="' + line.substr(5).pathNormalize() + '"/>' + os.EOL;
     });
+
+    create_dir(proj_dir);
+
+    let content = fs.readFileSync(csproj_template, 'utf8')
+        .replace('<Reference Include="$ASM$"/>', refs.trim())
+        .replace('<Compile Include="$FILE$"/>', includes.trim());
+
+    fs.writeFileSync(proj_file, content, { encoding: 'utf8' });
+
+    commands.executeCommand('cs-script.refresh_tree');
+    // });
 }
 // -----------------------------------
 export function print_project() {
@@ -194,22 +203,27 @@ export function print_project() {
 // -----------------------------------
 export function get_project_tree_items() {
     let lines: string[];
+    let editor = vscode.window.activeTextEditor;
+    let file: string;
 
-    with_lock(() => {
-        let editor = vscode.window.activeTextEditor;
-        let file = editor.document.fileName;
-        // script_file: string
-
-        // if (file == script_file)
+    if (Utils.IsSamePath(vscode.workspace.rootPath, csproj_dir)) { // cs-script workspace
+        let proj_file = path.join(csproj_dir, 'script.csproj');
+        file = Utils.getScriptName(proj_file);
+    }
+    else if (Utils.IsScript(editor.document.fileName)) {
+        file = editor.document.fileName;
         editor.document.save();
+    }
 
-        // no need to include debug.cs into the view so drop the ':dbg' switch
-        let output: string = Utils.RunSynch(`mono "${cscs_exe}" -nl -l -proj "${file}"`);
-        lines = output.lines().filter(actual_output);
-        unlock();
-    });
+    if (file)
+        with_lock(() => {
+            // no need to include debug.cs into the view so drop the ':dbg' switch
+            let output: string = Utils.RunSynch(`mono "${cscs_exe}" -nl -l -proj "${file}"`);
+            lines = output.lines().filter(actual_output);
+            unlock();
+        });
 
-return lines;
+    return lines;
 }
 // -----------------------------------
 export function check() {

@@ -30,6 +30,7 @@ export let diagnosticCollection: vscode.DiagnosticCollection;
 
 declare global {
     interface String {
+        contains(text: string): boolean;
         lines(): string[];
         pathNormalize(): string;
     }
@@ -37,6 +38,9 @@ declare global {
 
 String.prototype.lines = function () {
     return this.split(/\r?\n/g);
+}
+String.prototype.contains = function (text) {
+    return this.indexOf(text) >= 0;
 }
 String.prototype.pathNormalize = function () {
     return path.normalize(this).split(/[\\\/]/g).join(path.posix.sep);
@@ -54,7 +58,7 @@ export function with_lock(callback: () => void): void {
 export function lock(): boolean {
 
     if (!_environment_ready) {
-        if(_environment_compatible)
+        if (_environment_compatible)
             vscode.window.showErrorMessage(`Cannot detect required Mono version (${min_required_mono}). Install it from http://www.mono-project.com/download/`);
         return false;
     }
@@ -146,13 +150,13 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     console.log("Loading CS-Script extension from " + __dirname);
 
     // check extension dependencies
-    if (vscode.extensions.getExtension('ms-vscode.csharp') == null){
+    if (vscode.extensions.getExtension('ms-vscode.csharp') == null) {
         let message = 'CS-Script: The required extension "C# for Visual Studio Code" is not found. Ensure it is installed.';
         vscode.window.showErrorMessage(message);
         throw message;
     }
-    
-    if (vscode.extensions.getExtension('ms-vscode.mono-debug') == null){
+
+    if (vscode.extensions.getExtension('ms-vscode.mono-debug') == null) {
         let message = 'CS-Script: The required extension "Mono-Debug" is not found. Ensure it is installed.';
         vscode.window.showErrorMessage(message);
         throw message;
@@ -256,7 +260,7 @@ function deploy_files(): void {
         if (os.platform() == 'win32')
             deploy_roslyn();
 
-        fs.writeFileSync(ver_file, ext_version, 'utf8');
+        fs.writeFileSync(ver_file, ext_version, { encoding: 'utf8' });
 
         ensure_default_config(path.join(user_dir(), 'cscs.exe'));
 
@@ -322,10 +326,10 @@ export function prepare_new_script(): string {
         '}';
 
     if (!fs.existsSync(template_file))
-        fs.writeFileSync(template_file, template, 'utf8');
+        fs.writeFileSync(template_file, template, { encoding: 'utf8' });
 
     try {
-        template = fs.readFileSync(template_file, 'utf8');
+        template = fs.readFileSync(template_file, { encoding: 'utf8' });
     } catch (error) {
     }
 
@@ -419,7 +423,7 @@ export class Settings {
         if (file != null) file_path = file;
         else if (this._file != null) file_path = this._file;
 
-        fs.writeFile(file_path, JSON.stringify(this), 'utf8')
+        fs.writeFile(file_path, JSON.stringify(this), { encoding: 'utf8' })
     }
 
     public static Load(file?: string) {
@@ -447,6 +451,26 @@ export class Settings {
 }
 
 export class Utils {
+
+    public static IsScript(file: string): boolean {
+        if (!file)
+            return false;
+        return file.toLowerCase().endsWith('.cs');
+    }
+
+    public static getScriptName(projectFile: string): string {
+        if (fs.existsSync(projectFile)) {
+            let lines = fs.readFileSync(projectFile, 'utf8').lines();
+            for (var line of lines) {
+                if (line.contains('Compile')) {
+                    return line.trim()
+                        .replace('<Compile Include="', '')
+                        .replace('"/>', '');
+                }
+            }
+        }
+        return null;
+    }
 
     public static IsSamePath(abs_path1: string, abs_path2: string): boolean {
 
@@ -483,10 +507,10 @@ export class Utils {
         });
     }
 
-    public static RunSynch(command: string) : string {
+    public static RunSynch(command: string): string {
         return execSync(command).toString();
     }
-    
+
     public static Run(command: string, on_done: (number, string) => void) {
 
         let output: string = '';
@@ -530,7 +554,7 @@ export function ensure_default_config(cscs_exe: string, on_done?: (file: string)
                 .replace("</defaultRefAssemblies>", "System.dll;System.ValueTuple.dll</defaultRefAssemblies>")
                 .replace("<useAlternativeCompiler></useAlternativeCompiler>", "<useAlternativeCompiler>CSSRoslynProvider.dll</useAlternativeCompiler>");
 
-            fs.writeFileSync(config_file, updated_config, 'utf8');
+            fs.writeFileSync(config_file, updated_config, { encoding: 'utf8' });
 
             if (os.platform() == 'win32') {
                 let config_file_win = path.join(path.dirname(cscs_exe), 'css_config.xml');
@@ -541,7 +565,7 @@ export function ensure_default_config(cscs_exe: string, on_done?: (file: string)
                     // .replace("</defaultRefAssemblies>", "System.dll;System.ValueTuple.dll</defaultRefAssemblies>") 
                     .replace("<useAlternativeCompiler></useAlternativeCompiler>", "<useAlternativeCompiler>CSSRoslynProvider.dll</useAlternativeCompiler>");
 
-                fs.writeFileSync(config_file_win, updated_config, 'utf8');
+                fs.writeFileSync(config_file_win, updated_config, { encoding: 'utf8' });
             }
 
             if (on_done)
