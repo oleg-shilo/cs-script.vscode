@@ -50,7 +50,7 @@ export function load_project() {
             else {
                 editor.document.save();
                 generate_proj_file(csproj_dir, editor.document.fileName);
-                commands.executeCommand('nodeDependencies.refresh');
+                commands.executeCommand('project_tree.refresh');
             }
 
             setTimeout(() => outputChannel.clear(), 700);
@@ -202,7 +202,7 @@ export function get_project_tree_items() {
         // if (file == script_file)
         editor.document.save();
 
-        let output: string = Utils.RunSynch(`mono "${cscs_exe}" -nl -l -proj:dbg "${file}"`);
+        let output: string = Utils.RunSynch(`mono "${cscs_exe}" -nl -l -proj "${file}"`);
         lines = output.lines().filter(actual_output);
         unlock();
     });

@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Uri, commands, window } from "vscode";
 import * as cs_script from "./cs-script";
-import { DepNodeProvider } from "./tree_view";
+import { ProjectTreeProvider } from "./tree_view";
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -16,13 +16,15 @@ export function activate(context: vscode.ExtensionContext) {
     // This line of code will only be executed once when your extension is activated
     // console.log('"cs-script" extension is now active...');
 
-    const nodeDependenciesProvider = new DepNodeProvider(cs_script.get_project_tree_items);
+    const nodeDependenciesProvider = new ProjectTreeProvider(cs_script.get_project_tree_items);
     
-    vscode.window.registerTreeDataProvider('nodeDependencies', nodeDependenciesProvider);
-    vscode.commands.registerCommand('nodeDependencies.refresh', () => nodeDependenciesProvider.refresh());
+    vscode.window.registerTreeDataProvider('project_tree', nodeDependenciesProvider);
 
+        vscode.commands.registerCommand('project_tree.refresh', nodeDependenciesProvider.refresh);
     cs_script.ActivateDiagnostics(context);
     
+    // context.subscriptions.push(
+    // );
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.debug', cs_script.debug));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.run', cs_script.run));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.run_in_terminal', cs_script.run_in_terminal));

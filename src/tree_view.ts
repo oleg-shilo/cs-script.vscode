@@ -4,13 +4,14 @@ import * as path from 'path';
 import { Uri } from "vscode";
 
 
-export class DepNodeProvider implements vscode.TreeDataProvider<Dependency> {
+export class ProjectTreeProvider implements vscode.TreeDataProvider<Dependency> {
 
 	private _onDidChangeTreeData: vscode.EventEmitter<Dependency | undefined> = new vscode.EventEmitter<Dependency | undefined>();
 	readonly onDidChangeTreeData: vscode.Event<Dependency | undefined> = this._onDidChangeTreeData.event;
 
 	constructor(private aggregateScriptItems: () => string[]) {
 		vscode.window.onDidChangeActiveTextEditor(editor => {
+			// no need to do it so often
 			// this._onDidChangeTreeData.fire();
 		});
 		vscode.workspace.onDidChangeTextDocument(e => {
@@ -35,13 +36,6 @@ export class DepNodeProvider implements vscode.TreeDataProvider<Dependency> {
 				else
 					resolve([]);
 			} else {
-				// const packageJsonPath = path.join(this.workspaceRoot, 'package.json');
-				// let scriptFile = null;
-
-				// if (this.workspaceRoot) {
-				// 	console.log(this.workspaceRoot);
-				// }
-
 				resolve(this.getScriptItems());
 			}
 		});
@@ -98,66 +92,7 @@ export class DepNodeProvider implements vscode.TreeDataProvider<Dependency> {
 		});
 
 		return nodes;
-
-		// let deps = [
-		// 	new Dependency('References', vscode.TreeItemCollapsibleState.Collapsed,
-		// 		null, [asm1, asm2, asm3], 'assembly_group'
-		// 	),
-		// 	new Dependency(
-		// 		'script.cs',
-		// 		vscode.TreeItemCollapsibleState.None,
-		// 		{
-		// 			command: 'vscode.open',
-		// 			title: '',
-		// 			tooltip: 'Primary script: ' + path.basename(scriptFile),
-		// 			arguments: [Uri.file(scriptFile)],
-		// 		},
-		// 		null,
-		// 		'script'
-		// 	),
-		// 	new Dependency(
-		// 		'utils.cs',
-		// 		vscode.TreeItemCollapsibleState.None,
-		// 		{
-		// 			command: 'vscode.open',
-		// 			title: '',
-		// 			tooltip: 'Imported script: ' + path.basename(impScriptFile),
-		// 			arguments: [Uri.file(impScriptFile)],
-		// 		},
-		// 		null,
-		// 		'imported_script'
-		// 	)];
-
-		// return deps;
 	}
-
-	// private getDepsInPackageJson(packageJsonPath: string): Dependency[] {
-	// 	if (this.pathExists(packageJsonPath)) {
-	// 		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-
-	// 		const toDep = (moduleName: string): Dependency => {
-	// 			if (this.pathExists(path.join(this.workspaceRoot, 'node_modules', moduleName))) {
-	// 				return new Dependency(moduleName, vscode.TreeItemCollapsibleState.Collapsed);
-	// 			} else {
-	// 				return new Dependency(moduleName, vscode.TreeItemCollapsibleState.None, {
-	// 					command: 'extension.openPackageOnNpm',
-	// 					title: '',
-	// 					arguments: [moduleName],
-	// 				});
-	// 			}
-	// 		}
-
-	// 		const deps = packageJson.dependencies
-	// 			? Object.keys(packageJson.dependencies).map(toDep)
-	// 			: [];
-	// 		const devDeps = packageJson.devDependencies
-	// 			? Object.keys(packageJson.devDependencies).map(toDep)
-	// 			: [];
-	// 		return deps.concat(devDeps);
-	// 	} else {
-	// 		return [];
-	// 	}
-	// }
 
 	private pathExists(p: string): boolean {
 		try {
@@ -183,9 +118,9 @@ class Dependency extends vscode.TreeItem {
 
 		if (context) {
 			this.contextValue = context;
+
 			let icon = null;
 			if (context == 'imported')
-				// icon = 'document';
 				icon = 'cs';
 			else if (context == 'primary')
 				icon = 'css';
