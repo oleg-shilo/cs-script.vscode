@@ -19,9 +19,9 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<Dependency> 
 	}
 
 	refresh(): void {
-		vscode.window.showInformationMessage('Script View is refreshed - START...');
+		// vscode.window.showInformationMessage('Script View is refreshed - START...');
 		this._onDidChangeTreeData.fire();
-		vscode.window.showInformationMessage('Script View is refreshed - END...');
+		// vscode.window.showInformationMessage('Script View is refreshed - END...');
 	}
 
 	getTreeItem(element: Dependency): vscode.TreeItem {

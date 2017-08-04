@@ -48,7 +48,7 @@
         "views": {
 			"explorer": [
 				{
-					"id": "project_tree",
+					"id": "nodeDependencies",
 					"name": "CS-Script - Active"
 				}
 			]
@@ -76,7 +76,7 @@
         },
         "commands": [
             {
-				"command": "project_tree.refresh",
+				"command": "nodeDependencies.refresh",
 				"title": "Refresh",
                 "icon": {
                     "light": "./images/icons/refresh.light.svg",
@@ -153,15 +153,15 @@
         "menus": {
 			"view/title": [
 				{
-					"command": "project_tree.refresh",
-					"when": "view == project_tree",
+					"command": "nodeDependencies.refresh",
+					"when": "view == nodeDependencies",
 					"group": "navigation"
 				}
 			],
 			"view/item/context": [
 				{
-                    "command": "project_tree.refresh",
-                    "when": "view == project_tree"
+                    "command": "nodeDependencies.refresh",
+                    "when": "view == nodeDependencies"
 				}
 			],
             "editor/title": [

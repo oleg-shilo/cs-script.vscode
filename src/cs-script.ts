@@ -50,7 +50,6 @@ export function load_project() {
             else {
                 editor.document.save();
                 generate_proj_file(csproj_dir, editor.document.fileName);
-                commands.executeCommand('project_tree.refresh');
             }
 
             setTimeout(() => outputChannel.clear(), 700);
@@ -165,6 +164,8 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
             .replace('<Compile Include="$FILE$"/>', includes.trim());
 
         fs.writeFileSync(proj_file, content, { encoding: 'utf8' });
+
+        commands.executeCommand('nodeDependencies.refresh');
     });
 }
 // -----------------------------------
@@ -202,6 +203,7 @@ export function get_project_tree_items() {
         // if (file == script_file)
         editor.document.save();
 
+        // no need to include debug.cs into the view so drop the ':dbg' switch
         let output: string = Utils.RunSynch(`mono "${cscs_exe}" -nl -l -proj "${file}"`);
         lines = output.lines().filter(actual_output);
         unlock();

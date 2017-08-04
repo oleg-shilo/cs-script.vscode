@@ -18,13 +18,11 @@ export function activate(context: vscode.ExtensionContext) {
 
     const nodeDependenciesProvider = new ProjectTreeProvider(cs_script.get_project_tree_items);
     
-    vscode.window.registerTreeDataProvider('project_tree', nodeDependenciesProvider);
+    vscode.window.registerTreeDataProvider('nodeDependencies', nodeDependenciesProvider);
+    vscode.commands.registerCommand('nodeDependencies.refresh', () => nodeDependenciesProvider.refresh());
 
-        vscode.commands.registerCommand('project_tree.refresh', nodeDependenciesProvider.refresh);
     cs_script.ActivateDiagnostics(context);
     
-    // context.subscriptions.push(
-    // );
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.debug', cs_script.debug));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.run', cs_script.run));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.run_in_terminal', cs_script.run_in_terminal));
