@@ -21,6 +21,7 @@ let script_proj_name = 'script.csproj';
 let startup_file_key = 'cs-script.open_file_at_startup';
 export let csproj_dir = path.join(os.tmpdir(), 'CSSCRIPT', 'VSCode', 'cs-script - OmniSharp');
 
+function extra_args(): string { return VSCodeSettings.get("cs-script.extra_args_for_debug", "-co:/debug:pdbonly"); }
 // -----------------------------------
 export function load_project() {
     with_lock(() => {
@@ -135,6 +136,7 @@ export function parse_proj_dir(proj_dir: string): string {
 }
 
 function generate_proj_file(proj_dir: string, scriptFile: string): void {
+
     let proj_file = path.join(proj_dir, script_proj_name);
     let command = `"${cscs_exe}" -nl -l -proj:dbg "${scriptFile}"`;
 
@@ -142,7 +144,6 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
         command = 'mono ' + command;
 
     let output = Utils.RunSynch(command);
-    // Utils.Run(command, (code, output) => {
 
     let lines: string[] = output.trim().lines().filter(actual_output);
     let refs = '';
@@ -176,8 +177,28 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
 
     fs.writeFileSync(proj_file, content, { encoding: 'utf8' });
 
+    let launch_content = `
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "CS-Script (console)",
+            "type": "mono",
+            "request": "launch",
+            "program": "${cscs_exe}",
+            "args": ["-nl", "-d", "-l", "-inmem:0", "${extra_args()}", "-ac:2", "${scriptFile}"],
+            "cwd": "${path.dirname(scriptFile)}",
+            "console": "internalConsole"
+        }
+    ]
+}`;
+
+    let launch_dir = path.join(proj_dir, '.vscode');
+    utils.create_dir(launch_dir);
+
+    fs.writeFileSync( path.join(launch_dir, 'launch.json'), launch_content.pathNormalize(), { encoding: 'utf8' });
+
     commands.executeCommand('cs-script.refresh_tree');
-    // });
 }
 // -----------------------------------
 export function print_project() {
@@ -396,8 +417,8 @@ export function engine_help() {
     });
 }
 // -----------------------------------
-export function generate_syntax_help(force:boolean = false): string {
-    
+export function generate_syntax_help(force: boolean = false): string {
+
     // if (fs.existsSync(syntax_readme))
     let command = `mono "${cscs_exe}" -syntax`;
     let output = Utils.RunSynch(command);
@@ -499,15 +520,13 @@ export function debug() {
         // - clear dbg output
         // - ensure running via mono (at least on Linux) - CONFIG BASED
 
-        let extra_args = VSCodeSettings.get("cs-script.extra_args_for_debug", "-co:/debug:pdbonly");
-
         let launchConfig = {
             "name": "Launch",
             "type": "mono",
             "request": "launch",
             "program": cscs_exe,
             // mono debugger requires non-inmemory asms and injection of the breakpoint ("-ac:2)
-            "args": ["-nl", "-d", "-l", "-inmem:0", extra_args, "-ac:2", editor.document.fileName],
+            "args": ["-nl", "-d", "-l", "-inmem:0", extra_args(), "-ac:2", editor.document.fileName],
             "env": {
                 // "css_vscode_roslyn_dir": process.env.css_vscode_roslyn_dir
                 // "CSS_PROVIDER_TRACE": 'true'
