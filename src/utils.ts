@@ -15,7 +15,7 @@ let min_required_mono = '5.0.1';
 let ver_file: string;
 let cscs_exe: string;
 let _user_dir: string;
-let statusBarItem: StatusBarItem;
+export let statusBarItem: StatusBarItem;
 
 let _environment_compatible = false;
 let _environment_ready = false;
@@ -31,20 +31,64 @@ export let diagnosticCollection: vscode.DiagnosticCollection;
 declare global {
     interface String {
         contains(text: string): boolean;
-        lines(): string[];
+        lines(limit?: number): string[];
         pathNormalize(): string;
+    }
+
+    interface Array<T> {
+        where<T>(filter: (T) => boolean): Array<T>;
+        select<U>(convert: (T) => U): Array<U>;
+        cast<U>(): Array<U>;
+        first<T>(filter: (T) => boolean): T;
+        firstOrDefault<T>(filter?: (T) => boolean): T;
     }
 }
 
-String.prototype.lines = function () {
-    return this.split(/\r?\n/g);
+String.prototype.lines = function (limit?: number) {
+    return this.split(/\r?\n/g, limit);
 }
+
 String.prototype.contains = function (text) {
     return this.indexOf(text) >= 0;
 }
 String.prototype.pathNormalize = function () {
     return path.normalize(this).split(/[\\\/]/g).join(path.posix.sep);
 }
+
+Array.prototype.firstOrDefault = function <T>(predicate?):T {
+    for (var index = 0; index < this.length; index++) {
+        var element = this[index];
+        if (predicate== null || predicate(element))
+            return element;
+    }
+    return null;
+}
+Array.prototype.first = function (predicate) {
+    for (var index = 0; index < this.length; index++) {
+        var element = this[index];
+        if (predicate== null || predicate(element))
+            return element;
+    }
+    throw new Error('The collection is empty');
+}
+
+Array.prototype.where = function<T> (predicate): Array<T> {
+    return this.filter(predicate);
+}
+
+Array.prototype.cast = function<U> (): Array<U> {
+    return this.select(x=>x as U);
+}
+
+Array.prototype.select = function <T, U>(convert: (item: T) => U): Array<U> {
+    var result = [];
+    for (var i = 0; i < this.length; i++) {
+        var item = this[i];
+        var ci = convert(item);
+        result.push(ci);
+    }
+    return result;
+};
 
 export function with_lock(callback: () => void): void {
     if (lock())

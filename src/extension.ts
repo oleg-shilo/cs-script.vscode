@@ -4,9 +4,11 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Uri, commands, window } from "vscode";
+import { Uri, commands, window, HoverProvider, Position, CancellationToken, TextDocument, Hover } from "vscode";
 import * as cs_script from "./cs-script";
 import { ProjectTreeProvider } from "./tree_view";
+import { CSScriptHoverProvider, CSScriptCompletionItemProvider, CSScriptDefinitionProvider } from "./providers";
+import * as providers from "./providers";
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -17,10 +19,14 @@ export function activate(context: vscode.ExtensionContext) {
     // console.log('"cs-script" extension is now active...');
 
     cs_script.ActivateDiagnostics(context);
-
+    
     const treeViewProvider = new ProjectTreeProvider(cs_script.get_project_tree_items);
     vscode.window.registerTreeDataProvider('cs-script', treeViewProvider);
-    
+
+    context.subscriptions.push(vscode.languages.registerHoverProvider('csharp', new CSScriptHoverProvider()));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider('csharp', new CSScriptCompletionItemProvider(), '.', '>'));
+    context.subscriptions.push(vscode.languages.registerDefinitionProvider('csharp', new CSScriptDefinitionProvider()));
+
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.refresh_tree', () => treeViewProvider.refresh()));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.debug', cs_script.debug));
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.run', cs_script.run));

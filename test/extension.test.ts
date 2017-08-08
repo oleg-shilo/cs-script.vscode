@@ -53,7 +53,7 @@ suite("Extension Tests", () => {
     test("Can handle compare versions", () => {
         assert.equal(utils.compare_versions('1.2.3.4', '1.2.3.4'), 0);
         assert.equal(utils.compare_versions('001.2.3', '1.002.3-alpha'), 0);
-        
+
         assert.equal(utils.compare_versions('1.2.3', '1.2.3.1'), -1);
         assert.equal(utils.compare_versions('1.2.3.2', '1.2.3.1'), 1);
 
@@ -62,10 +62,10 @@ suite("Extension Tests", () => {
 
         assert.equal(utils.compare_versions('1.3.3.4', '1.2.3.4'), 1);
         assert.equal(utils.compare_versions('1.2.3.4', '1.3.3.4'), -1);
-       
+
         assert.equal(utils.compare_versions('1.2.4.4', '1.2.3.4'), 1);
         assert.equal(utils.compare_versions('1.2.3.4', '1.2.4.4'), -1);
-       
+
         assert.equal(utils.compare_versions('1.2.3.5', '1.2.3.4'), 1);
         assert.equal(utils.compare_versions('1.2.3.4', '1.2.3.5'), -1);
     });
@@ -96,9 +96,33 @@ searcDir:C:\\Program Files (x86)\\Mono\\lib\\mono\\4.5\\Facades`;
     });
 
     test("Can extract script name from project file", () => {
-        let proj_dir = path.join(os.tmpdir(), 'CSSCRIPT', 'VSCode', 'cs-script.vscode'); 
+        let proj_dir = path.join(os.tmpdir(), 'CSSCRIPT', 'VSCode', 'cs-script.vscode');
         let script = cs_script.parse_proj_dir(proj_dir);
         assert.ok(fs.existsSync(script));
+    });
+
+    test("Can prepare CS-Script syntax tooltips", () => {
+        //    var ttt = content.match(/-+\r?\n\/\/css_/igm)[0];
+        let section_r = /-+\r?\n\/\/css_/g;
+        let trim_r = /-+\r?\n/g;
+
+        let help = cs_script.generate_syntax_help();
+        let match, indexes = [];
+        let prev_index: number;
+
+        let help_map: { [id: string]: [number, string]; } = {};
+
+        while (match = section_r.exec(help)) {
+            if (prev_index) {
+                let section = help.substr(prev_index, match.index - prev_index).split(trim_r)[1];
+                let id = section.lines(1)[0].split(' ', 1)[0];
+
+                help_map[id] = [prev_index, section];
+            }
+            prev_index = match.index;
+        }
+
+        assert.ok(help_map.keys.length > 0);
     });
 
 });

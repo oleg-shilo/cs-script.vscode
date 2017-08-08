@@ -8,8 +8,10 @@ import { exec } from 'child_process';
 import { Uri, commands, DiagnosticCollection, DiagnosticSeverity, TextEditorSelectionChangeKind, Selection } from "vscode";
 import { ErrorInfo, Utils, diagnosticCollection, lock, unlock, with_lock, actual_output, settings, VSCodeSettings, user_dir, ensure_default_config, create_dir } from "./utils";
 
+export let syntax_readme = path.join(user_dir(), 'cs-script.syntax.txt')
 let ext_context: vscode.ExtensionContext;
 let cscs_exe = path.join(user_dir(), 'cscs.exe');
+let readme = path.join(user_dir(), 'cs-script.help.txt')
 let csproj_template = __dirname + "/../../bin/script.csproj";
 let outputChannel = vscode.window.createOutputChannel('Code');
 let last_process = null;
@@ -386,13 +388,21 @@ export function engine_help() {
         let command = `mono "${cscs_exe}" -help`;
 
         Utils.Run(command, (code, output) => {
-            let readme = path.join(user_dir(), 'cs-script.help.txt')
             fs.writeFileSync(readme, output, { encoding: 'utf8' });
             commands.executeCommand('vscode.open', Uri.file(readme));
 
             unlock();
         });
     });
+}
+// -----------------------------------
+export function generate_syntax_help(force:boolean = false): string {
+    
+    // if (fs.existsSync(syntax_readme))
+    let command = `mono "${cscs_exe}" -syntax`;
+    let output = Utils.RunSynch(command);
+    fs.writeFileSync(syntax_readme, output, { encoding: 'utf8' });
+    return output;
 }
 // -----------------------------------
 export function new_script() {
