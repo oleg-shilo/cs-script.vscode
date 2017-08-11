@@ -84,6 +84,14 @@
                 }
 			},
             {
+				"command": "cs-script.show_tree_data",
+				"title": "Show project info",
+                "icon": {
+                    "light": "./images/icons/document.light.svg",
+                    "dark": "./images/icons/document.svg"
+                }
+			},
+            {
                 "command": "cs-script.debug",
                 "title": "CS-Script: Debug",
                 "icon": {
@@ -156,8 +164,13 @@
 					"command": "cs-script.refresh_tree",
 					"when": "view == cs-script",
 					"group": "navigation"
+                },
+                {
+					"command": "cs-script.show_tree_data",
+					"when": "view == cs-script",
+					"group": "navigation"
 				}
-			],
+            ],
 			"view/item/context": [
 				{
                     "command": "cs-script.refresh_tree",

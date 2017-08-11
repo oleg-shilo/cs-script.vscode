@@ -206,26 +206,46 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
 }
 // -----------------------------------
 export function print_project() {
-    with_lock(() => {
-        let editor = vscode.window.activeTextEditor;
-        let file = editor.document.fileName;
+    if (Utils.IsSamePath(vscode.workspace.rootPath, csproj_dir)) { // cs-script workspace
+        let proj_file = path.join(csproj_dir, 'script.csproj');
+        let file = Utils.getScriptName(proj_file);
+        print_project_for(file);
+    }
+    else {
+        print_project_for_document();
+    }
 
-        editor.document.save();
-        outputChannel.show(true);
-        outputChannel.clear();
-        outputChannel.appendLine('Analyzing...');
+}
+// -----------------------------------
+export function print_project_for_document() {
+    let editor = vscode.window.activeTextEditor;
+    let file = editor.document.fileName;
 
-        let command = `mono "${cscs_exe}" -nl -l -proj:dbg "${file}"`;
+    editor.document.save();
+    outputChannel.show(true);
+    outputChannel.clear();
+    outputChannel.appendLine('Analyzing...');
 
-        Utils.Run(command, (code, output) => {
-            let lines: string[] = output.lines().filter(actual_output);
+    print_project_for(file);
+}
+// -----------------------------------
+export function print_project_for(file: string) {
 
-            outputChannel.clear();
-            lines.forEach((line, i) => outputChannel.appendLine(line));
+    if (Utils.IsScript(file))
+        with_lock(() => {
+            let command = `mono "${cscs_exe}" -nl -l -proj:dbg "${file}"`;
 
-            unlock();
+            Utils.Run(command, (code, output) => {
+                let lines: string[] = output.lines().filter(actual_output);
+
+                outputChannel.clear();
+                lines.forEach((line, i) => outputChannel.appendLine(line));
+
+                unlock();
+            });
         });
-    });
+       else
+        vscode.window.showErrorMessage(`"${file}" is not a valid C# script file.`);
 }
 // -----------------------------------
 export function get_project_tree_items() {
@@ -702,6 +722,8 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
             commands.executeCommand('vscode.open', Uri.file(file));
         }
 
+        exec(`mono "${cscs_exe}" -preload`);
+        // Utils.Run(`mono "${cscs_exe}" -preload`, (code, output) => {});
 
         return utils.ActivateDiagnostics(context);
     } catch (error) {
