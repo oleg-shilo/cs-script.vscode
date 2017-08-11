@@ -213,7 +213,8 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     context.subscriptions.push(diagnosticCollection);
     ext_context = context;
     ext_version = vscode.extensions.getExtension('oleg-shilo.cs-script').packageJSON.version
-    omnisharp_dir = path.join(vscode.extensions.getExtension('ms-vscode.csharp').extensionPath, 'bin', 'omnisharp');
+    omnisharp_dir = path.join(vscode.extensions.getExtension('ms-vscode.csharp').extensionPath, '.omnisharp', 'omnisharp');
+    
     ver_file = path.join(user_dir(), 'vscode.css_version.txt');
     settings = Settings.Load();
 

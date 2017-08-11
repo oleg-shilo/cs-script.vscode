@@ -41,7 +41,9 @@ export function load_project() {
         let current_folder = vscode.workspace.rootPath;
         let editor = vscode.window.activeTextEditor;
 
-        if (Utils.IsSamePath(vscode.workspace.rootPath, csproj_dir)) { //already loaded
+        let workspaceIsAlreadyLoaded = Utils.IsSamePath(vscode.workspace.rootPath, csproj_dir); 
+        
+        if (workspaceIsAlreadyLoaded) { 
             if (editor != null && !Utils.IsScript(editor.document.fileName)) {
                 vscode.window.showErrorMessage('The active document is not a C# code file. Please open a C# document and try again.');
             }
@@ -139,9 +141,6 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
 
     let proj_file = path.join(proj_dir, script_proj_name);
     let command = `mono "${cscs_exe}" -nl -l -proj:dbg "${scriptFile}"`;
-
-    if (!utils.isWin)
-        command = 'mono ' + command;
 
     let output = Utils.RunSynch(command);
 
