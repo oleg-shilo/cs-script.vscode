@@ -55,10 +55,10 @@ String.prototype.pathNormalize = function () {
     return path.normalize(this).split(/[\\\/]/g).join(path.posix.sep);
 }
 
-Array.prototype.firstOrDefault = function <T>(predicate?):T {
+Array.prototype.firstOrDefault = function <T>(predicate?): T {
     for (var index = 0; index < this.length; index++) {
         var element = this[index];
-        if (predicate== null || predicate(element))
+        if (predicate == null || predicate(element))
             return element;
     }
     return null;
@@ -66,18 +66,18 @@ Array.prototype.firstOrDefault = function <T>(predicate?):T {
 Array.prototype.first = function (predicate) {
     for (var index = 0; index < this.length; index++) {
         var element = this[index];
-        if (predicate== null || predicate(element))
+        if (predicate == null || predicate(element))
             return element;
     }
     throw new Error('The collection is empty');
 }
 
-Array.prototype.where = function<T> (predicate): Array<T> {
+Array.prototype.where = function <T>(predicate): Array<T> {
     return this.filter(predicate);
 }
 
-Array.prototype.cast = function<U> (): Array<U> {
-    return this.select(x=>x as U);
+Array.prototype.cast = function <U>(): Array<U> {
+    return this.select(x => x as U);
 }
 
 Array.prototype.select = function <T, U>(convert: (item: T) => U): Array<U> {
@@ -515,6 +515,23 @@ export class Utils {
         }
         return null;
     }
+
+    // public static getSearchDirs(projectFile: string): string[] {
+
+    //     let dirs = [];
+
+    //     if (fs.existsSync(projectFile)) {
+    //         let lines = fs.readFileSync(projectFile, 'utf8').lines();
+    //         for (var line of lines) {
+    //             if (line.contains('Probing')) {
+    //                 dirs.push(line.trim()
+    //                     .replace('<Probing Dir="', '')
+    //                     .replace('"/>', ''));
+    //             }
+    //         }
+    //     }
+    //     return dirs;
+    // }
 
     public static IsSamePath(abs_path1: string, abs_path2: string): boolean {
 

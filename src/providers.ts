@@ -7,22 +7,25 @@ import * as path from 'path';
 import { Uri, commands, window, HoverProvider, Position, CancellationToken, TextDocument, Hover, Definition, ProviderResult, Range, Location } from "vscode";
 import * as cs_script from "./cs-script";
 import * as utils from "./utils";
+import { Utils } from "./utils";
 
 function getCssDirective(document: TextDocument, position: Position): string {
 
     let word_range = document.getWordRangeAtPosition(position);
-    let word_start = word_range.start;
-    var word = document.getText(word_range).lines()[0];
+    if (word_range) {
+        let word_start = word_range.start;
+        var word = document.getText(word_range).lines()[0];
 
-    if (word.startsWith('css_') && word_start.character >= 2) {
-        // "//css_include"
-        let prefix_range = new Range(word_start.translate(0, -word_start.character), word_start);
-        let prefix = document.getText(prefix_range).lines()[0];
+        if (word.startsWith('css_') && word_start.character >= 2) {
+            // "//css_include"
+            let prefix_range = new Range(word_start.translate(0, -word_start.character), word_start);
+            let prefix = document.getText(prefix_range).lines()[0];
 
-        let directive = (prefix + word).trim();
+            let directive = (prefix + word).trim();
 
-        if (directive.startsWith('//css_'))
-            return directive;
+            if (directive.startsWith('//css_'))
+                return directive;
+        }
     }
     return null;
 }
@@ -35,33 +38,34 @@ interface HelpSection {
 let help_map: { [id: string]: HelpSection; };
 
 function parseSyntaxHelp(help: string): void {
+    if (help) {
+        let section_r = /-+\r?\n\/\/css_/g;
+        let trim_r = /-+\r?\n/g;
 
-    let section_r = /-+\r?\n\/\/css_/g;
-    let trim_r = /-+\r?\n/g;
+        let match, indexes = [];
+        let prev_index: number;
 
-    let match, indexes = [];
-    let prev_index: number;
+        help_map = {};
 
-    help_map = {};
+        while (match = section_r.exec(help)) {
+            if (prev_index) {
+                let section = help.substr(prev_index, match.index - prev_index).split(trim_r)[1];
 
-    while (match = section_r.exec(help)) {
-        if (prev_index) {
-            let section = help.substr(prev_index, match.index - prev_index).split(trim_r)[1];
+                let section_lines = section.lines(5);
 
-            let section_lines = section.lines(5);
+                let id = section_lines[0].split(' ', 1)[0]; // '//css_include <file>;'
+                let alt_id = section_lines
+                    .where(x => x.startsWith('Alias - //css'))
+                    .select(x => x.replace('Alias - ', '').trim())
+                    .firstOrDefault() as string;
 
-            let id = section_lines[0].split(' ', 1)[0]; // '//css_include <file>;'
-            let alt_id = section_lines
-                .where(x => x.startsWith('Alias - //css'))
-                .select(x => x.replace('Alias - ', '').trim())
-                .firstOrDefault() as string;
+                if (alt_id)
+                    help_map[alt_id] = { docOffset: prev_index, text: section };
 
-            if (alt_id)
-                help_map[alt_id] = { docOffset: prev_index, text: section };
-
-            help_map[id] = { docOffset: prev_index, text: section };
+                help_map[id] = { docOffset: prev_index, text: section };
+            }
+            prev_index = match.index;
         }
-        prev_index = match.index;
     }
 }
 
@@ -93,20 +97,53 @@ export class CSScriptCompletionItemProvider implements vscode.CompletionItemProv
         document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken):
         Thenable<vscode.CompletionItem[]> {
 
+
+        let items: vscode.CompletionItem[] = [];
+
         var word = getCssDirective(document, position);
+
         if (word != null) {
 
             if (!help_map)
                 parseSyntaxHelp(cs_script.generate_syntax_help());
 
-            let items: vscode.CompletionItem[] = [];
-
             for (var key in help_map) {
                 // vscode will be replacing a word so it will ignore '//' prefix. Thus we need to trim the insertion text as well; 
-                items.push({ label: key, kind: vscode.CompletionItemKind.Text, insertText:key.substr(2), documentation: help_map[key].text });
+                items.push({ label: key, kind: vscode.CompletionItemKind.Text, insertText: key.substr(2), documentation: help_map[key].text });
             }
 
             return Promise.resolve(items);
+        } else {
+
+            var line_text = document.lineAt(position).text;
+            if (line_text.trim().startsWith('//css_inc')) {
+                let script_dir = path.dirname(document.fileName);
+                let dir_items = fs.readdirSync(script_dir);
+
+                dir_items.forEach(name => {
+                    let full_path = path.join(script_dir, name);
+
+                    if (fs.lstatSync(full_path).isFile() && name.toLowerCase().endsWith('.cs'))
+                        items.push({ label: name, kind: vscode.CompletionItemKind.Text, sortText: '00', documentation: 'Script:\n' + full_path });
+
+                    // if (fs.lstatSync(full_path).isDirectory())
+                    //     items.push({ label: name + path.sep, kind: vscode.CompletionItemKind.Text, sortText: '01', documentation: "Folder:\n" + full_path });
+                });
+
+                let global_includes = process.env.CSSCRIPT_INC;
+
+                if (global_includes)
+                    fs.readdirSync(global_includes).forEach(name => {
+                        let full_path = path.join(global_includes, name);
+
+                        if (fs.lstatSync(full_path).isFile() && name.toLowerCase().endsWith('.cs'))
+                            items.push({ label: name, kind: vscode.CompletionItemKind.Text, sortText: '02', documentation: "Script:\n" + full_path });
+                    });
+
+                items.push({ label: '------------', kind: vscode.CompletionItemKind.Text, insertText: '', sortText: '03' }); // just a separator
+
+                return Promise.resolve(items);
+            };
         }
 
         return null;
@@ -116,7 +153,7 @@ export class CSScriptCompletionItemProvider implements vscode.CompletionItemProv
 let syntax_readme_selectedLine = -1;
 
 vscode.window.onDidChangeActiveTextEditor(editor => {
-    
+
     // 'new Location(...' in CSScriptDefinitionProvider does scrolling correctly but does not do the selection
 
     if (syntax_readme_selectedLine != -1) {

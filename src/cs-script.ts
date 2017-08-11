@@ -138,7 +138,7 @@ export function parse_proj_dir(proj_dir: string): string {
 function generate_proj_file(proj_dir: string, scriptFile: string): void {
 
     let proj_file = path.join(proj_dir, script_proj_name);
-    let command = `"${cscs_exe}" -nl -l -proj:dbg "${scriptFile}"`;
+    let command = `mono "${cscs_exe}" -nl -l -proj:dbg "${scriptFile}"`;
 
     if (!utils.isWin)
         command = 'mono ' + command;
@@ -165,8 +165,12 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
             if (!line.trim().endsWith('System.ValueTuple.dll')) // System.ValueTuple.dll is already added from the Omnisharp package
                 refs += '    <Reference Include="' + line.substr(4).pathNormalize() + '" />' + os.EOL;
         }
-        if (line.startsWith('file:'))
+
+        else if (line.startsWith('file:'))
             includes += '    <Compile Include="' + line.substr(5).pathNormalize() + '"/>' + os.EOL;
+
+        // else if (line.startsWith('searchDir:'))
+        //     includes += '    <Probing Dir="' + line.substr(10).pathNormalize() + '"/>' + os.EOL;
     });
 
     create_dir(proj_dir);
@@ -196,7 +200,7 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
     let launch_dir = path.join(proj_dir, '.vscode');
     utils.create_dir(launch_dir);
 
-    fs.writeFileSync( path.join(launch_dir, 'launch.json'), launch_content.pathNormalize(), { encoding: 'utf8' });
+    fs.writeFileSync(path.join(launch_dir, 'launch.json'), launch_content.pathNormalize(), { encoding: 'utf8' });
 
     commands.executeCommand('cs-script.refresh_tree');
 }
@@ -418,13 +422,40 @@ export function engine_help() {
 }
 // -----------------------------------
 export function generate_syntax_help(force: boolean = false): string {
-
-    // if (fs.existsSync(syntax_readme))
     let command = `mono "${cscs_exe}" -syntax`;
     let output = Utils.RunSynch(command);
     fs.writeFileSync(syntax_readme, output, { encoding: 'utf8' });
     return output;
 }
+// -----------------------------------
+// export function getImportableScripts(): string[] {
+//     let files = [];
+//     let lines: string[];
+//     let editor = vscode.window.activeTextEditor;
+//     let file: string;
+
+//     if (Utils.IsSamePath(vscode.workspace.rootPath, csproj_dir)) { // cs-script workspace
+//         let proj_file = path.join(csproj_dir, 'script.csproj');
+
+//         Utils.getSearchDirs(proj_file).forEach(dir=> {
+
+//             let dir_items = fs.readdirSync(dir);
+
+//             dir_items.forEach(name => {
+//                 if (fs.lstatSync(path.join(dir, name)).isFile() && name.toLowerCase().endsWith('.cs'))
+//                     files.push(name);
+//             });
+//         });
+//     }
+//     else if (Utils.IsScript(editor.document.fileName)) {
+//         file = editor.document.fileName;
+//         editor.document.save();
+//         // not implemented yet
+//         return files;
+//     }
+
+//     return files;
+// }
 // -----------------------------------
 export function new_script() {
     with_lock(() => {
@@ -670,9 +701,11 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
             ext_context.globalState.update(startup_file_key, '');
             commands.executeCommand('vscode.open', Uri.file(file));
         }
+
+
         return utils.ActivateDiagnostics(context);
     } catch (error) {
-        console.log(error);
+        // console.log(error);
         vscode.window.showErrorMessage(String(error));
     }
 };
