@@ -37,9 +37,10 @@ declare global {
 
     interface Array<T> {
         where<T>(filter: (T) => boolean): Array<T>;
+        any<T>(filter: (T) => boolean): boolean;
         select<U>(convert: (T) => U): Array<U>;
         cast<U>(): Array<U>;
-        first<T>(filter: (T) => boolean): T;
+        first<T>(filter?: (T) => boolean): T;
         firstOrDefault<T>(filter?: (T) => boolean): T;
     }
 }
@@ -78,6 +79,15 @@ Array.prototype.where = function <T>(predicate): Array<T> {
 
 Array.prototype.cast = function <U>(): Array<U> {
     return this.select(x => x as U);
+}
+
+Array.prototype.any = function <T>(predicate): boolean {
+
+    for (var i = 0; i < this.length; i++) {
+        if (predicate(this[i]))
+            return true;
+    }
+    return false;
 }
 
 Array.prototype.select = function <T, U>(convert: (item: T) => U): Array<U> {
@@ -214,7 +224,7 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     ext_context = context;
     ext_version = vscode.extensions.getExtension('oleg-shilo.cs-script').packageJSON.version
     omnisharp_dir = path.join(vscode.extensions.getExtension('ms-vscode.csharp').extensionPath, '.omnisharp', 'omnisharp');
-    
+
     ver_file = path.join(user_dir(), 'vscode.css_version.txt');
     settings = Settings.Load();
 
@@ -515,6 +525,21 @@ export class Utils {
             }
         }
         return null;
+    }
+
+    public static getScriptFiles(projectFile: string): string[] {
+        let files: string[] = []
+        if (fs.existsSync(projectFile)) {
+            let lines = fs.readFileSync(projectFile, 'utf8').lines();
+            for (var line of lines) {
+                if (line.contains('Compile')) {
+                    files.push(line.trim()
+                        .replace('<Compile Include="', '')
+                        .replace('"/>', ''));
+                }
+            }
+        }
+        return files;
     }
 
     // public static getSearchDirs(projectFile: string): string[] {

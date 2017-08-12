@@ -41,9 +41,9 @@ export function load_project() {
         let current_folder = vscode.workspace.rootPath;
         let editor = vscode.window.activeTextEditor;
 
-        let workspaceIsAlreadyLoaded = Utils.IsSamePath(vscode.workspace.rootPath, csproj_dir); 
-        
-        if (workspaceIsAlreadyLoaded) { 
+        let workspaceIsAlreadyLoaded = Utils.IsSamePath(vscode.workspace.rootPath, csproj_dir);
+
+        if (workspaceIsAlreadyLoaded) {
             if (editor != null && !Utils.IsScript(editor.document.fileName)) {
                 vscode.window.showErrorMessage('The active document is not a C# code file. Please open a C# document and try again.');
             }
@@ -57,7 +57,10 @@ export function load_project() {
                     commands.executeCommand('vscode.open', Uri.file(scriptFile));
                 }
                 else {
-                    editor.document.save();
+                    if (editor.document.isDirty) {
+                        editor.document.save();
+                        return;
+                    }
                     generate_proj_file(csproj_dir, editor.document.fileName);
                 }
 
@@ -75,7 +78,10 @@ export function load_project() {
                 outputChannel.clear();
                 outputChannel.appendLine("Loading OmniSharp project...");
 
-                editor.document.save();
+                if (editor.document.isDirty) {
+                    editor.document.save();
+                    return;
+                }
 
                 generate_proj_file(csproj_dir, editor.document.fileName);
 
@@ -213,7 +219,6 @@ export function print_project() {
     else {
         print_project_for_document();
     }
-
 }
 // -----------------------------------
 export function print_project_for_document() {
@@ -243,7 +248,7 @@ export function print_project_for(file: string) {
                 unlock();
             });
         });
-       else
+    else
         vscode.window.showErrorMessage(`"${file}" is not a valid C# script file.`);
 }
 // -----------------------------------
@@ -708,12 +713,26 @@ function onActiveEditorSelectionChange(event: vscode.TextEditorSelectionChangeEv
         output_line_last_click = event.textEditor.selection.start.line;
     }
 }
+// -----------------------------------
+function onDidSaveWorkspaceTextDocument(document: vscode.TextDocument) {
+
+    if (Utils.IsSamePath(vscode.workspace.rootPath, csproj_dir)) {
+        let proj_file = path.join(csproj_dir, 'script.csproj');
+
+        let scripts = Utils.getScriptFiles(proj_file);
+        if (scripts.any(x => x.pathNormalize() == document.fileName.pathNormalize()))
+            generate_proj_file(csproj_dir, scripts.first());
+    }
+
+}
+// -----------------------------------
 
 export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     try {
         ext_context = context;
         vscode.window.onDidChangeActiveTextEditor(onActiveEditorChange);
         vscode.window.onDidChangeTextEditorSelection(onActiveEditorSelectionChange);
+        vscode.workspace.onDidSaveTextDocument(onDidSaveWorkspaceTextDocument);
 
         let file = ext_context.globalState.get('cs-script.open_file_at_startup', '');
         if (file != null) {
@@ -722,7 +741,6 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
         }
 
         exec(`mono "${cscs_exe}" -preload`);
-        // Utils.Run(`mono "${cscs_exe}" -preload`, (code, output) => {});
 
         return utils.ActivateDiagnostics(context);
     } catch (error) {
