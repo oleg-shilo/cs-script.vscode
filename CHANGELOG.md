@@ -1,5 +1,15 @@
 # Change Log
 
+## 1.3.0
+- Added project tree view
+- Implemented CS-Script execution via on-fly generated specific launch.json
+- Implemented CS-Script specific intellisense
+  * Added 'Go to definition' for CS-Script directives
+  * Added auto-completion for CS-Script directives
+  * Added auto-completion for path items in CS-Script `//css_include` directive
+  * Added 'on hover' support for CS-Script directives
+  * Added "Show project info" tree view button
+
 ## 1.2.1
 - Fixed problem with generating debug info for Mono-Debug on Windows
 
