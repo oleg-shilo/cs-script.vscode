@@ -24,7 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.registerTreeDataProvider('cs-script', treeViewProvider);
 
     context.subscriptions.push(vscode.languages.registerHoverProvider('csharp', new CSScriptHoverProvider()));
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider('csharp', new CSScriptCompletionItemProvider(), '.', '>'));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider('csharp', new CSScriptCompletionItemProvider(), '.', '_'));
     context.subscriptions.push(vscode.languages.registerDefinitionProvider('csharp', new CSScriptDefinitionProvider()));
 
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.refresh_tree', () => treeViewProvider.refresh()));
@@ -47,20 +47,6 @@ export function activate(context: vscode.ExtensionContext) {
                 status: 'initialConfiguration'
             };
         }
-
-        // Attach any properties that weren't explicitly set.			
-        // debugConfig.cwd = debugConfig.cwd || "${workspaceRoot}";
-        // debugConfig.args = debugConfig.args || [];
-        // debugConfig.sdkPath = debugConfig.sdkPath || this.sdks.dart;
-        // debugConfig.debugSdkLibraries = debugConfig.debugSdkLibraries || config.debugSdkLibraries;
-        // debugConfig.debugExternalLibraries = debugConfig.debugExternalLibraries || config.debugExternalLibraries;
-        // if (debugConfig.checkedMode === undefined)
-        //     debugConfig.checkedMode = true;
-
-        // vs.commands.executeCommand('vscode.startDebug', debugConfig);
-        // return {
-        //     status: 'ok'
-        // };
     }));
 };
 

@@ -109,6 +109,10 @@ export function with_lock(callback: () => void): void {
         }
 }
 
+export function is_ready(): boolean {
+    return _ready;
+}
+
 export function lock(): boolean {
 
     if (!_environment_ready) {
@@ -172,7 +176,12 @@ export function copy_file_to(fileName: string, srcDir: string, destDir: string):
 
 export function copy_file_to_sync(fileName: string, srcDir: string, destDir: string): void {
     const fse = require('fs-extra')
-    fse.copySync(path.join(srcDir, fileName), path.join(destDir, fileName));
+
+    try {
+        fse.copySync(path.join(srcDir, fileName), path.join(destDir, fileName));
+    } catch (error) {
+        console.log(error.toString());
+    }
 }
 
 export function user_dir(): string {
@@ -248,7 +257,6 @@ export function deploy_engine(): void {
             }
         }
 
-
         if (need_to_deploy) {
             statusBarItem.text = '$(versions) Deploying CS-Script...';
             statusBarItem.show();
@@ -322,6 +330,9 @@ function deploy_files(): void {
         statusBarItem.hide();
 
         _ready = true;
+
+        // commands.executeCommand('cs-script.refresh_tree');
+
     } catch (error) {
         console.log(error);
         vscode.window.showErrorMessage('CS-Script: ' + String(error));
@@ -598,26 +609,27 @@ export class Utils {
         return execSync(command).toString();
     }
 
-    public static Run(command: string, on_done: (number, string) => void) {
+    public static Run(command: string, on_done?: (number, string) => void) {
 
         let output: string = '';
 
         let p = exec(command);
         p.stdout.on('data', data => output += data);
         p.stderr.on('data', data => output += data);
-        p.on('close', code => on_done(code, output));
+        p.on('close', code => {
+            if (on_done) on_done(code, output);
+        });
     }
 }
 
 export function preload_roslyn() {
     try {
+
         let exe = path.join(user_dir(), 'cscs.exe');
         let command = 'mono "' + exe + '" -nl -preload';
-        Utils.Run(command, (code, output) => {
-            // console.log(output);
-        });
-    } catch (error) {
+        Utils.Run(command);
 
+    } catch (error) {
     }
 }
 export function ensure_default_config(cscs_exe: string, on_done?: (file: string) => void) {

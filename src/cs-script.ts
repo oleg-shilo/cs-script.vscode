@@ -601,7 +601,6 @@ export function run() {
     with_lock(() => {
 
         // todo
-        // - check if document is saved or untitled (and probably save it)
         // - check if process is already running
         // - read cscs location from config
         // - ensure running via mono (at least on Linux) - CONFIG BASED
@@ -740,9 +739,8 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
             commands.executeCommand('vscode.open', Uri.file(file));
         }
 
-        exec(`mono "${cscs_exe}" -preload`);
-
         return utils.ActivateDiagnostics(context);
+        
     } catch (error) {
         // console.log(error);
         vscode.window.showErrorMessage(String(error));

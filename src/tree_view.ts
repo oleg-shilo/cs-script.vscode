@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Uri } from "vscode";
-
+import { Uri, commands } from "vscode";
+import * as utils from "./utils";
 
 export class ProjectTreeProvider implements vscode.TreeDataProvider<Dependency> {
 
@@ -42,12 +42,6 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<Dependency> 
 	private getScriptRefs(asms: string[]): Dependency[] {
 		return asms.map(asm => {
 			return new Dependency(asm, vscode.TreeItemCollapsibleState.None,
-				// {
-				// 	command: 'vscode.open',
-				// 	title: '',
-				// 	tooltip: 'Script Assembly: ',
-				// 	arguments: [Uri.file(asm)],
-				// },
 				null,
 				null, 'assembly');
 		});
@@ -60,36 +54,41 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<Dependency> 
 		let nodes = [];
 		nodes.push(refsNode);
 
-		let items = this.aggregateScriptItems();
+		if (!utils.is_ready()) {
+			setTimeout(() => commands.executeCommand('cs-script.refresh_tree') , 500);
+		}
+		else {
+			let items = this.aggregateScriptItems();
 
-		if (items)
-			items.forEach(item => {
-				if (item.startsWith('file:')) {
-					let file = item.substr(5);
-					let role = "Primary";
+			if (items)
+				items.forEach(item => {
+					if (item.startsWith('file:')) {
+						let file = item.substr(5);
+						let role = "Primary";
 
-					if (nodes.length > 1)
-						role = "Imported";
+						if (nodes.length > 1)
+							role = "Imported";
 
-					let node = new Dependency(
-						path.basename(file),
-						vscode.TreeItemCollapsibleState.None,
-						{
-							command: 'vscode.open',
-							title: '',
-							tooltip: role + ' script: ' + file,
-							arguments: [Uri.file(file)],
-						},
-						null,
-						role.toLowerCase()
-					)
+						let node = new Dependency(
+							path.basename(file),
+							vscode.TreeItemCollapsibleState.None,
+							{
+								command: 'vscode.open',
+								title: '',
+								tooltip: role + ' script: ' + file,
+								arguments: [Uri.file(file)],
+							},
+							null,
+							role.toLowerCase()
+						)
 
-					nodes.push(node);
-				}
-				else if (item.startsWith('ref:'))
-					refsNode.children.push(item.substr(4));
+						nodes.push(node);
+					}
+					else if (item.startsWith('ref:'))
+						refsNode.children.push(item.substr(4));
 
-			});
+				});
+		}
 
 		return nodes;
 	}

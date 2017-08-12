@@ -160,11 +160,6 @@
 
         "menus": {
 			"view/title": [
-				{
-					"command": "cs-script.refresh_tree",
-					"when": "view == cs-script",
-					"group": "navigation"
-                },
                 {
 					"command": "cs-script.show_tree_data",
 					"when": "view == cs-script",
@@ -173,7 +168,7 @@
             ],
 			"view/item/context": [
 				{
-                    "command": "cs-script.refresh_tree",
+					"command": "cs-script.show_tree_data",
                     "when": "view == cs-script"
 				}
 			],
