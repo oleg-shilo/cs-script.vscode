@@ -2,7 +2,7 @@
 
 ## 1.3.0
 - Added project tree view
-- Implemented CS-Script execution via on-fly generated specific launch.json
+- Implemented CS-Script execution with standard F5 via on-fly generated specific launch.json
 - Implemented CS-Script specific intellisense
   * Added 'Go to definition' for CS-Script directives
   * Added auto-completion for CS-Script directives

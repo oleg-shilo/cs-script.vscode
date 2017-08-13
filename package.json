@@ -85,7 +85,7 @@
 			},
             {
 				"command": "cs-script.show_tree_data",
-				"title": "Show project info",
+				"title": "Show project info in Output panel",
                 "icon": {
                     "light": "./images/icons/document.light.svg",
                     "dark": "./images/icons/document.svg"
@@ -288,7 +288,7 @@
     "devDependencies": {
         "typescript": "^2.0.3",
         "vscode": "^1.0.0",
-        "mocha": "^2.3.3",
+        "mocha": "^3.2.0",
         "@types/node": "^6.0.40",
         "@types/mocha": "^2.2.32"
     }
