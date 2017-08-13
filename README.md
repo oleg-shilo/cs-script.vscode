@@ -45,9 +45,9 @@ The extension is supported on all OSs where VSCode can run.
 Below are the road map highlights only. Some more detailed information are available in the last section of this document.
 - Add support fro C# 7 just out of box. (**_Done in v1.2.0_**)
 - Add toolbar buttons for most frequent CS-Script commands. (**_Done in v1.2.0_**)
-- Adding a [custom view](https://code.visualstudio.com/updates/v1_13#_custom-views) containing all script dependencies (e.g. imported scripts, DLLs)
-- Integrate CS-Script specific autocompletion with default C# autocompletion (OmniSharp).
-- Integrate CS-Script run/debug commands with the default launch actions. 
+- Adding a [custom view](https://code.visualstudio.com/updates/v1_13#_custom-views)  containing all script dependencies (e.g. imported scripts, DLLs) (**_Done in v1.3.0_**)
+- Integrate CS-Script specific autocompletion with default C# autocompletion (OmniSharp). (**_Done in v1.3.0_**)
+- Integrate CS-Script run/debug commands with the default launch actions. (**_Done in v1.3.0_**)
 - Allow fallback autocompletion (similar to Sublime Text) when OmniSharp is not activated.
 - Allow OmniSharp autocompletion to be integrated without loading the folder. May not be possible due to the OmniSharp limitations.  
 
@@ -84,8 +84,12 @@ Open the C# file and execute "check" command (F7):
 ![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_check.gif)
 
 _**Debugging**_<br>
+_Command: `Debug: Start Debugging`<br>_
+Open the C# file and load it with "cs-script: load project" command (Ctrl+F7). After that you can start debugging the same way as with any VSCode workspace/language: by pressing F5 (Debug: Start Debugging command):
+
+_**Debugging (without workspace)**_<br>
 _Command: `cs-script: debug`<br>_
-Open the C# file and execute "debug" command (F7):
+Open the C# file and execute "debug" command (Alt+F5):
 
 ![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_debug1.gif)
 
@@ -95,13 +99,20 @@ Open the C# file and execute "print project" command (Alt+F7):
 
 ![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_projA.gif)
 
-_**Enabling IntelliSense**_<br>
+
+![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_projB.gif)
+
+_**Using CS-Script IntelliSense**_<br>
+_Command: `N/A`<br>_
+Open the C# file and start using normal intellisense triggers with CS-Script specific symbols: _hover, go-to-definition, autocompletion_.
+
+![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/cs-s_intellisense.gif)
+
+_**Enabling C# IntelliSense**_<br>
 _Command: `cs-script: load project`<br>_
 Open the C# file and execute "load project" command (ctrl+F7):
 
 _Note: currently VSCode project model does not allow programmatic opening of a project/folder and a file. Thus initially you need to trigger "load project" command twice to achieve the desired outcome. First time to load the folder and second time to load the file. But after the project/folder is loaded activating a C# IntelliSense is always a single step operation. This minor limitation is going to be addressed in the future releases. Providing VSCode team will cooperate._   
-
-![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_projB.gif)
 
 <hr>
 
@@ -110,7 +121,11 @@ _**Project structure**_<br>
 VSCode is a subject to a serious limitation - the project model is based on a folder and doesn't allow any customization. To put it simple, VSCode executes/debugs folders while CS-Script files. While the extension completely overcomes this limitation for execution and debugging, the Intellisense support is only enabled when OmniSharp project is loaded. To make it easier _CS-Script.VSCode_ allows generation and loading required OmniSharp project in a single-step (`load project` command or `ctrl+7`). Though in the future the solution most likely will be extended to overcome this limitation as well.
 
 _**C# 7**_<br>
-The extension comes with C# 7 support (via Roslyn) enabled by default. However Roslyn has an unfortunate limitation - it is extremely heavy and slow on startup. Thus it can take ~3-5 seconds to compile the fist script. Roslyn team did a good job by caching runtime instances of the compilers thus any consequent compilations will require only milliseconds to be accomplished. Unfortunately on Linux/Mono the same caching mechanism is not available so the compilation will consistently take up to 1.5 seconds (tested on VMWare Mint 18.1 4GB RAM on i7-5500U 2*2.40 GHz). Hopefully Roslyn team will extend runtime caching in the future releases of Mono. 
+The extension comes with C# 7 support (via Roslyn) enabled by default. However Roslyn has an unfortunate limitation - it is extremely heavy and slow on startup. Thus it can take ~3-5 seconds to do the first compilation of a script. 
+
+Roslyn team did a good job by caching runtime instances of the compilers thus any consequent compilations will require only milliseconds to be accomplished. Unfortunately on Linux/Mono the same caching mechanism is not available so the compilation will consistently take up to 1.5 seconds (tested on VMWare Mint 18.1 4GB RAM on i7-5500U 2*2.40 GHz). Hopefully Roslyn team will extend runtime caching in the future releases of Mono. 
+
+Note, the Roslyn startup delay has no affect on script **execution**. CS-Script uses application level JIT compilation (similar to Python caching) that avoids compiling scripts if they are not changed since the lats execution.  
 
 <hr>
 
