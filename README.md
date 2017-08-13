@@ -65,6 +65,9 @@ Note: the most frequently used CS-Script command can also be accessed directly v
 
 ![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/toolbar.png)
 
+Be aware that apart from allowing typical C# Intellisense this extension also provides C-Script specific code assistance features (mouse hover, go-to-definition and autocompletion):
+
+![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/cs-s_intellisense.gif)
 
 ## Usage
 
