@@ -113,6 +113,10 @@ export function is_ready(): boolean {
     return _ready;
 }
 
+export function is_busy(): boolean {
+    return _busy;
+}
+
 export function lock(): boolean {
 
     if (!_environment_ready) {

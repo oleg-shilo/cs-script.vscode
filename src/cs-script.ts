@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { exec } from 'child_process';
 import { Uri, commands, DiagnosticCollection, DiagnosticSeverity, TextEditorSelectionChangeKind, Selection } from "vscode";
-import { ErrorInfo, Utils, diagnosticCollection, lock, unlock, with_lock, actual_output, settings, VSCodeSettings, user_dir, ensure_default_config, create_dir } from "./utils";
+import { ErrorInfo, Utils, diagnosticCollection, lock, unlock, is_busy, with_lock, actual_output, settings, VSCodeSettings, user_dir, ensure_default_config, create_dir } from "./utils";
 
 export let syntax_readme = path.join(user_dir(), 'cs-script.syntax.txt')
 let ext_context: vscode.ExtensionContext;
@@ -51,20 +51,24 @@ export function load_project() {
                 outputChannel.show(true);
                 outputChannel.clear();
                 outputChannel.appendLine("Loading script...");
+                try {
 
-                if (editor == null) {
-                    let scriptFile = parse_proj_dir(csproj_dir);
-                    commands.executeCommand('vscode.open', Uri.file(scriptFile));
-                }
-                else {
-                    if (editor.document.isDirty) {
-                        editor.document.save();
-                        return;
+                    if (editor == null) {
+                        let scriptFile = parse_proj_dir(csproj_dir);
+                        commands.executeCommand('vscode.open', Uri.file(scriptFile));
                     }
-                    generate_proj_file(csproj_dir, editor.document.fileName);
-                }
+                    else {
+                        if (editor.document.isDirty) {
+                            editor.document.save();
+                            return;
+                        }
+                        generate_proj_file(csproj_dir, editor.document.fileName);
+                    }
 
-                setTimeout(() => outputChannel.clear(), 700);
+                }
+                finally {
+                    setTimeout(() => outputChannel.clear(), 700);
+                }
             }
         }
         else {
@@ -145,48 +149,50 @@ export function parse_proj_dir(proj_dir: string): string {
 
 function generate_proj_file(proj_dir: string, scriptFile: string): void {
 
-    let proj_file = path.join(proj_dir, script_proj_name);
-    let command = `mono "${cscs_exe}" -nl -l -proj:dbg "${scriptFile}"`;
+    try {
 
-    let output = Utils.RunSynch(command);
+        let proj_file = path.join(proj_dir, script_proj_name);
+        let command = `mono "${cscs_exe}" -nl -l -proj:dbg "${scriptFile}"`;
 
-    let lines: string[] = output.trim().lines().filter(actual_output);
-    let refs = '';
-    let includes = '';
+        let output = Utils.RunSynch(command);
 
-    let System_ValueTuple_dll = null;
-    if (utils.isWin) {
-        System_ValueTuple_dll = path.join(user_dir(), 'roslyn', 'System.ValueTuple.dll').pathNormalize();
-    }
-    else {
-        refs += '    <Reference Include="System.Runtime.dll" />' + os.EOL;
-        System_ValueTuple_dll = path.join(utils.omnisharp_dir, 'System.ValueTuple.dll').pathNormalize();
-    }
+        let lines: string[] = output.trim().lines().filter(actual_output);
+        let refs = '';
+        let includes = '';
 
-    refs += '    <Reference Include="' + System_ValueTuple_dll + '" />' + os.EOL;
-
-    lines.forEach((line, i) => {
-        if (line.startsWith('ref:')) {
-            if (!line.trim().endsWith('System.ValueTuple.dll')) // System.ValueTuple.dll is already added from the Omnisharp package
-                refs += '    <Reference Include="' + line.substr(4).pathNormalize() + '" />' + os.EOL;
+        let System_ValueTuple_dll = null;
+        if (utils.isWin) {
+            System_ValueTuple_dll = path.join(user_dir(), 'roslyn', 'System.ValueTuple.dll').pathNormalize();
+        }
+        else {
+            refs += '    <Reference Include="System.Runtime.dll" />' + os.EOL;
+            System_ValueTuple_dll = path.join(utils.omnisharp_dir, 'System.ValueTuple.dll').pathNormalize();
         }
 
-        else if (line.startsWith('file:'))
-            includes += '    <Compile Include="' + line.substr(5).pathNormalize() + '"/>' + os.EOL;
+        refs += '    <Reference Include="' + System_ValueTuple_dll + '" />' + os.EOL;
 
-        // else if (line.startsWith('searchDir:'))
-        //     includes += '    <Probing Dir="' + line.substr(10).pathNormalize() + '"/>' + os.EOL;
-    });
+        lines.forEach((line, i) => {
+            if (line.startsWith('ref:')) {
+                if (!line.trim().endsWith('System.ValueTuple.dll')) // System.ValueTuple.dll is already added from the Omnisharp package
+                    refs += '    <Reference Include="' + line.substr(4).pathNormalize() + '" />' + os.EOL;
+            }
 
-    create_dir(proj_dir);
+            else if (line.startsWith('file:'))
+                includes += '    <Compile Include="' + line.substr(5).pathNormalize() + '"/>' + os.EOL;
 
-    let content = fs.readFileSync(csproj_template, 'utf8')
-        .replace('<Reference Include="$ASM$"/>', refs.trim())
-        .replace('<Compile Include="$FILE$"/>', includes.trim());
+            // else if (line.startsWith('searchDir:'))
+            //     includes += '    <Probing Dir="' + line.substr(10).pathNormalize() + '"/>' + os.EOL;
+        });
 
-    fs.writeFileSync(proj_file, content, { encoding: 'utf8' });
+        create_dir(proj_dir);
 
-    let launch_content = `
+        let content = fs.readFileSync(csproj_template, 'utf8')
+            .replace('<Reference Include="$ASM$"/>', refs.trim())
+            .replace('<Compile Include="$FILE$"/>', includes.trim());
+
+        fs.writeFileSync(proj_file, content, { encoding: 'utf8' });
+
+        let launch_content = `
 {
     "version": "0.2.0",
     "configurations": [
@@ -202,12 +208,16 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
     ]
 }`;
 
-    let launch_dir = path.join(proj_dir, '.vscode');
-    utils.create_dir(launch_dir);
+        let launch_dir = path.join(proj_dir, '.vscode');
+        utils.create_dir(launch_dir);
 
-    fs.writeFileSync(path.join(launch_dir, 'launch.json'), launch_content.pathNormalize(), { encoding: 'utf8' });
+        fs.writeFileSync(path.join(launch_dir, 'launch.json'), launch_content.pathNormalize(), { encoding: 'utf8' });
 
-    commands.executeCommand('cs-script.refresh_tree');
+        commands.executeCommand('cs-script.refresh_tree');
+    } catch (error) {
+        vscode.window.showErrorMessage(`Cannot generate project from the script. Check the //css_ref and //css_in directives.`);
+        throw error;
+    }
 }
 // -----------------------------------
 export function print_project() {
@@ -266,14 +276,18 @@ export function get_project_tree_items() {
         editor.document.save();
     }
 
-    if (file)
-        with_lock(() => {
-            // no need to include debug.cs into the view so drop the ':dbg' switch
-            let output: string = Utils.RunSynch(`mono "${cscs_exe}" -nl -l -proj "${file}"`);
-            lines = output.lines().filter(actual_output);
-            unlock();
-        });
-
+    if (file) {
+        if (!is_busy())
+            with_lock(() => {
+                // no need to include debug.cs into the view so drop the ':dbg' switch
+                let output: string = Utils.RunSynch(`mono "${cscs_exe}" -nl -l -proj "${file}"`);
+                lines = output.lines().filter(actual_output);
+                unlock();
+            });
+        else {
+            setTimeout(() => commands.executeCommand('cs-script.refresh_tree') , 500);
+        }
+    }
     return lines;
 }
 // -----------------------------------
@@ -740,7 +754,7 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
         }
 
         return utils.ActivateDiagnostics(context);
-        
+
     } catch (error) {
         // console.log(error);
         vscode.window.showErrorMessage(String(error));

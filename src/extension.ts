@@ -1,4 +1,9 @@
 'use strict';
+// TODO:
+// #4 Project fails to load if the script has cs-script directive invalid syntax.
+// Ctrl+F5 shows cs-script busy, but executes the script for every run of the modified script
+
+
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
