@@ -16,10 +16,10 @@ The extension provides a very thin layer of own functionality. Its primary respo
 ## Minimal set of dependencies (third-party extensions)
 Latest Mono from http://www.mono-project.com/download/ and the following VSCode extensions:
 
+Note, you may need to add Mono to the system path manually if it didn't happen for you during the Mono installation. 
+
 ![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/dependencies.png)
 <hr>
-
-
 
 ## Functionality
 
