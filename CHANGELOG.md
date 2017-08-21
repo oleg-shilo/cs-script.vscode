@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.3.2
+- 'Check syntax' action that became in conflict with the new "scripted arg" support.
+
 ## 1.3.1
 - Issue #4: Project fails to load if the script has cs-script directive invalid syntax.
 - Issue #5: Executing detached script (Ctrl+F5) work OK but sometimes trigger "is busy" warning message.
