@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.3.1
+- Issue #4: Project fails to load if the script has cs-script directive invalid syntax.
+- Issue #5: Executing detached script (Ctrl+F5) work OK but sometimes trigger "is busy" warning message.
+- Updated cs-script engine to v3.27.3 (assorted Linux improvements)
+
 ## 1.3.0
 - Added project tree view
 - Implemented CS-Script execution with standard F5 via on-fly generated specific launch.json

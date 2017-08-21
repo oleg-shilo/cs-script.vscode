@@ -2,7 +2,7 @@
     "name": "cs-script",
     "displayName": "CS-Script",
     "description": "Execution, debugging and editing C# code that targets .NET and Mono (no .NET Core required) ",
-    "version": "1.3.0",
+    "version": "1.3.1",
     "publisher": "oleg-shilo",
     "icon": "images/css_logo.png",
     "engines": {
