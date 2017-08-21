@@ -46,13 +46,13 @@
     "main": "./out/src/extension",
     "contributes": {
         "views": {
-			"explorer": [
-				{
-					"id": "cs-script",
-					"name": "CS-Script - Active"
-				}
-			]
-		},
+            "explorer": [
+                {
+                    "id": "cs-script",
+                    "name": "CS-Script - Active"
+                }
+            ]
+        },
         "configuration": {
             "type": "object",
             "title": "CS-Script configuration",
@@ -76,21 +76,21 @@
         },
         "commands": [
             {
-				"command": "cs-script.refresh_tree",
-				"title": "Refresh",
+                "command": "cs-script.refresh_tree",
+                "title": "Refresh",
                 "icon": {
                     "light": "./images/icons/refresh.light.svg",
                     "dark": "./images/icons/refresh.svg"
                 }
-			},
+            },
             {
-				"command": "cs-script.show_tree_data",
-				"title": "Show project info in Output panel",
+                "command": "cs-script.show_tree_data",
+                "title": "Show project info in Output panel",
                 "icon": {
                     "light": "./images/icons/document.light.svg",
                     "dark": "./images/icons/document.svg"
                 }
-			},
+            },
             {
                 "command": "cs-script.debug",
                 "title": "CS-Script: Debug",
@@ -110,7 +110,7 @@
             {
                 "command": "cs-script.run_in_terminal",
                 "title": "CS-Script: Run in terminal",
-                "icon":  {
+                "icon": {
                     "light": "./images/icons/run.terminal.light.svg",
                     "dark": "./images/icons/run.terminal.svg"
                 }
@@ -156,22 +156,20 @@
                 "title": "CS-Script: About"
             }
         ],
-
-
         "menus": {
-			"view/title": [
+            "view/title": [
                 {
-					"command": "cs-script.show_tree_data",
-					"when": "view == cs-script",
-					"group": "navigation"
-				}
+                    "command": "cs-script.show_tree_data",
+                    "when": "view == cs-script",
+                    "group": "navigation"
+                }
             ],
-			"view/item/context": [
-				{
-					"command": "cs-script.show_tree_data",
+            "view/item/context": [
+                {
+                    "command": "cs-script.show_tree_data",
                     "when": "view == cs-script"
-				}
-			],
+                }
+            ],
             "editor/title": [
                 {
                     "when": "resourceLangId == csharp",
@@ -281,9 +279,7 @@
         "mkdirp": "^0.5.1",
         "vscode": "^1.0.0"
     },
-    "extensionDependencies": [
-        
-    ],
+    "extensionDependencies": [],
     "license": "SEE LICENSE IN LICENSE.md",
     "devDependencies": {
         "typescript": "^2.0.3",
