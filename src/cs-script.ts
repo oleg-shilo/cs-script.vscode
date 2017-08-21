@@ -271,7 +271,7 @@ export function get_project_tree_items() {
         let proj_file = path.join(csproj_dir, 'script.csproj');
         file = Utils.getScriptName(proj_file);
     }
-    else if (Utils.IsScript(editor.document.fileName)) {
+    else if (editor && Utils.IsScript(editor.document.fileName)) {
         file = editor.document.fileName;
         editor.document.save();
     }
