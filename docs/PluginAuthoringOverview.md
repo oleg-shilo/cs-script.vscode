@@ -113,56 +113,57 @@ __Visual Studio Code (VSCode)__
 
 *Audience*
 
-VSCode shares many similarities with ST3. Including having very large army of very devoted followers. Due to the superior extension hosting model the variety of the extensions is arguably higher then for any other editor. This largely contributes to the constantly growing popularity of the editor    
+VSCode shares many similarities with ST3. Including having a very large army of very devoted followers. Due to the superior extension hosting model the **variety** of the extensions is arguably higher then for any other editor. This largely contributes to the constantly growing popularity of the editor    
 
 
 *User experience*
 
-Well, that's it, it is the most strong VSCode selling point.
+Well, that's it, this is the strongest VSCode selling point.
 
-The text rendering engine is practically the same as in Atom. VECode uses Electron (Atom fork). Thus when it comes to teh text editing experience it is roughly the same. But that extra, which VSCode offers is what makes it so different.
+The text rendering engine is practically the same as in Atom. VECode uses Electron (Atom fork). Thus when it comes to the text editing experience it is roughly the same as in Atom. But that extra, which VSCode offers is what makes it so different.
 
-For starters, it brings a full scale built-in debugger. Yes, it's not as complete as the one that comes Visual Studio. But make no mistake it is a true debugger. This is the feature that neither ST3 nor N++ consider to be effort worthy. The debugger infrastructure is open and is a part of the extension hosting solution. Meaning that other languages can integrate their debuggers making it a complete IDE.    
+For starters, it brings a full scale built-in debugger. Yes, it's not as complete as the one that comes Visual Studio. But make no mistake, it is a true debugger. This is the feature that neither ST3 nor N++ considered to be effort worthy to have. The debugger infrastructure is open and is a part of the extension hosting solution. Meaning that other languages can integrate their debuggers making the editor into a complete IDE.    
 
-Extensions are allowed to bring their own custom views. This opens the doors for true GUI presentations of any information in the TreeView style:
+Extensions are allowed to bring their own custom views. This opens the doors for the true GUI presentations of any information in the TreeView style:
 ![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/cs-s_intellisense.gif)
 
 
-Extensions als can have their frequently used functionality to be accessed via custom toolbar buttons. Excellent.
+Extensions also can have their frequently used functionality to be accessed via custom toolbar buttons. Excellent.
 
-I deliberately described in this section the functionality that is not available in ST3, thc closes competitor of VSCode. None of this is possible in ST3. ST3's team is carefully guarding their product from letting any of these goodnesses to get in. The reasoning is, as for any other over-restrictive framework: "These features are not really needed. ST# is already perfect without them".
+I deliberately described in this section the functionality that is not available in ST3, the closest competitor of VSCode. None of this is possible in ST3. ST3's team is carefully guarding their product from letting any of these goodnesses to get in. The reasoning is, as for any other over-restrictive frameworks, "These features are not really needed. ST3 is already perfect without them".
 
 Another strong point is a built-in HTML rendered, which makes it possible to achieve some very rich content presentations. It can be just as simple as a markdown content preview or as comprehensive as diagraming with Mermaid.
 
 ![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_diagramming.png)
 
-Though there is one strong point of criticism that is brought by practically everyone from the ST3 camp: VSCode is slow to start. Really slow. In my opinion, if it wasn't for slow startup VSCode would be a clear winner.  
+Though there is one strong point of criticism that is brought by practically everyone from the ST3 camp: VSCode is slow to start. Really slow. In my opinion, if it wasn't for slow startup VSCode would be a clear winner in this game.  
 
 *Developer experience*
 
-For developers who just moved to VSCode from other environments it may feel like a breath of fresh air. Availability of the debugger makes the world of difference. Yes it's not only users who benefit from the debugger but the extension developers as wel. API itself is intense and makes all the features described in the User Experience section possible.
+For developers who just moved to VSCode from other environments it may feel like a breath of fresh air. Availability of the debugger makes the world of difference. Yes it's not only users who benefit from the debugger but the extension developers as well. API itself is intense and makes all the features described in the User Experience section (above) possible.
 
 On negative side, API is not complete. There are certain gaps. For example at this very moment one can create a custom view with the TreeView content but cannot control the tooltip of the tree node. 
 
-Another unpleasant moment is volatility of API. Some parts of API are getting deprecated and replaced with presumably a better alternatives. But on practical level it means that your extension can be effectively crippled with the next VSCode update if you are not monitoring the API changes constantly.     
+Another unpleasant moment is volatility of API. Some parts of API are getting deprecated and replaced with presumably better alternatives. But on practical level it means that your extension can be effectively crippled with the next VSCode update if you are not monitoring the API changes constantly.     
 
 _Support and community_
 
-The VSCode documentation is something that can really take some improvement. It is OK, but just. I my opinion it take a wrong approach, serves the wrong use-case. 
+The VSCode documentation is something that can really take some improvement. It is OK, but just OK. I my opinion it take a wrong approach, serves the wrong use-case. 
 
-With ST3 documentation it's easy to find what methods you need to uses if yu only have an idea about what you want to achieve. Whereas with VSCode documentation it's only easy to find out the details of the method when you have its name. 
+With ST3 documentation it's easy to find what methods you need to use even if you only have an idea about what you want to achieve. Whereas with VSCode documentation it's only easy if you want to find out the details of the method when you have the method name name. 
 
-Another slightly unfriendly moment is the troubleshooting advise on VSCode GitHub. They ask you not to post questions here but use _Stack Overflow_ instead. I found it slightly irrigating. Stack Overflow is practically useless (at least at this stage) for getting the assistance regarding extensions authoring. It only has some content about using VSCode but not developing for it. Though after weeks of having my questions unanswered I actually found some help on GitHub. 
+Another slightly unfriendly moment is the troubleshooting advise on VSCode GitHub. They ask you not to post questions there but use _Stack Overflow_ instead. I found it slightly irritating. Stack Overflow is practically useless (at least at this stage) for getting the assistance regarding extensions authoring. It only has some content about using VSCode but not developing for it. Though after weeks of having my questions unanswered on _Stack Overflow_ I actually found some help on VSCode _GitHub_. 
 
 I hope that these minor annoyances are just the side effects of the growth. 
 
 
 *Plugin management*
+
 The VSCode plugin management is based on the MS market place infrastructure. Thus when the developer is happy with the plugin he can package it and publish on the VSCode plugin gallery. 
 
-The plugin management model is not as flexible as for ST3 but still quite good.  Thus while no GitHub (or any other SC) integration available it lets installing local packages (just a package file), which is an excellent test technique fo verifying the health of the package before publishing.
+The plugin management model is not as flexible as for ST3 but still adequate. Thus while plugin management has no GitHub (or any other SC) integration it lets installing local packages (just a package file), which is an excellent test technique for verifying the health of the package before publishing.
 
-One positive side of VSCode comparing to ST3 plugin management is that developers are not forced to compress their plugins into the "black-box" zip container. Thus troubleshooting is is much simpler.
+Another positive side of VSCode comparing to ST3 plugin management is that developers are not forced to compress their plugins into the "black-box" zip container. Thus troubleshooting is is much simpler.
 
 *Bottom line*
 
@@ -175,16 +176,16 @@ If only those just a few limitations/issues are addressed, that would make VSCod
 
 __Conclusion__
 
-All tree platforms have very solid presence on Desktop and devoted audience. And yet all these platforms are quite different. All of them have their positives and negatives and none of them is ideal. Today the major competition is happening between VSCode and ST3. The are the leaders of the race. 
+All tree platforms have very solid presence on Desktop and devoted community. And yet all these platforms are quite different. All of them have their positives and negatives and none of them is ideal. Today the major competition is happening between VSCode and ST3. They are the leaders in this race. 
 
-If I use smartphone analogy this is how I would describe these tree remarkable editors:  
+If I use smartphone analogy, this is how I would describe these tree remarkable editors:  
 
-N++ is as WinPhone.<br>
-Once ground breaking. Still relevant, very solid product, which will never be a game changer. It's just an old dog with the expected attitude to the new tricks.
+_N++ is as WinPhone_<br>
+Once ground breaking. Still relevant, very solid product, which will never be a game changer again. It's just an old dog with the expected attitude to the new tricks.
 
-ST3 is as iPhone<br> 
+_ST3 is as iPhone_<br> 
 Polished, sexy and still ultimately appealing but... practically no longer evolving. It's just enjoying the past well deserved reputation. The next "big move" is the ~~removal of the headphone jack~~ change of the default color theme. It always carefully prevents you from being too ambitious. 
 
-VSCode is as Android<br>
+_VSCode is as Android_<br>
 Rough on edges, but dynamic and ambitious. Doesn't always keep its stuff together but respects user's freedom. Have an enormous potential and exhibits remarkable attitude. 
 
