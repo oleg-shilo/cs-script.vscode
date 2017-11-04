@@ -4,9 +4,9 @@ __Preamble__
 
 I am in a reasonably unique position as I have developed a complex plugin (and a few simpler ones) that has been ported to all three peoples editors: Notepad++, Sublime Text and VSCode.
 
-The presented content is reflection of my personal experiences and it should be taken as such. Many people will disagree with my conclusions and I actually expect that as it wasn't my goal to provide a final undisputed assessment of these wonderful editors. 
+The presented content is a reflection of my personal experiences and it should be taken as such. Many people may disagree with my conclusions and I actually expect that as it wasn't my goal to provide a final undisputed assessment of these wonderful platform. 
 
-My objective was to give the developers an idea about what to expect when they about to start plugin development for the nominated editors. And also ti give the opportunity for the editor's maintainers to understand the shortcumings of the developer experience they provide an possible address them.   
+My objective was to give the developers an idea about what to expect when they are about to start developing for the nominated editors. And also to give the opportunity for the editor's maintainers to understand the shortcomings of the developer experience they provide an possible address them.   
 
 __Notepad++ (N++)__
 
@@ -25,29 +25,35 @@ This is the look and feel of the CS-Script plugin for N++. It achieves very VS-l
 
 *Developer experience*
 
-Sadly, my least favorite out of all three. 
+Sadly, my least favorite out of all three platforms.
 
-Hosting model is rather average in terms of the design quality. They failed to recognize the importance of a platform neutral runtime for hosting plugins and opted to the native runtime. Meaning C/C++. Even if one uses a bridge to .NET or Python, the plugin for x64 needs to be maintained completely separately (separate builds and bin repositories). Think about it, ST3 and  VSCode plugins work on all OSs but for N++ that works only on Windows you need to maintain two separate plugins (x86 vs x64).
+The hosting model is rather average in terms of the design quality. They failed to recognize the importance of a platform neutral runtime for hosting plugins and opted to the native runtime. Meaning C/C++. Even if one uses a bridge to .NET or Python, the plugin for x64 needs to be maintained completely separately (separate builds and binary repositories). 
 
-API itself leaves so much to be desired. It is very limited and extremely old fashioned. N++ only offer very lean own API and instead simply tunnels developers to the old Scintilla rendering engine API. And Scintilla is the beast of an old school. I pretends it is still 2000. Sometimes it even forces you to deal with text as a array of bytes not characters (selection length is a amount of selected bytes). Scintilla does an excellent rendering job but that's it. It's hard to be impressed by its other functionality. Tooltips are not interactive. Styling for tooltips and auto-completion is not possible. On a bright side N++ lets you to hook up into its own windows management so you can create custom panels/view. Meaning that by going low level you can achieve virtually any appearance you want (e.g. tree view, lists, host web browser).
+Think about it, ST3 and VSCode plugins work on all OSs but for N++ (that works only on Windows) you need to maintain two separate plugins (x86 vs x64).
+
+API itself leaves so much to be desired. It is very limited and extremely old fashioned. N++ only offers a very lean own API and simply tunnels the developer to the old Scintilla rendering engine API. And Scintilla is the beast of an old school. I pretends it is still 2000. Sometimes it even forces you to deal with text as a array of bytes not characters (selection length is an amount of selected bytes). 
+
+Scintilla does an excellent rendering job but that's it. It's hard to be impressed by its other functionality. Tooltips are not interactive. Styling for tooltips and auto-completion is not possible. On a bright side N++ lets you to hook up into its own windows management so you can create custom panels/view. Meaning that by going _low-level_ you can achieve virtually any appearance you want (e.g. tree view, lists, host web browser).
 
 *Plugin management*
 
-Plugin management is puzzling. They have implemented very nice Plugin Manager but the the public repositories are updated so infrequently that if one has made a mistake in his plugin he will need to wait ~3-4 month before his fix can reach the users. 
+Plugin management is puzzling. They have implemented very nice Plugin Manager but the public repositories are updated so infrequently that if one has made a mistake in his plugin he will need to wait ~3-4 month before his fix can reach the users. 
 
 _Support and community_
 
 Documentation is rather minimalistic. Dedicated discussion boards are not very sound nor helpful. 
 
-N++ support is shocking. The guys probably work very hard and don't have much time/opportunity for interacting with the plugin developers. Once, a specific N++ update has delivered a nasty bug that completely broke all plugins that are more complicated then a single dll and rely on own file/folder structure. One day everything works, next day it starts reporting multiple plugins as "Incompatible with N++". The problem  was logged with clear indication of its devastating severity. No response for weeks. I had to chase (unsuccessfully) the team coordinator on his Tweeter and other public platforms. No luck. Only when my plugin users and other plugin authors started complaining on N++ forum the problem was acknowledged and... reluctantly fixed.
+N++ support is shocking. The guys probably work very hard and don't have much time nor opportunity for interacting with the plugin developers. Once, a specific N++ update has delivered a nasty bug that completely broke all plugins that are more complicated then a single dll and rely on their own file/folder structure. One day everything works, next day it starts reporting multiple plugins as "Incompatible with N++". 
 
-The only positive dev experience is that one can use the debugger and being native virtually any functionality can be achieved.
+The problem  was logged with clear indication of its devastating severity. No response for weeks. I had to chase (unsuccessfully) the team coordinator on his Tweeter and other public platforms. No luck. Only when my plugin users and other plugin authors started complaining on N++ forum the problem was acknowledged and... reluctantly fixed.
+
+The only positive dev experience is that one can use the debugger. Another one is that being native means that virtually any functionality can be achieved.
 
 *Bottom line*
 
-Despite being awkwardly designed delivers an excellent user experience. 
-If you are developer - embrace yourself. You are on your own. 
-Platform is demanding the highest effort cost from the developers while almost not limiting them in what can be achieved.      
+Light, dynamic and extremely customizable. Targeting, arguably, a slightly more advanced audience. Delivers almost flawless user experience while imposing certain limitations on the plugin developers.
+
+The platform is slightly friendlier towards development of the simpler/smaller plugins. While the complex comprehensive plugins are definitely possible but at the higher effort cost.​
 
 __Sublime Text 3 (ST3)__
 
@@ -57,39 +63,45 @@ Sublime is an extremely popular editor. It has an reputation of a sophisticated 
 
 *User experience*
 
-One work comes in mind: slick. It's brilliant. Lightning fast. Fastest to startup out of all three. The level of customization is out of this world. 
+One word comes in mind - slick. It's brilliant. Lightning fast. Fastest to startup out of all three. The level of customization is out of this world.
 
-Sometimes the customization me even combat with the convenience. Thus using very frequently column selection in VS, VSCode and N++ I found its implementation on ST3 (via mutli-cursor mode) to be a bit "stubborn". 
+Sometimes the customization may even conflict with the convenience. Thus using, very frequently, column selection in VS, VSCode and N++ I found its implementation on ST3 (via mutli-cursor mode) to be a bit "stubborn". 
 
-there is a huge library of plugins. Available on all OSs.
+There is a huge library of plugins. Available on all OSs.
 
-Though, one obvious negative is the absence of printing out of box. For such a comprehensive editor not to have such a fundamental feature seems puzzling, to say the least. One needs to install one of a few pining plugins in order to enable printing (usually via system web browser). 
+Though, one obvious negative is the absence of printing support out of box. For such a comprehensive editor not to have such a fundamental feature seems rather puzzling, to say the least. One needs to install one of the few printing plugins in order to enable printing (usually via system web browser). 
 
 *Developer experience*
 
 Very good. The hosting model is designed brilliantly. Hosting runtime and language is Python. 
 
-API itself is scrupulously design. Everything just makes sense. Simple, logical and predictable. I one word - elegant. When you don't have something supported naively you can fallback on IDE commands execution. Tooltips are rendered with a light weight HTML engine. Brilliant. You can put buttons there and have a complex styling. 
+API itself is scrupulously designed. Everything just makes sense. Simple, logical and predictable. I one word - elegant. When you don't have something supported naively you can fallback on IDE commands execution. Tooltips are rendered with a light weight HTML engine. Brilliant. You can put there buttons and have complex styling. Great. 
 
-The API's draw back - it's sealed. The API practically has stopped its evolution sealing the state of the functionality as is. For example closing already opened file with API is not possible. One has to set focus on the required document tab and execute command "close" (equivalent of Menu->File->Close). Meaning that you have to mess up with the focus - bad user experience. For more complicated scenarios focus management becomes a real issue. Scanning keyboard state is also unavailable. Another upsetting design decision is to prohibit completely custom panels. That's it ST3 for years resist developers demands for this feature. You cannot create a custom panel. The best you can do is to open a document, place some special text to mimic rich UI elements (e.g. tree view). I had to go this way with "Favorites" and with "CodeMap" plugins:
+The API's draw back - it's sealed. The API practically has stopped its evolution sealing the state of the functionality as is. 
+
+For example closing already opened file with API is not possible. One has to set focus on the required document tab and execute command "close" (equivalent of Menu->File->Close). Meaning that you have to mess up with the focus. Meaning bad user experience. For more complicated scenarios focus management becomes a real issue. Scanning keyboard state is also unavailable. 
+
+Another upsetting design decision is prohibiting completely any custom panels. That's it, ST3 for years resisted developers demands for this feature. You cannot create a custom panel. The best you can do is to open a document, place some special text to mimic rich UI elements (e.g. tree view). I had to go this way with "Favorites" and with "CodeMap" plugins:
 
 ![](https://github.com/oleg-shilo/sublime-codemap/raw/master/images/image1.gif)
 
 
 _Support and community_
 
-Just excellent. The best out of tree. If you post the question the chances are that it will be answered by the people who knows exactly what they are talking about. In general, the professional the level of an average member of the ST3 community is very high. Occasionally, you can sense religious notes, but very mild. One thing is for sure, if there is the answer and you just don't know where it is the ST3 forum is the place to find it. 
-Documentation is simply structured and gives very good overview of the overall functionality and possibilities. For everything else - discussion boards.
+Just excellent. The best out of tree. If you post the question the chances are that it will be answered by the people who knows exactly what they are talking about. In general, professional level of an average member of the ST3 community is very high. Occasionally, you can sense religious notes, but very mild. One thing is for sure, if there is the answer and you just don't know where it is the ST3 forum is the place to find it. 
+Documentation is simply structured and gives you a very good overview of the overall functionality and possibilities. For everything else - discussion boards.
 
 *Plugin management*
 
-Plugin management is ingenious. The editor can be fetch plugins form your local files, your personal GitHub repository or via official GiHub based repository router Plugin Manager. A developer is in full control of the life cycle of his/her plugin.
+The plugin management is ingenious. The editor can fetch plugins form your local files, your personal GitHub repository or via official GiHub based repository router Plugin Manager. The plugin developer is in full control of the life cycle of his/her plugin.
 
-The biggest downside (apart from stagnating API) is the absence of the integrated debugger. If your plugin exhibits a complex behavior then you are out of luck, you can only rely on Python's "print()". This also has indirect drawback: no language-plugins can have a proper debugger integration under ST3. 
+The biggest downside (apart from stagnating API) is the absence of the integrated debugger. If your plugin exhibits a complex behavior then you are out of luck, you can only rely on Python's "_print()_". This also has indirect drawback: no language-plugins can have a proper debugger runtime integration under ST3. 
 
-Another negative, side-by-side plugin development. One cannot have a plugin installed and being developed/troubleshooted at the same time. 
+Another negative is side-by-side plugin development. One cannot have a plugin installed and being developed/troubleshooted at the same time. Well, it's possible only for the uncompressed plugins, which are officially discouraged. 
 
-And I cannot ignore another unexpected inconvenience. ST3 plugin guideline requires you to distribute the packages in the compressed form. While it has certain benefits for the ST3 dev team it is a nightmare for the plugin developers to troubleshoot such plugins. The only exception is made to the plugins that contain executables that need to be present in the unpacked form at runtime. Thus when I tried to publish my CodeMap pluguin in uncompressed form I was approached by the ST3 team member and asked politely to obey the rules and compressed the plugin. I am sure if I start long boring argument they would let me do it my way but... I would rather prefer to have a choice instead of having to justify my motives. Though this point can be easily challenged by the ST3 team.      
+And I cannot ignore another unexpected inconvenience. ST3 plugin guideline requires you to distribute the packages in the compressed form. While it has certain benefits for the ST3 dev team it is a nightmare for the plugin developers to troubleshoot such plugins. The only exception is made to the plugins that contain executables, which need to be present in the unpacked form at runtime. 
+
+Thus when I tried to publish my CodeMap pluguin in uncompressed form I was approached by the ST3 team member and asked politely to obey the rules and compressed the plugin. I am sure if I start a long boring argument they would let me do it my way but... I would rather prefer to have a choice instead of having to justify my motives. Though this point can be easily challenged by the ST3 team.      
 
 *Bottom line*
 
@@ -106,7 +118,7 @@ VSCode shares many similarities with ST3. Including having very large army of ve
 
 *User experience*
 
-Well, that's it it is the most strong VSCode selling point.
+Well, that's it, it is the most strong VSCode selling point.
 
 The text rendering engine is practically the same as in Atom. VECode uses Electron (Atom fork). Thus when it comes to teh text editing experience it is roughly the same. But that extra, which VSCode offers is what makes it so different.
 
