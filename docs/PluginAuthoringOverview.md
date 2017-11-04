@@ -101,7 +101,7 @@ Another negative is side-by-side plugin development. One cannot have a plugin in
 
 And I cannot ignore another unexpected inconvenience. ST3 plugin guideline requires you to distribute the packages in the compressed form. While it has certain benefits for the ST3 dev team it is a nightmare for the plugin developers to troubleshoot such plugins. The only exception is made to the plugins that contain executables, which need to be present in the unpacked form at runtime. 
 
-Thus when I tried to publish my CodeMap pluguin in uncompressed form I was approached by the ST3 team member and asked politely to obey the rules and compressed the plugin. I am sure if I start a long boring argument they would let me do it my way but... I would rather prefer to have a choice instead of having to justify my motives. Though this point can be easily challenged by the ST3 team.      
+Thus when I tried to publish my CodeMap plugin in uncompressed form I was approached by the ST3 team member and asked politely to obey the rules and compressed the plugin. I am sure if I start a long boring argument they would let me do it my way but... I would rather prefer to have a choice instead of having to justify my motives. Though this point can be easily challenged by the ST3 team.      
 
 *Bottom line*
 
