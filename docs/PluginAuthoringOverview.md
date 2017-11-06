@@ -1,6 +1,6 @@
 # Authoring plugins for VSCode, Sublime and Notepad++
 
-_Published on [CodeProject](https://www.codeproject.com/script/Articles/Preview.aspx)_
+_Published on [CodeProject](https://www.codeproject.com/Articles/1213718/Authoring-plugins-for-VSCode-Sublime-Text-and)_
 
 __Preamble__
 
