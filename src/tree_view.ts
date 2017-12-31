@@ -4,10 +4,10 @@ import * as path from 'path';
 import { Uri, commands } from "vscode";
 import * as utils from "./utils";
 
-export class ProjectTreeProvider implements vscode.TreeDataProvider<Dependency> {
+export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectItem> {
 
-	private _onDidChangeTreeData: vscode.EventEmitter<Dependency | undefined> = new vscode.EventEmitter<Dependency | undefined>();
-	readonly onDidChangeTreeData: vscode.Event<Dependency | undefined> = this._onDidChangeTreeData.event;
+	private _onDidChangeTreeData: vscode.EventEmitter<ProjectItem | undefined> = new vscode.EventEmitter<ProjectItem | undefined>();
+	readonly onDidChangeTreeData: vscode.Event<ProjectItem | undefined> = this._onDidChangeTreeData.event;
 
 	constructor(private aggregateScriptItems: () => string[]) {
 		vscode.window.onDidChangeActiveTextEditor(editor => {
@@ -22,11 +22,11 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<Dependency> 
 		this._onDidChangeTreeData.fire();
 	}
 
-	getTreeItem(element: Dependency): vscode.TreeItem {
+	getTreeItem(element: ProjectItem): vscode.TreeItem {
 		return element;
 	}
 
-	getChildren(element?: Dependency): Thenable<Dependency[]> {
+	getChildren(element?: ProjectItem): Thenable<ProjectItem[]> {
 		return new Promise(resolve => {
 			if (element) {
 				if (element.children)
@@ -39,17 +39,17 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<Dependency> 
 		});
 	}
 
-	private getScriptRefs(asms: string[]): Dependency[] {
+	private getScriptRefs(asms: string[]): ProjectItem[] {
 		return asms.map(asm => {
-			return new Dependency(asm, vscode.TreeItemCollapsibleState.None,
+			return new ProjectItem(asm, vscode.TreeItemCollapsibleState.None,
 				null,
 				null, 'assembly');
 		});
 	}
 
-	private getScriptItems(): Dependency[] {
+	private getScriptItems(): ProjectItem[] {
 
-		let refsNode = new Dependency('References', vscode.TreeItemCollapsibleState.Collapsed, null, [], 'assembly_group');
+		let refsNode = new ProjectItem('References', vscode.TreeItemCollapsibleState.Collapsed, null, [], 'assembly_group');
 
 		let nodes = [];
 		nodes.push(refsNode);
@@ -69,7 +69,7 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<Dependency> 
 						if (nodes.length > 1)
 							role = "Imported";
 
-						let node = new Dependency(
+						let node = new ProjectItem(
 							path.basename(file),
 							vscode.TreeItemCollapsibleState.None,
 							{
@@ -104,7 +104,7 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<Dependency> 
 	}
 }
 
-class Dependency extends vscode.TreeItem {
+class ProjectItem extends vscode.TreeItem {
 
 	constructor(
 		public readonly label: string,

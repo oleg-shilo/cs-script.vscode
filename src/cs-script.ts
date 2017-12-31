@@ -572,6 +572,7 @@ export function build_exe() {
         });
     });
 }
+
 // -----------------------------------
 export function debug() {
     let editor = vscode.window.activeTextEditor;
@@ -602,7 +603,9 @@ export function debug() {
             }
         };
 
-        vscode.commands.executeCommand('vscode.startDebug', launchConfig).then(() => {
+        // vscode.startDebug has been deprecated
+        // vscode.commands.executeCommand('vscode.startDebug', launchConfig)
+        vscode.debug.startDebugging(undefined, launchConfig).then(() => {
         }, err => {
             vscode.window.showInformationMessage('Error: ' + err.message);
         });

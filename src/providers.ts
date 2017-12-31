@@ -9,6 +9,11 @@ import * as cs_script from "./cs-script";
 import * as utils from "./utils";
 import { Utils } from "./utils";
 
+interface HelpSection {
+    docOffset: number;
+    text: string;
+}
+
 function getCssDirective(document: TextDocument, position: Position): string {
 
     let word_range = document.getWordRangeAtPosition(position);
@@ -30,10 +35,6 @@ function getCssDirective(document: TextDocument, position: Position): string {
     return null;
 }
 
-interface HelpSection {
-    docOffset: number;
-    text: string;
-}
 
 let help_map: { [id: string]: HelpSection; };
 
