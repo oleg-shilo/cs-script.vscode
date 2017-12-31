@@ -1,5 +1,7 @@
 # Authoring plugins for VSCode, Sublime and Notepad++
 
+_Published on [CodeProject](https://www.codeproject.com/Articles/1213718/Authoring-plugins-for-VSCode-Sublime-Text-and)_
+
 __Preamble__
 
 I am in a reasonably unique position as I have developed a complex plugin (and a few simpler ones) that has been ported to all three peoples editors: Notepad++, Sublime Text and VSCode.
