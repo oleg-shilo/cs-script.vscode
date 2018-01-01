@@ -127,15 +127,15 @@ class ProjectItem extends vscode.TreeItem {
 				icon = 'asm';
 			if (icon)
 				this.iconPath = {
-					light: path.join(__filename, '..', '..', '..', 'images', 'icons', icon + '.light.svg'),
-					dark: path.join(__filename, '..', '..', '..', 'images', 'icons', icon + '.svg')
+					light: path.join(__filename, '..', '..', 'images', 'icons', icon + '.light.svg'),
+					dark: path.join(__filename, '..', '..', 'images', 'icons', icon + '.svg')
 				};
 		}
 	}
 
 	iconPath = {
-		light: path.join(__filename, '..', '..', '..', 'images', 'icons', 'document.light.svg'),
-		dark: path.join(__filename, '..', '..', '..', 'images', 'icons', 'document.svg')
+		light: path.join(__filename, '..', '..', 'images', 'icons', 'document.light.svg'),
+		dark: path.join(__filename, '..', '..', 'images', 'icons', 'document.svg')
 	};
 
 	contextValue = 'dependency';

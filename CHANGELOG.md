@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.3.4
+- Fixed problem project tree not being updated on saving the script.
+
 ## 1.3.3
 - Fixed problem with the original VSCode debugging API being depricated (vscode.commands.executeCommand("vscode.startDebug") vs vscode.debug.startDebugging(...)).
 
