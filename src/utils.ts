@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { Uri, commands, DiagnosticCollection, DiagnosticSeverity, StatusBarAlignment, StatusBarItem } from "vscode";
 
-let ext_dir = path.join(__dirname, "..", "..");
+let ext_dir = path.join(__dirname, "..");
 let exec = require('child_process').exec;
 let execSync = require('child_process').execSync;
 

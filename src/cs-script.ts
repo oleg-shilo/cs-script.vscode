@@ -12,7 +12,7 @@ export let syntax_readme = path.join(user_dir(), 'cs-script.syntax.txt')
 let ext_context: vscode.ExtensionContext;
 let cscs_exe = path.join(user_dir(), 'cscs.exe');
 let readme = path.join(user_dir(), 'cs-script.help.txt')
-let csproj_template = __dirname + "/../../bin/script.csproj";
+let csproj_template = __dirname + "/../bin/script.csproj";
 let outputChannel = vscode.window.createOutputChannel('Code');
 let last_process = null;
 

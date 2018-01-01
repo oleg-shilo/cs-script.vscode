@@ -18,7 +18,7 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectItem>
 		})
 	}
 
-	refresh(): void {
+	public refresh(): void {
 		this._onDidChangeTreeData.fire();
 	}
 
