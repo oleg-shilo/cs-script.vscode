@@ -523,6 +523,7 @@ export class Settings {
 export class Utils {
 
     public static IsScript(file: string): boolean {
+        
         if (!file)
             return false;
         return file.toLowerCase().endsWith('.cs');

@@ -1,10 +1,13 @@
 # Change Log
 
+## 1.3.5
+- Added explicit extension dependency on `mono-debug`. Seems the disclaimer "to add Mono" in the extension description does not convince users users to do so.   
+
 ## 1.3.4
 - Fixed problem project tree not being updated on saving the script.
 
 ## 1.3.3
-- Fixed problem with the original VSCode debugging API being depricated (vscode.commands.executeCommand("vscode.startDebug") vs vscode.debug.startDebugging(...)).
+- Fixed problem with the original VSCode debugging API being deprecated (vscode.commands.executeCommand("vscode.startDebug") vs vscode.debug.startDebugging(...)).
 
 ## 1.3.2
 - 'Check syntax' action that became in conflict with the new "scripted arg" support.
