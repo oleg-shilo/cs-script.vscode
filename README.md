@@ -2,7 +2,9 @@
 
 Execution, debugging and editing C# code that targets .NET and Mono (no .NET Core required).     
 <hr/>
-Note this extension depends on "ms-vscode.mono-debug" and "ms-vscode.csharp". Thus if these extensions are installed/function incorrectly please log error reports at their web sites.    
+Note this extension depends on "ms-vscode.mono-debug" and "ms-vscode.csharp". Thus if these extensions are installed/function incorrectly please log error reports at their web sites. 
+
+Please be aware that currently the extension does not provide its own _Intellisense_ functionality and instead relies on VSCode built-in _Intellisense_ engine OmniSharp. See **_Enabling C# IntelliSense_** section below for the instructions on how to activate _Intellisense_ for a loaded C# file.   
 <hr/>
 Currently VSCode support for C# is heavily oriented on development for .NET Core (e.g. ASP.NET Core). This imposes serious limitations on developers who is developing for desktop and server using C#. This project is aiming for filling this gap.
 
