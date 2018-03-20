@@ -1,20 +1,23 @@
-'use strict';
-import * as fs from 'fs';
-import * as os from 'os';
-import * as utils from "./utils";
-import * as vscode from 'vscode';
-import * as path from 'path';
-import { exec } from 'child_process';
-import { Uri, commands, DiagnosticCollection, DiagnosticSeverity, TextEditorSelectionChangeKind, Selection } from "vscode";
-import { ErrorInfo, Utils, diagnosticCollection, lock, unlock, is_busy, with_lock, actual_output, settings, VSCodeSettings, user_dir, ensure_default_config, create_dir } from "./utils";
+"use strict";
 
-export let syntax_readme = path.join(user_dir(), 'cs-script.syntax.txt')
+/* tslint:disable */
+
+import * as fs from "fs";
+import * as os from "os";
+import * as utils from "./utils";
+import * as vscode from "vscode";
+import * as path from "path";
+// import { exec } from 'child_process';
+import { Uri, commands,  DiagnosticSeverity, TextEditorSelectionChangeKind, } from "vscode";
+import { ErrorInfo, Utils,  unlock, is_busy, with_lock, actual_output, settings, VSCodeSettings, user_dir, create_dir } from "./utils";
+
+export let syntax_readme: string = path.join(user_dir(), "cs-script.syntax.txt");
 let ext_context: vscode.ExtensionContext;
-let cscs_exe = path.join(user_dir(), 'cscs.exe');
-let readme = path.join(user_dir(), 'cs-script.help.txt')
+let cscs_exe:string = path.join(user_dir(), 'cscs.exe');
+let readme:string = path.join(user_dir(), 'cs-script.help.txt')
 let csproj_template = __dirname + "/../bin/script.csproj";
 let outputChannel = vscode.window.createOutputChannel('Code');
-let last_process = null;
+// let last_process = null;
 
 // it is extremely important to keep project file name in sync with the activation event trigger in manifest file )"workspaceContains:script.csproj")
 let script_proj_name = 'script.csproj';
@@ -132,7 +135,7 @@ export function load_project() {
     });
 }
 
-export function parse_proj_dir(proj_dir: string): string {
+export function parse_proj_dir(proj_dir: string): string | null {
     let proj_file = path.join(proj_dir, script_proj_name);
     let prefix = '<Compile Include="';
     let suffix = '"/>';

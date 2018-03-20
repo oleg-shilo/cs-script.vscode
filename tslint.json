@@ -1,0 +1,15 @@
+{
+	"rules": {
+		"no-string-throw": false,
+		"no-unused-expression": false,
+		"no-duplicate-variable": true,
+		"curly": true,
+		"class-name": true,
+		"semicolon": [
+			true,
+			"always"
+		],
+		"triple-equals": false
+	},
+	"defaultSeverity": "warning"
+}

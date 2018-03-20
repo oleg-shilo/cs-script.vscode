@@ -1,9 +1,16 @@
-'use strict';
-import * as vscode from 'vscode';
-import * as os from 'os';
-import * as path from 'path';
-import * as fs from 'fs';
-import { Uri, commands, DiagnosticCollection, DiagnosticSeverity, StatusBarAlignment, StatusBarItem } from "vscode";
+"use strict";
+
+/* tslint:disable */
+
+import * as vscode from "vscode";
+import * as os from "os";
+import * as fx_extra from "fs-extra";
+import * as net from "net";
+import * as path from "path";
+import * as fs from "fs";
+import * as fsx from "fs-extra";
+import * as child_process from "child_process"
+import { StatusBarAlignment, StatusBarItem } from "vscode";
 
 let ext_dir = path.join(__dirname, "..");
 let exec = require('child_process').exec;
@@ -179,10 +186,9 @@ export function copy_file_to(fileName: string, srcDir: string, destDir: string):
 }
 
 export function copy_file_to_sync(fileName: string, srcDir: string, destDir: string): void {
-    const fse = require('fs-extra')
-
+    
     try {
-        fse.copySync(path.join(srcDir, fileName), path.join(destDir, fileName));
+        fsx.copySync(path.join(srcDir, fileName), path.join(destDir, fileName));
     } catch (error) {
         console.log(error.toString());
     }
@@ -523,10 +529,10 @@ export class Settings {
 export class Utils {
 
     public static IsScript(file: string): boolean {
-        
         if (!file)
             return false;
-        return file.toLowerCase().endsWith('.cs');
+        return 
+            file.toLowerCase().endsWith('.cs');
     }
 
     public static getScriptName(projectFile: string): string {
@@ -686,4 +692,45 @@ export function ensure_default_config(cscs_exe: string, on_done?: (file: string)
 export function actual_output(element, index, array) {
     // ignore mono test output that comes from older releases(s)  (known Mono issue)
     return (!element.startsWith('failed to get 100ns ticks'));
+}
+
+
+let SYNTAXER_VERSION = "1.2.2.0";
+
+let SEVER = ""; // will be set at the end of this file
+let HOST = '127.0.0.1';
+let PORT = 18002;
+
+function startServer():void{
+	child_process.execFile("mono", [SEVER, "-port:" + PORT, "-listen", "-client:" + process.pid, "-timeout:60000"]);
+}
+
+
+export class Syntaxer {
+
+    public static send(request: string, on_data: (data: string) => void, on_error: (error: any) => void): void {
+
+        var client = new net.Socket();
+        client.connect(PORT, HOST, function () {
+            // let request = "-client:" + process.pid + "\n-op:codemap_vscode\n-script:" + file;
+            client.write(request);
+        });
+
+        client.on('error', function (error) {
+            if (fs.existsSync(SEVER)) { // may not be deployed yet
+                // child_process.execFile(SEVER, SEVER_CMD);
+                startServer();
+                // setTimeout(() => vscode.commands.executeCommand('codemap.refresh'), 500);
+                on_error("Syntaxer server is not ready yet...");
+            }
+            else{
+                on_error(error.toString());
+            }
+        });
+
+        client.on('data', function (data) {
+            on_data(data.toString())
+            client.destroy();
+        });
+    }
 }

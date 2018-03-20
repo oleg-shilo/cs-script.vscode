@@ -1,22 +1,20 @@
-'use strict';
+"use strict";
+
+/* tslint:disable */
+
 // TODO:
 // #4 Project fails to load if the script has cs-script directive invalid syntax.
 // Ctrl+F5 shows cs-script busy, but executes the script for every run of the modified script
 
-
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
-import { Uri, commands, window, HoverProvider, Position, CancellationToken, TextDocument, Hover } from "vscode";
 import * as cs_script from "./cs-script";
 import { ProjectTreeProvider } from "./tree_view";
 import { CSScriptHoverProvider, CSScriptCompletionItemProvider, CSScriptDefinitionProvider } from "./providers";
-import * as providers from "./providers";
 
 export function refresh_tree() {
-    console.log('dgfshgsdfg');
+    console.log('refresh_tree');
 }
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -25,7 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Use the console to output diagnostic information (console.log) and errors (console.error)
     // This line of code will only be executed once when your extension is activated
     // console.log('"cs-script" extension is now active...');
-
+    
     cs_script.ActivateDiagnostics(context);
     
     const treeViewProvider = new ProjectTreeProvider(cs_script.get_project_tree_items);

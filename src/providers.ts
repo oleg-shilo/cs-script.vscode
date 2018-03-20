@@ -1,17 +1,25 @@
-'use strict';
+/* tslint:disable */
+
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Uri, commands, window, HoverProvider, Position, CancellationToken, TextDocument, Hover, Definition, ProviderResult, Range, Location } from "vscode";
+import { HoverProvider, Position, CancellationToken, TextDocument, Hover, Definition, ProviderResult, Range, Location } from "vscode";
 import * as cs_script from "./cs-script";
 import * as utils from "./utils";
 import { Utils } from "./utils";
+// import { Syntaxer } from "./syntaxer";
+
 
 interface HelpSection {
     docOffset: number;
     text: string;
+}
+
+function getCssCompletion(document: TextDocument, position: Position): string {
+    
+    return "";
 }
 
 function getCssDirective(document: TextDocument, position: Position): string {
@@ -79,8 +87,9 @@ export class CSScriptHoverProvider implements HoverProvider {
         var word = getCssDirective(document, position);
         if (word != null) {
 
-            if (!help_map)
+            if (!help_map){
                 parseSyntaxHelp(cs_script.generate_syntax_help());
+            }
 
             for (var key in help_map) {
                 if (key == word) {

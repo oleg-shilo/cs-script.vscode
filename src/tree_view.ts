@@ -1,5 +1,5 @@
+/* tslint:disable */
 import * as vscode from 'vscode';
-import * as fs from 'fs';
 import * as path from 'path';
 import { Uri, commands } from "vscode";
 import * as utils from "./utils";
@@ -42,20 +42,19 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectItem>
 	private getScriptRefs(asms: string[]): ProjectItem[] {
 		return asms.map(asm => {
 			return new ProjectItem(asm, vscode.TreeItemCollapsibleState.None,
-				null,
-				null, 'assembly');
+				undefined, undefined, 'assembly');
 		});
 	}
 
 	private getScriptItems(): ProjectItem[] {
 
-		let refsNode = new ProjectItem('References', vscode.TreeItemCollapsibleState.Collapsed, null, [], 'assembly_group');
 
-		let nodes = [];
+
+		let nodes: ProjectItem[] = [];
 		nodes.push(refsNode);
 
 		if (!utils.is_ready()) {
-			setTimeout(() => commands.executeCommand('cs-script.refresh_tree') , 500);
+			setTimeout(() => commands.executeCommand('cs-script.refresh_tree'), 500);
 		}
 		else {
 			let items = this.aggregateScriptItems();
@@ -78,7 +77,7 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectItem>
 								tooltip: role + ' script: ' + file,
 								arguments: [Uri.file(file)],
 							},
-							null,
+							undefined,
 							role.toLowerCase()
 						)
 
@@ -93,18 +92,18 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectItem>
 		return nodes;
 	}
 
-	private pathExists(p: string): boolean {
-		try {
-			fs.accessSync(p);
-		} catch (err) {
-			return false;
-		}
+	// private pathExists(p: string): boolean {
+	// 	try {
+	// 		fs.accessSync(p);
+	// 	} catch (err) {
+	// 		return false;
+	// 	}
 
-		return true;
-	}
+	// 	return true;
+	// }
 }
 
-class ProjectItem extends vscode.TreeItem {
+export class ProjectItem extends vscode.TreeItem {
 
 	constructor(
 		public readonly label: string,
@@ -118,18 +117,24 @@ class ProjectItem extends vscode.TreeItem {
 		if (context) {
 			this.contextValue = context;
 
-			let icon = null;
-			if (context == 'imported')
+			var icon: string;
+
+			if (context == 'imported') {
 				icon = 'cs';
-			else if (context == 'primary')
+			}
+			else if (context == 'primary') {
 				icon = 'css';
-			else if (context == 'assembly' || context == 'assembly_group')
+			}
+			 else if (context == 'assembly' || context == 'assembly_group') {
 				icon = 'asm';
-			if (icon)
+			}
+
+			if (icon != undefined) {
 				this.iconPath = {
 					light: path.join(__filename, '..', '..', 'images', 'icons', icon + '.light.svg'),
 					dark: path.join(__filename, '..', '..', 'images', 'icons', icon + '.svg')
 				};
+			}
 		}
 	}
 
