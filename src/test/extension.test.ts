@@ -107,7 +107,7 @@ searcDir:C:\\Program Files (x86)\\Mono\\lib\\mono\\4.5\\Facades`;
         let trim_r = /-+\r?\n/g;
 
         let help = cs_script.generate_syntax_help();
-        let match, indexes = [];
+        let match;
         let prev_index: number;
 
         let help_map: { [id: string]: [number, string]; } = {};

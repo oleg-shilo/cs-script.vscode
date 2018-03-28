@@ -48,7 +48,7 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectItem>
 
 	private getScriptItems(): ProjectItem[] {
 
-
+		let refsNode = new ProjectItem('References', vscode.TreeItemCollapsibleState.Collapsed, null, [], 'assembly_group');
 
 		let nodes: ProjectItem[] = [];
 		nodes.push(refsNode);

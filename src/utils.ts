@@ -4,12 +4,12 @@
 
 import * as vscode from "vscode";
 import * as os from "os";
-import * as fx_extra from "fs-extra";
-import * as net from "net";
+// import * as fx_extra from "fs-extra";
+// import * as net from "net";
 import * as path from "path";
 import * as fs from "fs";
 import * as fsx from "fs-extra";
-import * as child_process from "child_process"
+// import * as child_process from "child_process"
 import { StatusBarAlignment, StatusBarItem } from "vscode";
 
 let ext_dir = path.join(__dirname, "..");
@@ -17,10 +17,10 @@ let exec = require('child_process').exec;
 let execSync = require('child_process').execSync;
 
 let mkdirp = require('mkdirp');
-let ext_context: vscode.ExtensionContext;
+// let ext_context: vscode.ExtensionContext;
 let min_required_mono = '5.0.1';
 let ver_file: string;
-let cscs_exe: string;
+// let cscs_exe: string;
 let _user_dir: string;
 export let statusBarItem: StatusBarItem;
 
@@ -44,7 +44,7 @@ declare global {
 
     interface Array<T> {
         where<T>(filter: (T) => boolean): Array<T>;
-        any<T>(filter: (T) => boolean): boolean;
+        any<T>(filter?: (T) => boolean): boolean;
         select<U>(convert: (T) => U): Array<U>;
         cast<U>(): Array<U>;
         first<T>(filter?: (T) => boolean): T;
@@ -88,11 +88,17 @@ Array.prototype.cast = function <U>(): Array<U> {
     return this.select(x => x as U);
 }
 
-Array.prototype.any = function <T>(predicate): boolean {
+Array.prototype.any = function <T>(predicate?): boolean {
 
     for (var i = 0; i < this.length; i++) {
-        if (predicate(this[i]))
+        let item: T = this[i];
+        if (predicate) {
+            if (predicate(item))
+                return true;
+        }
+        else {
             return true;
+        }
     }
     return false;
 }
@@ -186,7 +192,7 @@ export function copy_file_to(fileName: string, srcDir: string, destDir: string):
 }
 
 export function copy_file_to_sync(fileName: string, srcDir: string, destDir: string): void {
-    
+
     try {
         fsx.copySync(path.join(srcDir, fileName), path.join(destDir, fileName));
     } catch (error) {
@@ -240,7 +246,7 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     diagnosticCollection = vscode.languages.createDiagnosticCollection('c#');
     statusBarItem = vscode.window.createStatusBarItem(StatusBarAlignment.Left);
     context.subscriptions.push(diagnosticCollection);
-    ext_context = context;
+    // ext_context = context;
     ext_version = vscode.extensions.getExtension('oleg-shilo.cs-script').packageJSON.version
     omnisharp_dir = path.join(vscode.extensions.getExtension('ms-vscode.csharp').extensionPath, '.omnisharp', 'omnisharp');
 
@@ -308,7 +314,7 @@ export function compare_versions(a: string, b: string): Number {
 function check_environment(): void {
     try {
 
-        let mono_found = true;
+        // let mono_found = true;
 
         let command = 'mono --version';
         let output: string = execSync(command).toString();
@@ -410,6 +416,19 @@ export function prepare_new_script(): string {
     }
 
     return template
+}
+
+export function save_as_temp(content: string, script_file: string): string {
+
+    let dir = path.dirname(script_file);
+    let ext = path.extname(script_file);
+    let name = path.basename(script_file, ext);
+
+    let temp_file = path.join(dir, name + '.$temp$' + ext);
+
+    fs.writeFileSync(temp_file, content, { encoding: 'utf8' });
+
+    return temp_file;
 }
 
 
@@ -529,10 +548,10 @@ export class Settings {
 export class Utils {
 
     public static IsScript(file: string): boolean {
-        if (!file)
+        if (file == undefined)
             return false;
-        return 
-            file.toLowerCase().endsWith('.cs');
+        else
+            return file.toLowerCase().endsWith('.cs');
     }
 
     public static getScriptName(projectFile: string): string {
@@ -695,42 +714,42 @@ export function actual_output(element, index, array) {
 }
 
 
-let SYNTAXER_VERSION = "1.2.2.0";
+// let SYNTAXER_VERSION = "1.2.2.0";
 
-let SEVER = ""; // will be set at the end of this file
-let HOST = '127.0.0.1';
-let PORT = 18002;
+// let SEVER = ""; // will be set at the end of this file
+// let HOST = '127.0.0.1';
+// let PORT = 18002;
 
-function startServer():void{
-	child_process.execFile("mono", [SEVER, "-port:" + PORT, "-listen", "-client:" + process.pid, "-timeout:60000"]);
-}
+// function startServer():void{
+// 	child_process.execFile("mono", [SEVER, "-port:" + PORT, "-listen", "-client:" + process.pid, "-timeout:60000"]);
+// }
 
 
-export class Syntaxer {
+// export class Syntaxer {
 
-    public static send(request: string, on_data: (data: string) => void, on_error: (error: any) => void): void {
+//     public static send(request: string, on_data: (data: string) => void, on_error: (error: any) => void): void {
 
-        var client = new net.Socket();
-        client.connect(PORT, HOST, function () {
-            // let request = "-client:" + process.pid + "\n-op:codemap_vscode\n-script:" + file;
-            client.write(request);
-        });
+//         var client = new net.Socket();
+//         client.connect(PORT, HOST, function () {
+//             // let request = "-client:" + process.pid + "\n-op:codemap_vscode\n-script:" + file;
+//             client.write(request);
+//         });
 
-        client.on('error', function (error) {
-            if (fs.existsSync(SEVER)) { // may not be deployed yet
-                // child_process.execFile(SEVER, SEVER_CMD);
-                startServer();
-                // setTimeout(() => vscode.commands.executeCommand('codemap.refresh'), 500);
-                on_error("Syntaxer server is not ready yet...");
-            }
-            else{
-                on_error(error.toString());
-            }
-        });
+//         client.on('error', function (error) {
+//             if (fs.existsSync(SEVER)) { // may not be deployed yet
+//                 // child_process.execFile(SEVER, SEVER_CMD);
+//                 startServer();
+//                 // setTimeout(() => vscode.commands.executeCommand('codemap.refresh'), 500);
+//                 on_error("Syntaxer server is not ready yet...");
+//             }
+//             else{
+//                 on_error(error.toString());
+//             }
+//         });
 
-        client.on('data', function (data) {
-            on_data(data.toString())
-            client.destroy();
-        });
-    }
-}
+//         client.on('data', function (data) {
+//             on_data(data.toString())
+//             client.destroy();
+//         });
+//     }
+// }

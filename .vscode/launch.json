@@ -9,13 +9,11 @@
             "name": "Extension",
             "type": "extensionHost",
             "request": "launch",
+            "stopOnEntry": false,
+            "sourceMaps": true,
             "runtimeExecutable": "${execPath}",
-            "args": [
-                "--extensionDevelopmentPath=${workspaceFolder}"
-            ],
-            "outFiles": [
-                "${workspaceFolder}/out/**/*.js"
-            ],
+            "args": [ "--extensionDevelopmentPath=${workspaceFolder}" ],
+            "outFiles": [ "${workspaceFolder}/out/**/*.js" ],
             "preLaunchTask": "npm: watch"
         },
         {
