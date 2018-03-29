@@ -418,6 +418,16 @@ export function prepare_new_script(): string {
     return template
 }
 
+export function clear_temp_file_suffixes(content: string): string {
+    // "c:\Users\osh\AppData\Roaming\Code\User\cs-script.user\new_script.$temp$.cs(16,9): Test();
+    return content.replace(/.\$temp\$/g, '');
+}
+
+export function select_line(line: number): void {
+    let editor = vscode.window.activeTextEditor;
+    editor.selection = new vscode.Selection(line, editor.document.lineAt(line).text.length, line, 0);
+}
+
 export function save_as_temp(content: string, script_file: string): string {
 
     let dir = path.dirname(script_file);
@@ -455,7 +465,7 @@ export class ErrorInfo {
 
             if (parts.length != 2) {
                 if (fs.existsSync(parts[0])) {
-                    result.file = parts[0];
+                    result.file = clear_temp_file_suffixes(parts[0]);
                     result.range = new vscode.Range(0, 0, 0, 0);
                 }
                 else {

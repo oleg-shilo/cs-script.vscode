@@ -685,19 +685,13 @@ let current_doc = '';
 function onActiveEditorChange(editor: vscode.TextEditor) {
     if (editor != null ) {
     // if (editor != null && editor.document.languageId == "code-runner-output") {
-        // const position = editor.selection.active;
-
-        // let start = position.with(2, 0);
-        // let end = position.with(2, 5);
-        // let newSelection = new vscode.Selection(start, end);
-        // editor.selection = newSelection;
 
         // console.log('Active doc: ' + editor.document.fileName);
         current_doc = editor.document.fileName;
     }
 }
 
-let output_line_last_click = -1;
+// let output_line_last_click = -1;
 function onActiveEditorSelectionChange(event: vscode.TextEditorSelectionChangeEvent) {
     // clicking file links in output is broken: https://github.com/Microsoft/vscode-go/issues/1002
     // another reason is that C# compiler output <file>(<line>,<col>) is incompatible with VSCode 
@@ -710,7 +704,8 @@ function onActiveEditorSelectionChange(event: vscode.TextEditorSelectionChangeEv
         let enabled = VSCodeSettings.get("cs-script.single_click_navigate_from_output", true);
         let single_line_selection = event.textEditor.selection.start.line == event.textEditor.selection.end.line;
 
-        if (enabled && single_line_selection && output_line_last_click != event.textEditor.selection.start.line) {
+        // if (enabled && single_line_selection && output_line_last_click != event.textEditor.selection.start.line) {
+        if (enabled && single_line_selection) {
             let line = event.textEditor.document.lineAt(event.textEditor.selection.start.line).text;
 
             let info = ErrorInfo.parse(line);
@@ -732,7 +727,7 @@ function onActiveEditorSelectionChange(event: vscode.TextEditorSelectionChangeEv
 
             }
         }
-        output_line_last_click = event.textEditor.selection.start.line;
+        // output_line_last_click = event.textEditor.selection.start.line;
     }
 }
 // -----------------------------------

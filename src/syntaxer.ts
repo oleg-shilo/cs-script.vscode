@@ -10,22 +10,29 @@ import * as mkdirp from "mkdirp";
 import * as process from "process";
 import * as child_process from "child_process"
 // import { Uri, commands } from "vscode";
-import { save_as_temp } from "./utils";
+import { save_as_temp, clear_temp_file_suffixes } from "./utils";
+import * as utils from "./utils";
 
 // let exec = require("child_process").exec;
 
-let SYNTAXER_VERSION = "1.2.2.0";
+let SYNTAXER_VERSION = "1.2.5.0";
 
 let CSCS = ""; // will be set at the end of this file to the path of the CS-Script engine executable
 let SERVER = ""; // will be set at the end of this file to the path of the server executable
 let PORT = 18003;
 
 function startServer(): void {
-	// let cscs_path = "cscs_path:C:\Users\osh\AppData\Roaming\Code\User\cs-script.user\syntaxer\1.2.2.0\cscs.exe";
-
-	SERVER = "E:\\Galos\\Projects\\Sublime\\cs-script\\syntaxer\\bin\\Debug\\syntaxer.exe";
-	child_process.execFile("mono", [SERVER, `-port:${PORT}`, "-listen", `-client:${process.pid}`, "-timeout:60000", `-cscs_path:${CSCS}`]);
-	// child_process.execFile(SERVER, [`-port:${PORT}`, "-listen", `-client:${process.pid}`, "-timeout:60000", `-cscs_path:${CSCS}`]);
+	
+	if (utils.isWin) {
+		// SERVER = "E:\\Galos\\Projects\\Sublime\\cs-script\\syntaxer\\bin\\Debug\\syntaxer.exe";
+		
+		// On Windows Syntaxer:RoslynIntellisense.AutoCompleter.FindReferences throws Roalyn..CodeAnalysis exception
+		// when run under mono. And yet everything is OK on Linux
+		child_process.execFile(SERVER, [`-port:${PORT}`, "-listen", `-client:${process.pid}`, "-timeout:60000", `-cscs_path:${CSCS}`]);
+	}
+	else {
+		child_process.execFile("mono", [SERVER, `-port:${PORT}`, "-listen", `-client:${process.pid}`, "-timeout:60000", `-cscs_path:${CSCS}`]);
+	}
 }
 
 export class Syntaxer {
@@ -91,16 +98,26 @@ export class Syntaxer {
 				fs.unlink(temp_file, error => { });
 			});
 	}
+	public static getRefrences(code: string, file: string, position: number, resolve, reject): void {
+		let temp_file = save_as_temp(code, file);
+
+		Syntaxer.send(`-client:${process.pid}\n-op:references\n-script:${temp_file}\n-pos:${position}`,
+			data => {
+				resolve(clear_temp_file_suffixes(data));
+				fs.unlink(temp_file, error => { });
+			});
+	}
+
 	public static getDefinition(code: string, file: string, position: number, resolve, reject): void {
 		let temp_file = save_as_temp(code, file);
-		
-		let rich = '\n-rich';
+
+		let rich = '\n-rich'; // will need to be used in future
 		rich = '';
 
 		Syntaxer.send(`-client:${process.pid}\n-op:resolve\n-script:${temp_file}\n-pos:${position}${rich}`,
 			data => {
 				// possibly it is a temp file reference
-				resolve(data.replace('.$temp$', ''));
+				resolve(clear_temp_file_suffixes(data));
 				fs.unlink(temp_file, error => { });
 			});
 	}

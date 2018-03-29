@@ -5,18 +5,14 @@
 import * as vscode from 'vscode';
 // import * as fs from 'fs';
 // import * as path from 'path';
-import { HoverProvider, Position, CompletionItem, CancellationToken, TextDocument, Hover, Definition, ProviderResult, Range, Location } from "vscode";
+import { HoverProvider, Position, CompletionItem, CancellationToken, TextDocument, Hover, Definition, ProviderResult, Range, Location, ReferenceContext } from "vscode";
 // import * as cs_script from "./cs-script";
 // import * as utils from "./utils";
 import { Syntaxer } from "./syntaxer";
+import { ErrorInfo, select_line } from './utils';
 // import { Utils } from "./utils";
 // import { Syntaxer } from "./syntaxer";
 
-
-interface HelpSection {
-    docOffset: number;
-    text: string;
-}
 
 function isWorkspace(): boolean { return vscode.workspace.rootPath != undefined; }
 
@@ -176,34 +172,64 @@ export class CSScriptCompletionItemProvider implements vscode.CompletionItemProv
     }
 }
 
-let syntax_readme_selectedLine = -1;
+let syntaxer_navigate_selectedLine = -1;
 
 vscode.window.onDidChangeActiveTextEditor(editor => {
 
     // 'new Location(...' in CSScriptDefinitionProvider does scrolling correctly but does not do the selection
 
-    if (syntax_readme_selectedLine != -1) {
-        let line = syntax_readme_selectedLine;
-        setTimeout(() => {
-            editor.selection = new vscode.Selection(line, 0, line, editor.document.lineAt(line).text.length);
-        }, 300);
-        syntax_readme_selectedLine = -1;
+    if (syntaxer_navigate_selectedLine != -1) {
+        setTimeout(() => select_line(syntaxer_navigate_selectedLine), 300);
+        syntaxer_navigate_selectedLine = -1;
     }
 });
 
-export class CSScriptDefinitionProvider implements vscode.DefinitionProvider {
+export class CSScriptReferenceProvider implements vscode.ReferenceProvider {
 
-    public provideDefinition(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<Definition> {
+    public provideReferences(document: TextDocument, position: Position, context: ReferenceContext, token: CancellationToken): ProviderResult<Location[]> {
 
-        syntax_readme_selectedLine = -1;
-        let result: Location = undefined;
+        let result: Location[] = [];
 
         let is_workspace = isWorkspace();
         let is_css_directive = isCssDirective(document, position);
 
         if (!is_workspace || is_css_directive) {
 
-            let script_file = document.fileName;
+            return new Promise((resolve, reject) =>
+
+                Syntaxer.getRefrences(document.getText(), document.fileName, document.offsetAt(position),
+
+                    data => {
+                        if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
+
+                            let lines: string[] = data.lines();
+
+                            lines.forEach(line => {
+                                let info = ErrorInfo.parse(line);
+                                result.push(new Location(vscode.Uri.file(info.file), info.range));
+                            });
+                        }
+                        resolve(result);
+                    },
+                    error => {
+                    }));
+
+        }
+        return null;
+    }
+
+}
+export class CSScriptDefinitionProvider implements vscode.DefinitionProvider {
+
+    public provideDefinition(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<Definition> {
+
+        syntaxer_navigate_selectedLine = -1;
+        let result: Location = undefined;
+
+        let is_workspace = isWorkspace();
+        let is_css_directive = isCssDirective(document, position);
+
+        if (!is_workspace || is_css_directive) {
 
             return new Promise((resolve, reject) =>
 
@@ -221,28 +247,21 @@ export class CSScriptDefinitionProvider implements vscode.DefinitionProvider {
                             let line = Number(lines[1].substr('line:'.length)) - 1;
 
                             if (file.length > 0) {
-                                syntax_readme_selectedLine = line;
+                                syntaxer_navigate_selectedLine = line;
                                 result = new Location(vscode.Uri.file(file), new Range(new Position(line, 0), new Position(line, 0)));
+
+                                // It's the same file so no doc change event will be fired on navigation.
+                                // Thus so no line with the cursor will be selected in the event handler.
+                                // Meaning, we have to do it explicitly.     
+                                if (file.toLowerCase() == document.fileName.toLowerCase()) {
+                                    setTimeout(() => select_line(syntaxer_navigate_selectedLine), 30);
+                                }
                             }
                         }
                         resolve(result);
                     },
                     error => {
                     }));
-
-            // if (!help_map)
-            //     parseSyntaxHelp(cs_script.generate_syntax_help());
-
-            // for (var key in help_map)
-            //     if (key == word) {
-            //         let text = fs.readFileSync(cs_script.syntax_readme, { encoding: 'utf8' });
-
-            //         let line = text.substr(0, help_map[key].docOffset).lines().length;
-            //         utils.statusBarItem.hide();
-            //         syntax_readme_selectedLine = line;
-
-            //         return new Location(vscode.Uri.file(cs_script.syntax_readme), new Range(new Position(line, 0), new Position(line, 0)));
-            //     }
         }
         // utils.statusBarItem.hide();
         return null;

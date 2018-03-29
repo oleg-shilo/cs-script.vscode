@@ -3,8 +3,8 @@
 /* tslint:disable */
 
 // TODO:
-// #4 Project fails to load if the script has cs-script directive invalid syntax.
-// Ctrl+F5 shows cs-script busy, but executes the script for every run of the modified script
+// - Syntaxer.F12 does not set the focus if the location is already in the active doc
+// - Show notification on syntaxer deployed
 
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
@@ -12,7 +12,8 @@ import * as vscode from 'vscode';
 import * as cs_script from "./cs-script";
 import * as syntaxer from "./syntaxer";
 import { ProjectTreeProvider } from "./tree_view";
-import { CSScriptHoverProvider, CSScriptCompletionItemProvider, CSScriptDefinitionProvider } from "./providers";
+import { CSScriptHoverProvider, CSScriptCompletionItemProvider, CSScriptDefinitionProvider, CSScriptReferenceProvider } from "./providers";
+// import { Utils, clear_temp_file_suffixes } from './utils';
 
 export function refresh_tree() {
     console.log('refresh_tree');
@@ -34,6 +35,8 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.languages.registerHoverProvider('csharp', new CSScriptHoverProvider()));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider('csharp', new CSScriptCompletionItemProvider(), '.', '_'));
     context.subscriptions.push(vscode.languages.registerDefinitionProvider('csharp', new CSScriptDefinitionProvider()));
+    context.subscriptions.push(vscode.languages.registerReferenceProvider('csharp', new  CSScriptReferenceProvider()));
+    // formatting provider
 
 
     context.subscriptions.push(vscode.commands.registerCommand('cs-script.refresh_tree', () => treeViewProvider.refresh()));
