@@ -8,7 +8,7 @@ import * as utils from "./utils";
 import * as vscode from "vscode";
 import * as path from "path";
 // import { exec } from 'child_process';
-import { Uri, commands, DiagnosticSeverity, TextEditorSelectionChangeKind, } from "vscode";
+import { Uri, commands, DiagnosticSeverity, TextEditorSelectionChangeKind, Location, } from "vscode";
 import { ErrorInfo, Utils, unlock, is_busy, with_lock, actual_output, settings, VSCodeSettings, user_dir, create_dir, select_line } from "./utils";
 import { Syntaxer } from "./syntaxer";
 
@@ -330,33 +330,54 @@ export function check() {
     });
 }
 // -----------------------------------
-export function find_references() {
-    with_lock(() => {
-        let editor = vscode.window.activeTextEditor;
-        let document = editor.document;
-        let position = editor.selection.active;
+export async function find_references() {
+
+    let editor = vscode.window.activeTextEditor;
+    let document = editor.document;
+    let position = editor.selection.active;
+
+
+    with_lock(async () => {
 
         outputChannel.show(true);
         outputChannel.clear();
-
-        Syntaxer.getRefrences(document.getText(), document.fileName, document.offsetAt(position),
-            data => {
-                if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
-                    outputChannel.clear();
-                    outputChannel.appendLine('References:');
-
-                    let lines: string[] = data.lines();
-
-                    lines.forEach(line => {
-                        outputChannel.appendLine(line);
-                    });
-                }
-            },
-            error => {
-                outputChannel.clear();
-            });
-
         outputChannel.appendLine('Resolving references...');
+
+        if (document.languageId == "csharp" || document.languageId == "vb") {
+            Syntaxer.getRefrences(document.getText(), document.fileName, document.offsetAt(position),
+                data => {
+                    if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
+
+                        let lines: string[] = data.lines();
+
+                        outputChannel.clear();
+                        outputChannel.appendLine(`${lines.length} references:`);
+
+                        lines.forEach(line => {
+                            outputChannel.appendLine(line);
+                        });
+                    }
+                },
+                error => {
+                    outputChannel.clear();
+                });
+        }
+        else {
+            try {
+
+                let locations = await vscode.commands.executeCommand('vscode.executeReferenceProvider', Uri.file(document.fileName), position);
+                let lines = (locations as Location[]);
+                outputChannel.clear();
+                outputChannel.appendLine(`${lines.length} references:`);
+
+                lines.forEach(location => {
+                    outputChannel.appendLine(`${location.uri.fsPath}(${location.range.start.line + 1},${location.range.start.character + 1}): ...`);
+                });
+            }
+            catch  {
+                outputChannel.clear();
+            }
+        }
         unlock();
     });
 }
@@ -754,7 +775,8 @@ function onActiveEditorSelectionChange(event: vscode.TextEditorSelectionChangeEv
 
             let info = ErrorInfo.parse(line);
 
-            if (info != null && fs.existsSync(info.file) && (info.file.endsWith('.cs') || info.file.endsWith('.txt') || info.file.endsWith('.vb'))) {
+            // if (info != null && fs.existsSync(info.file) && (info.file.endsWith('.cs') || info.file.endsWith('.txt') || info.file.endsWith('.vb'))) {
+            if (info != null && fs.existsSync(info.file)) {
 
                 let already_active = (current_doc == info.file);
                 if (!already_active)

@@ -5,7 +5,7 @@
 import * as vscode from 'vscode';
 // import * as fs from 'fs';
 // import * as path from 'path';
-import { HoverProvider, Position, CompletionItem, CancellationToken, TextDocument, Hover, Definition, ProviderResult, Range, Location, ReferenceContext } from "vscode";
+import { HoverProvider, Position, CompletionItem, CancellationToken, TextDocument, Hover, Definition, ProviderResult, Range, Location, ReferenceContext} from "vscode";
 // import * as cs_script from "./cs-script";
 // import * as utils from "./utils";
 import { Syntaxer } from "./syntaxer";

@@ -419,7 +419,7 @@ export function prepare_new_script(): string {
 }
 
 export function clear_temp_file_suffixes(content: string): string {
-    // "c:\Users\osh\AppData\Roaming\Code\User\cs-script.user\new_script.$temp$.cs(16,9): Test();
+    // "c:\Users\<user>\AppData\Roaming\Code\User\cs-script.user\new_script.$temp$.cs(16,9): Test();
     return content.replace(/.\$temp\$/g, '');
 }
 
