@@ -8,13 +8,14 @@ import * as utils from "./utils";
 import * as vscode from "vscode";
 import * as path from "path";
 // import { exec } from 'child_process';
-import { Uri, commands,  DiagnosticSeverity, TextEditorSelectionChangeKind, } from "vscode";
-import { ErrorInfo, Utils,  unlock, is_busy, with_lock, actual_output, settings, VSCodeSettings, user_dir, create_dir } from "./utils";
+import { Uri, commands, DiagnosticSeverity, TextEditorSelectionChangeKind, } from "vscode";
+import { ErrorInfo, Utils, unlock, is_busy, with_lock, actual_output, settings, VSCodeSettings, user_dir, create_dir, select_line } from "./utils";
+import { Syntaxer } from "./syntaxer";
 
 export let syntax_readme: string = path.join(user_dir(), "cs-script.syntax.txt");
 let ext_context: vscode.ExtensionContext;
-let cscs_exe:string = path.join(user_dir(), 'cscs.exe');
-let readme:string = path.join(user_dir(), 'cs-script.help.txt')
+let cscs_exe: string = path.join(user_dir(), 'cscs.exe');
+let readme: string = path.join(user_dir(), 'cs-script.help.txt')
 let csproj_template = __dirname + "/../bin/script.csproj";
 let outputChannel = vscode.window.createOutputChannel('Code');
 // let last_process = null;
@@ -42,7 +43,7 @@ export function load_project() {
         // Note: os.tmpdir() for some reason returns lower cased root so Utils.IsSamePath needs to be used 
         // let proj_dir = path.join(os.tmpdir(), 'CSSCRIPT', 'VSCode', 'cs-script.vscode');
         // let current_folder = vscode.workspace.rootPath;
-        
+
         let editor = vscode.window.activeTextEditor;
 
         let workspaceIsAlreadyLoaded = Utils.IsSamePath(vscode.workspace.rootPath, csproj_dir);
@@ -289,7 +290,7 @@ export function get_project_tree_items() {
                 unlock();
             });
         else {
-            setTimeout(() => commands.executeCommand('cs-script.refresh_tree') , 500);
+            setTimeout(() => commands.executeCommand('cs-script.refresh_tree'), 500);
         }
     }
     return lines;
@@ -326,6 +327,37 @@ export function check() {
 
             unlock();
         });
+    });
+}
+// -----------------------------------
+export function find_references() {
+    with_lock(() => {
+        let editor = vscode.window.activeTextEditor;
+        let document = editor.document;
+        let position = editor.selection.active;
+
+        outputChannel.show(true);
+        outputChannel.clear();
+
+        Syntaxer.getRefrences(document.getText(), document.fileName, document.offsetAt(position),
+            data => {
+                if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
+                    outputChannel.clear();
+                    outputChannel.appendLine('References:');
+
+                    let lines: string[] = data.lines();
+
+                    lines.forEach(line => {
+                        outputChannel.appendLine(line);
+                    });
+                }
+            },
+            error => {
+                outputChannel.clear();
+            });
+
+        outputChannel.appendLine('Resolving references...');
+        unlock();
     });
 }
 // -----------------------------------
@@ -683,8 +715,8 @@ export function run() {
 // intercepting Modifier_MouseClick https://github.com/Microsoft/vscode/issues/3130
 let current_doc = '';
 function onActiveEditorChange(editor: vscode.TextEditor) {
-    if (editor != null ) {
-    // if (editor != null && editor.document.languageId == "code-runner-output") {
+    if (editor != null) {
+        // if (editor != null && editor.document.languageId == "code-runner-output") {
 
         // console.log('Active doc: ' + editor.document.fileName);
         current_doc = editor.document.fileName;
@@ -693,9 +725,21 @@ function onActiveEditorChange(editor: vscode.TextEditor) {
 
 // let output_line_last_click = -1;
 function onActiveEditorSelectionChange(event: vscode.TextEditorSelectionChangeEvent) {
-    // clicking file links in output is broken: https://github.com/Microsoft/vscode-go/issues/1002
+    // The idea is to allow user to click the link (e.g. `script.cs (10, 23)`) printed in the output window 
+    // and navigate to the file location defined in the printed link.
+
+    // In VSCode clicking file links in output is broken: https://github.com/Microsoft/vscode-go/issues/1002
     // another reason is that C# compiler output <file>(<line>,<col>) is incompatible with VSCode 
     // clickable output <file>:<line>:<col>
+
+    // Attempting to implement a work around. A good approach is to detect Ctrl being pressed and do the navigation. 
+    // 
+    // https://github.com/Microsoft/vscode/issues/3130
+    // And if it is not pressed then lat it be just a simple click. However, VSCode does not let to test 
+    // Ctrl button state (vscode/#3130)  :o(       
+    //
+    // Always navigating on a sinle click on a text line in the ouput window works fine but interfere with the selection operations.
+    // Thus let's do navigation if no current selection is made. 
 
     if (event.kind == TextEditorSelectionChangeKind.Mouse &&
         event.textEditor.document.fileName.startsWith("extension-output-") &&
@@ -710,7 +754,7 @@ function onActiveEditorSelectionChange(event: vscode.TextEditorSelectionChangeEv
 
             let info = ErrorInfo.parse(line);
 
-            if (info != null && fs.existsSync(info.file) && (info.file.endsWith('.cs') || info.file.endsWith('.txt'))) {
+            if (info != null && fs.existsSync(info.file) && (info.file.endsWith('.cs') || info.file.endsWith('.txt') || info.file.endsWith('.vb'))) {
 
                 let already_active = (current_doc == info.file);
                 if (!already_active)
@@ -720,9 +764,15 @@ function onActiveEditorSelectionChange(event: vscode.TextEditorSelectionChangeEv
                                 let editor = vscode.window.activeTextEditor;
                                 const position = editor.selection.active;
 
-                                let start = position.with(info.range.start.line, info.range.start.character);
-                                let newSelection = new vscode.Selection(start, start);
-                                editor.selection = newSelection;
+                                let select_whole_line = true;
+                                if (select_whole_line) {
+                                    select_line(info.range.start.line);
+                                }
+                                else {
+                                    let start = position.with(info.range.start.line, info.range.start.character);
+                                    let newSelection = new vscode.Selection(start, start);
+                                    editor.selection = newSelection;
+                                }
                             }), 100);
 
             }

@@ -425,7 +425,10 @@ export function clear_temp_file_suffixes(content: string): string {
 
 export function select_line(line: number): void {
     let editor = vscode.window.activeTextEditor;
-    editor.selection = new vscode.Selection(line, editor.document.lineAt(line).text.length, line, 0);
+    if (line != -1) {
+        editor.selection = new vscode.Selection(line, editor.document.lineAt(line).text.length, line, 0);
+        editor.revealRange(editor.selection);
+    }
 }
 
 export function save_as_temp(content: string, script_file: string): string {

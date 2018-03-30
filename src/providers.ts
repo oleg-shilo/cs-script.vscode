@@ -179,7 +179,11 @@ vscode.window.onDidChangeActiveTextEditor(editor => {
     // 'new Location(...' in CSScriptDefinitionProvider does scrolling correctly but does not do the selection
 
     if (syntaxer_navigate_selectedLine != -1) {
-        setTimeout(() => select_line(syntaxer_navigate_selectedLine), 300);
+
+        let line = syntaxer_navigate_selectedLine;
+        setTimeout(() => {
+            select_line(line);
+        }, 100);
         syntaxer_navigate_selectedLine = -1;
     }
 });
@@ -240,7 +244,7 @@ export class CSScriptDefinitionProvider implements vscode.DefinitionProvider {
 
                             let lines: string[] = data.lines();
 
-                            // file:c:\Users\osh\AppData\Roaming\Code\User\cs-script.user\new_script.cs
+                            // file:c:\Users\<user>\AppData\Roaming\Code\User\cs-script.user\new_script.cs
                             // line:25
 
                             let file = lines[0].substr('file:'.length);
