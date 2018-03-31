@@ -4,16 +4,11 @@ import * as fse from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
 import * as net from "net";
-// import * as fse from "fs-extra"
 import * as mkdirp from "mkdirp";
-// import * as vscode from "vscode";
 import * as process from "process";
 import * as child_process from "child_process"
-// import { Uri, commands } from "vscode";
 import { save_as_temp, clear_temp_file_suffixes } from "./utils";
 import * as utils from "./utils";
-
-// let exec = require("child_process").exec;
 
 let SYNTAXER_VERSION = "1.2.5.0";
 
@@ -22,10 +17,10 @@ let SERVER = ""; // will be set at the end of this file to the path of the serve
 let PORT = 18003;
 
 function startServer(): void {
-	
+
 	if (utils.isWin) {
-		// SERVER = "E:\\Galos\\Projects\\Sublime\\cs-script\\syntaxer\\bin\\Debug\\syntaxer.exe";
-		
+		// SERVER = "E:\\<company_name>\\Projects\\Sublime\\cs-script\\syntaxer\\bin\\Debug\\syntaxer.exe";
+
 		// On Windows Syntaxer:RoslynIntellisense.AutoCompleter.FindReferences throws Roalyn..CodeAnalysis exception
 		// when run under mono. And yet everything is OK on Linux
 		child_process.execFile(SERVER, [`-port:${PORT}`, "-listen", `-client:${process.pid}`, "-timeout:60000", `-cscs_path:${CSCS}`]);
@@ -67,18 +62,6 @@ export class Syntaxer {
 		});
 	}
 
-
-	public static Exit(): void {
-
-	}
-
-	// public static isRunning(): boolean {
-
-	// 	let response = Syntaxer.send(`-client:${process.pid}`);
-	// 	return response != undefined;
-	// }
-
-
 	public static getCompletions(code: string, file: string, position: number, resolve, reject): void {
 		let temp_file = save_as_temp(code, file);
 
@@ -88,6 +71,7 @@ export class Syntaxer {
 				fs.unlink(temp_file, error => { });
 			});
 	}
+
 	public static getTooltip(code: string, file: string, position: number, resolve, reject): void {
 		let temp_file = save_as_temp(code, file);
 
@@ -160,6 +144,22 @@ export function DeploySyntaxer() {
 		}
 	}
 
+	function purge_old_syntaxer(): void {
+		let syntaxer_dir = path.join(user_dir(), 'syntaxer');
+
+		const is_dir = source => fs.lstatSync(source).isDirectory();
+
+		fs.readdir(syntaxer_dir, (err, items) => {
+			items.forEach(item => {
+				if (item != SYNTAXER_VERSION) {
+					let dir = path.join(syntaxer_dir, item);
+					if (is_dir(dir))
+						utils.delete_dir(dir);
+				}
+			});
+		});
+	}
+
 	let fileName = "syntaxer.exe";
 	let ext_dir = path.join(__dirname, "..");
 	let sourceDir = path.join(ext_dir, 'bin');
@@ -167,6 +167,7 @@ export function DeploySyntaxer() {
 
 	SERVER = path.join(destDir, fileName);
 	CSCS = path.join(destDir, "..", "cscs.exe");
+	let provider =  path.join(destDir, "..", "CSSRoslynProvider.dll");
 
 	if (fs.existsSync(SERVER)) {
 		startServer();
@@ -174,14 +175,16 @@ export function DeploySyntaxer() {
 	else {
 		create_dir(destDir);
 
-		fse.copy(path.join(sourceDir, fileName), SERVER)
-			.then(startServer)
-			.catch(console.error);
-
-		fse.copy(path.join(sourceDir, "CSSRoslynProvider.dll"), path.join(destDir, path.join(destDir, "..", "CSSRoslynProvider.dll")))
+		fse.copy(path.join(sourceDir, "CSSRoslynProvider.dll"), provider)
 			.catch(console.error);
 
 		fse.copy(path.join(sourceDir, "cscs.exe"), CSCS)
 			.catch(console.error);
+
+		fse.copy(path.join(sourceDir, fileName), SERVER)
+			.then(startServer)
+			// .then(() => vscode.window.showInformationMessage('New version of CS-Script Syntaxer has been deployed.'))
+			.catch(console.error);
 	}
+	purge_old_syntaxer();
 }

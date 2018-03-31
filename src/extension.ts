@@ -3,7 +3,6 @@
 /* tslint:disable */
 
 // TODO:
-// - Syntaxer.F12 does not set the focus if the location is already in the active doc
 // - Show notification on syntaxer deployed
 
 // The module 'vscode' contains the VS Code extensibility API
@@ -13,11 +12,7 @@ import * as cs_script from "./cs-script";
 import * as syntaxer from "./syntaxer";
 import { ProjectTreeProvider } from "./tree_view";
 import { CSScriptHoverProvider, CSScriptCompletionItemProvider, CSScriptDefinitionProvider, CSScriptReferenceProvider } from "./providers";
-// import { Utils, clear_temp_file_suffixes } from './utils';
 
-export function refresh_tree() {
-    console.log('refresh_tree');
-}
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -40,9 +35,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.languages.registerDefinitionProvider('csharp', new CSScriptDefinitionProvider()));
     context.subscriptions.push(vscode.languages.registerDefinitionProvider('vb', new CSScriptDefinitionProvider()));
-    
-    context.subscriptions.push(vscode.languages.registerReferenceProvider('csharp', new  CSScriptReferenceProvider()));
-    context.subscriptions.push(vscode.languages.registerReferenceProvider('vb', new  CSScriptReferenceProvider()));
+
+    context.subscriptions.push(vscode.languages.registerReferenceProvider('csharp', new CSScriptReferenceProvider()));
+    context.subscriptions.push(vscode.languages.registerReferenceProvider('vb', new CSScriptReferenceProvider()));
     // formatting provider
 
 

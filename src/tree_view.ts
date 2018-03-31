@@ -91,16 +91,6 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectItem>
 
 		return nodes;
 	}
-
-	// private pathExists(p: string): boolean {
-	// 	try {
-	// 		fs.accessSync(p);
-	// 	} catch (err) {
-	// 		return false;
-	// 	}
-
-	// 	return true;
-	// }
 }
 
 export class ProjectItem extends vscode.TreeItem {

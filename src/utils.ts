@@ -167,17 +167,17 @@ export function delete_dir(dir: string): void {
         let files = fs.readdirSync(dir);
         for (let i = 0; i < files.length; i++) {
 
-            let file_path = path.join(dir, files[i]);
+            let item_path = path.join(dir, files[i]);
 
-            if (fs.lstatSync(file_path).isFile())
+            if (fs.lstatSync(item_path).isFile())
                 try {
-                    fs.unlinkSync(file_path);
+                    fs.unlinkSync(item_path);
                 } catch (error) {
                 }
+            else
+                delete_dir(item_path);
         }
-
         fs.rmdir(dir);
-
     } catch (error) {
     }
 }
@@ -726,43 +726,3 @@ export function actual_output(element, index, array) {
     return (!element.startsWith('failed to get 100ns ticks'));
 }
 
-
-// let SYNTAXER_VERSION = "1.2.2.0";
-
-// let SEVER = ""; // will be set at the end of this file
-// let HOST = '127.0.0.1';
-// let PORT = 18002;
-
-// function startServer():void{
-// 	child_process.execFile("mono", [SEVER, "-port:" + PORT, "-listen", "-client:" + process.pid, "-timeout:60000"]);
-// }
-
-
-// export class Syntaxer {
-
-//     public static send(request: string, on_data: (data: string) => void, on_error: (error: any) => void): void {
-
-//         var client = new net.Socket();
-//         client.connect(PORT, HOST, function () {
-//             // let request = "-client:" + process.pid + "\n-op:codemap_vscode\n-script:" + file;
-//             client.write(request);
-//         });
-
-//         client.on('error', function (error) {
-//             if (fs.existsSync(SEVER)) { // may not be deployed yet
-//                 // child_process.execFile(SEVER, SEVER_CMD);
-//                 startServer();
-//                 // setTimeout(() => vscode.commands.executeCommand('codemap.refresh'), 500);
-//                 on_error("Syntaxer server is not ready yet...");
-//             }
-//             else{
-//                 on_error(error.toString());
-//             }
-//         });
-
-//         client.on('data', function (data) {
-//             on_data(data.toString())
-//             client.destroy();
-//         });
-//     }
-// }

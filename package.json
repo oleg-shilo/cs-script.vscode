@@ -2,8 +2,8 @@
     "name": "cs-script",
     "displayName": "CS-Script",
     "description": "Execution, debugging and editing C# code that targets .NET and Mono (no .NET Core required)",
-    "version": "1.3.6",
-    "license" : "MIT", 
+    "version": "1.4.0",
+    "license": "MIT",
     "publisher": "oleg-shilo",
     "engines": {
         "vscode": "^1.21.0"
@@ -46,7 +46,6 @@
         "onCommand:cs-script.engine_help",
         "onCommand:cs-script.check"
     ],
-    
     "main": "./out/extension",
     "contributes": {
         "views": {
@@ -197,12 +196,12 @@
                 },
                 {
                     "when": "resourceLangId == csharp",
-                    "command": "cs-script.load_project",
+                    "command": "cs-script.check",
                     "group": "navigation@3"
                 },
                 {
                     "when": "resourceLangId == csharp",
-                    "command": "cs-script.check",
+                    "command": "cs-script.load_project",
                     "group": "navigation@4"
                 },
                 {
@@ -294,6 +293,5 @@
         "fs-extra": "^3.0.1",
         "@types/node": "^7.0.43",
         "@types/mocha": "^2.2.42"
-        
     }
 }

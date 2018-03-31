@@ -7,7 +7,6 @@ import * as os from "os";
 import * as utils from "./utils";
 import * as vscode from "vscode";
 import * as path from "path";
-// import { exec } from 'child_process';
 import { Uri, commands, DiagnosticSeverity, TextEditorSelectionChangeKind, Location, } from "vscode";
 import { ErrorInfo, Utils, unlock, is_busy, with_lock, actual_output, settings, VSCodeSettings, user_dir, create_dir, select_line } from "./utils";
 import { Syntaxer } from "./syntaxer";
@@ -18,7 +17,6 @@ let cscs_exe: string = path.join(user_dir(), 'cscs.exe');
 let readme: string = path.join(user_dir(), 'cs-script.help.txt')
 let csproj_template = __dirname + "/../bin/script.csproj";
 let outputChannel = vscode.window.createOutputChannel('Code');
-// let last_process = null;
 
 // it is extremely important to keep project file name in sync with the activation event trigger in manifest file )"workspaceContains:script.csproj")
 let script_proj_name = 'script.csproj';
@@ -524,35 +522,6 @@ export function generate_syntax_help(force: boolean = false): string {
     return output;
 }
 // -----------------------------------
-// export function getImportableScripts(): string[] {
-//     let files = [];
-//     let lines: string[];
-//     let editor = vscode.window.activeTextEditor;
-//     let file: string;
-
-//     if (Utils.IsSamePath(vscode.workspace.rootPath, csproj_dir)) { // cs-script workspace
-//         let proj_file = path.join(csproj_dir, 'script.csproj');
-
-//         Utils.getSearchDirs(proj_file).forEach(dir=> {
-
-//             let dir_items = fs.readdirSync(dir);
-
-//             dir_items.forEach(name => {
-//                 if (fs.lstatSync(path.join(dir, name)).isFile() && name.toLowerCase().endsWith('.cs'))
-//                     files.push(name);
-//             });
-//         });
-//     }
-//     else if (Utils.IsScript(editor.document.fileName)) {
-//         file = editor.document.fileName;
-//         editor.document.save();
-//         // not implemented yet
-//         return files;
-//     }
-
-//     return files;
-// }
-// -----------------------------------
 export function new_script() {
     with_lock(() => {
         let new_file_path = path.join(user_dir(), 'new_script.cs')
@@ -678,7 +647,6 @@ export function run() {
         // todo
         // - check if process is already running
         // - read cscs location from config
-        // - ensure running via mono (at least on Linux) - CONFIG BASED
 
         outputChannel.appendLine("data");
         let editor = vscode.window.activeTextEditor;
