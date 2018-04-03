@@ -60,7 +60,7 @@ Below are the road map highlights only. Some more detailed information are avail
 - Adding a [custom view](https://code.visualstudio.com/updates/v1_13#_custom-views)  containing all script dependencies (e.g. imported scripts, DLLs) (**_Done in v1.3.0_**)
 - Integrate CS-Script specific autocompletion with default C# autocompletion (OmniSharp). (**_Done in v1.3.0_**)
 - Integrate CS-Script run/debug commands with the default launch actions. (**_Done in v1.3.0_**)
-- Allow fallback autocompletion (similar to Sublime Text) when OmniSharp is not activated.
+- Allow fallback autocompletion (similar to Sublime Text) when OmniSharp is not activated. (**_Done in v1.4.0_**)
 - Allow OmniSharp autocompletion to be integrated without loading the folder. May not be possible due to the OmniSharp limitations.
 
 <hr>
@@ -84,7 +84,7 @@ Be aware that apart from allowing typical C# Intellisense this extension also pr
 ## Usage
 
 _**Installing**_<br>
-While the extension is already published on VSCode marketplace it may take some time until it becomes publicly available. Until then you can install the extension from VSIX (from GitGub).
+While the extension is published on [VSCode marketplace](https://marketplace.visualstudio.com/items?itemName=oleg-shilo.cs-script) the latest un published[releases can be accesses on GitHub [releases page](https://github.com/oleg-shilo/cs-script.vscode/releases).
 
 _**Executing**_<br>
 _Command: `cs-script: run`<br>_
@@ -138,7 +138,7 @@ The supported _Intellisense_ features are:
 6. Format document (in next release)
 7. Rename symbol (in next release)
 
-"Find all references (classic)" is an alternative result representation of the standard VSCode "Find all references" for C#, TypeScript and VB.NET code. This presentation in conjunction with a single-click navigation is more consistent with the traditional Visual Studio experience:
+"Find all references (classic)" is an alternative result representation of the standard VSCode "Find all references" for C#, TypeScript and VB.NET code (supported syntaxes can be extended). This presentation in conjunction with a single-click navigation is more consistent with the traditional Visual Studio experience:
 
 ![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/find_refs_classic.gif)
 
