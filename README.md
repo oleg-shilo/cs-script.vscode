@@ -1,11 +1,16 @@
 # CS-Script - VSCode Extension (CS-Script.VSCode)
 
-Execution, debugging and editing C# code that targets .NET and Mono (no .NET Core required).     
+Execution, debugging and editing C# scripts that target .NET and Mono (no .NET Core required).</br> 
+A single C# file is all that is required to run the script. Support for VB.NET scripts is currently limited to Windows only.
+
 <hr/>
 Note this extension depends on "ms-vscode.mono-debug" and "ms-vscode.csharp". Thus if these extensions are installed/function incorrectly please log error reports at their web sites. 
-
-Please be aware that currently the extension does not provide its own _Intellisense_ functionality and instead relies on VSCode built-in _Intellisense_ engine OmniSharp. See **_Enabling C# IntelliSense_** section below for the instructions on how to activate _Intellisense_ for a loaded C# file.   
 <hr/>
+
+## Overview
+
+_The extension implements its own Roslyn-based _Intellisense_ functionality fully integrated with VSCode  infrastructure. Though you can always opt to the VSCode built-in _Intellisense_ engine OmniSharp. See **_Using CS-Script IntelliSense_** section for details._
+
 Currently VSCode support for C# is heavily oriented on development for .NET Core (e.g. ASP.NET Core). This imposes serious limitations on developers who is developing for desktop and server using C#. This project is aiming for filling this gap.
 
 The extension is powered by the [CS-Script engine](https://github.com/oleg-shilo/cs-script/blob/master/README.md) - popular Open Source script engine that delivers Python scripting experience but for C# syntax. CS-Script uses ECMA-compliant C# as a programming language and it can be hosted by applications or run standalone. CS-Script is already a core of the plugins for some other popular editors/IDEs: 
@@ -114,24 +119,52 @@ Open the C# file and execute "print project" command (Alt+F7):
 
 _**Using CS-Script IntelliSense**_<br>
 _Command: `N/A`<br>_
-Open the C# file and start using normal intellisense triggers with CS-Script specific symbols: _hover, go-to-definition, autocompletion_.
+Open the C# file and start using normal intellisense triggers with CS-Script specific symbols: _hover, go-to-definition, autocompletion, find references_.
 
 ![](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/cs-s_intellisense.gif)
 
-_**Enabling C# IntelliSense**_<br>
+The supported _Intellisense_ features are:
+1. Suggest completion (autocompletion)
+2. Go to definition
+3. Find all references
+4. Find all references (classic)
+5. Show symbol info as tooltip on mouse over the expression
+6. Format document (in next release)
+7. Rename symbol (in next release)
+
+"Find all references (classic)" is an alternative result representation of the standard VSCode "Find all references", which is more consistent with the traditional Visual Studio 
+experience:
+
+
+
+
+_**Load as workspace**_<br>
 _Command: `cs-script: load project`<br>_
-Open the C# file and execute "load project" command (ctrl+F7):
+Open the C# file and execute "load project" command (ctrl+F7)
 
-_Note: currently VSCode project model does not allow programmatic opening of a project/folder and a file. Thus initially you need to trigger "load project" command twice to achieve the desired outcome. First time to load the folder and second time to load the file. But after the project/folder is loaded activating a C# IntelliSense is always a single step operation. This minor limitation is going to be addressed in the future releases. Providing VSCode team will cooperate._   
+CS-Script and VSCode are following completely different _project_ paradigm.
+- _CS-Script_</br>
+  A single C#/VB.NET file is self-sufficient. It contains all the information about the dependencies required for execution/editing/debugging the script application: 
+   - referenced scripts (directly in code)
+   - referenced assemblies (directly in code)
+   - referenced NuGet packages (directly in code)
+   - CS-Script extension _Intellisense_ functionality
 
-<hr>
+- _VSCode_</br>
+  A project file (*.csproj) and a project folder is required to fully define the dependencies required for execution/editing/debugging the application: 
+   - referenced scripts (in project file)
+   - referenced assemblies (in project file)
+   - referenced NuGet packages (in project file)
+   - Omnisharp _Intellisense_ functionality
+
+By default, when you just open a C#/VB.NET file the all development activities are handled by the CS-Script extension infrastructure. However it is possible to open the file and generate the all traditional project infrastructure (project file and folder). Tis can be achieved by executing the "load project" command (ctrl+F7). 
 
 ## Limitations
 _**Project structure**_<br>
 VSCode is a subject to a serious limitation - the project model is based on a folder and doesn't allow any customization. To put it simple, VSCode executes/debugs folders while CS-Script files. While the extension completely overcomes this limitation for execution and debugging, the Intellisense support is only enabled when OmniSharp project is loaded. To make it easier _CS-Script.VSCode_ allows generation and loading required OmniSharp project in a single-step (`load project` command or `ctrl+7`). Though in the future the solution most likely will be extended to overcome this limitation as well.
 
 _**C# 7**_<br>
-The extension comes with C# 7 support (via Roslyn) enabled by default. However Roslyn has an unfortunate limitation - it is extremely heavy and slow on startup. Thus it can take ~3-5 seconds to do the first compilation of a script. 
+The extension comes with C# 7 support (via Roslyn) enabled by default. However Roslyn has an unfortunate limitation - it is extremely heavy and slow on startup. Thus it can take ~3-5 seconds to do the first compilation of a script. Any further successive do not exhibit any startup delays. 
 
 Roslyn team did a good job by caching runtime instances of the compilers thus any consequent compilations will require only milliseconds to be accomplished. Unfortunately on Linux/Mono the same caching mechanism is not available so the compilation will consistently take up to 1.5 seconds (tested on VMWare Mint 18.1 4GB RAM on i7-5500U 2*2.40 GHz). Hopefully Roslyn team will extend runtime caching in the future releases of Mono. 
 

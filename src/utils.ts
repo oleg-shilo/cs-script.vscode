@@ -348,6 +348,7 @@ function deploy_files(): void {
         _ready = true;
 
         // commands.executeCommand('cs-script.refresh_tree');
+        // vscode.window.showErrorMessage('CS-Script: Roslyn provider has been deployed');
 
     } catch (error) {
         console.log(error);
@@ -406,6 +407,36 @@ export function prepare_new_script(): string {
         '        Console.WriteLine("Hello...");' + os.EOL +
         '    }' + os.EOL +
         '}';
+
+    if (!fs.existsSync(template_file))
+        fs.writeFileSync(template_file, template, { encoding: 'utf8' });
+
+    try {
+        template = fs.readFileSync(template_file, { encoding: 'utf8' });
+    } catch (error) {
+    }
+
+    return template
+}
+
+export function prepare_new_script_vb(): string {
+    let template_file = path.join(user_dir(), 'new_script_vb.tmpl');
+
+    let template =
+        "' //css_ref System" + os.EOL +
+        "' //css_ref System.web" + os.EOL +
+        "' //css_ref System.Windows.Forms" + os.EOL +
+        "$backup_comment$" + os.EOL +
+        "Imports System" + os.EOL +
+        "" + os.EOL +
+        "Imports System.Windows.Forms" + os.EOL +
+        "" + os.EOL +
+        "Module Module1" + os.EOL +
+        "    Sub Main()" + os.EOL +
+        "        Console.WriteLine(\"Hello World! (VB)\")" + os.EOL +
+        "        MessageBox.Show(\"Hello World! (VB)\")" + os.EOL +
+        "    End Sub" + os.EOL +
+        "End Module";
 
     if (!fs.existsSync(template_file))
         fs.writeFileSync(template_file, template, { encoding: 'utf8' });
@@ -564,7 +595,7 @@ export class Utils {
         if (file == undefined)
             return false;
         else
-            return file.toLowerCase().endsWith('.cs');
+            return file.toLowerCase().endsWith('.cs') || file.toLowerCase().endsWith('.vb');
     }
 
     public static getScriptName(projectFile: string): string {

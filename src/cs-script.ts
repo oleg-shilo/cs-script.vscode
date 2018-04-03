@@ -5,6 +5,7 @@
 import * as fs from "fs";
 import * as os from "os";
 import * as utils from "./utils";
+import * as syntaxer from "./syntaxer";
 import * as vscode from "vscode";
 import * as path from "path";
 import { Uri, commands, DiagnosticSeverity, TextEditorSelectionChangeKind, Location, } from "vscode";
@@ -243,12 +244,14 @@ export function print_project_for_document() {
     outputChannel.clear();
     outputChannel.appendLine('Analyzing...');
 
-    print_project_for(file);
+    if (!print_project_for(file))
+        outputChannel.clear();
+
 }
 // -----------------------------------
-export function print_project_for(file: string) {
+export function print_project_for(file: string): boolean {
 
-    if (Utils.IsScript(file))
+    if (Utils.IsScript(file)) {
         with_lock(() => {
             let command = `mono "${cscs_exe}" -nl -l -proj:dbg "${file}"`;
 
@@ -261,8 +264,12 @@ export function print_project_for(file: string) {
                 unlock();
             });
         });
-    else
+        return true;
+    }
+    else {
         vscode.window.showErrorMessage(`"${file}" is not a valid C# script file.`);
+        return false;
+    }
 }
 // -----------------------------------
 export function get_project_tree_items() {
@@ -334,7 +341,6 @@ export async function find_references() {
     let document = editor.document;
     let position = editor.selection.active;
 
-
     with_lock(async () => {
 
         outputChannel.show(true);
@@ -366,10 +372,33 @@ export async function find_references() {
                 let locations = await vscode.commands.executeCommand('vscode.executeReferenceProvider', Uri.file(document.fileName), position);
                 let lines = (locations as Location[]);
                 outputChannel.clear();
-                outputChannel.appendLine(`${lines.length} references:`);
+                outputChannel.appendLine(`Found ${lines.length} references:`);
+
+                let lastLocationFile = "";
+                let lastLocationLines: string[];
 
                 lines.forEach(location => {
-                    outputChannel.appendLine(`${location.uri.fsPath}(${location.range.start.line + 1},${location.range.start.character + 1}): ...`);
+
+                    let hint = "...";
+
+                    if (lastLocationFile != location.uri.fsPath) {
+                        lastLocationLines = [];
+
+                        if (fs.existsSync(location.uri.fsPath)) {
+                            try {
+                                lastLocationLines = fs.readFileSync(location.uri.fsPath, 'utf8').lines();
+                            } catch  {
+                            }
+                        }
+                    }
+
+                    if (lastLocationLines.length > location.range.start.line)
+                        try {
+                            hint = lastLocationLines[location.range.start.line].substring(location.range.start.character);
+                        } catch  {
+                        }
+
+                    outputChannel.appendLine(`${location.uri.fsPath}(${location.range.start.line + 1},${location.range.start.character + 1}): ${hint}`);
                 });
             }
             catch  {
@@ -399,7 +428,10 @@ export function about() {
             outputChannel.clear();
             outputChannel.appendLine('CS-Script.VSCode - v' + utils.ext_version);
             outputChannel.appendLine('-------------------------------------------------------');
-            outputChannel.append(output);
+            outputChannel.appendLine(output.trim());
+            outputChannel.appendLine('-------------------------------------------------------');
+            outputChannel.appendLine('Syntaxer');
+            outputChannel.append('   ' + syntaxer.SERVER);
 
             unlock();
         });
@@ -542,6 +574,36 @@ export function new_script() {
                 '// ' + backup_file + ' \n';
 
         let content = utils.prepare_new_script().replace('$backup_comment$', backup_comment)
+
+        fs.writeFileSync(new_file_path, content);
+
+        if (fs.existsSync(new_file_path))
+            commands.executeCommand('vscode.open', Uri.file(new_file_path));
+
+        unlock();
+    });
+}
+// -----------------------------------
+export function new_script_vb() {
+    with_lock(() => {
+        let new_file_path = path.join(user_dir(), 'new_script.vb')
+
+        let backup_file = null;
+        if (fs.existsSync(new_file_path))
+            backup_file = new_file_path + '.bak';
+
+        if (backup_file && fs.existsSync(backup_file)) {
+            fs.unlinkSync(backup_file);
+            fs.renameSync(new_file_path, backup_file);
+        }
+
+        let backup_comment = '';
+        if (backup_file)
+            backup_comment =
+                "' // The previous content of this file has been saved into \n" +
+                "' // " + backup_file + ' \n';
+
+        let content = utils.prepare_new_script_vb().replace('$backup_comment$', backup_comment)
 
         fs.writeFileSync(new_file_path, content);
 

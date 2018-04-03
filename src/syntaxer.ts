@@ -4,6 +4,7 @@ import * as fse from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
 import * as net from "net";
+import * as vscode from 'vscode';
 import * as mkdirp from "mkdirp";
 import * as process from "process";
 import * as child_process from "child_process"
@@ -13,7 +14,7 @@ import * as utils from "./utils";
 let SYNTAXER_VERSION = "1.2.5.0";
 
 let CSCS = ""; // will be set at the end of this file to the path of the CS-Script engine executable
-let SERVER = ""; // will be set at the end of this file to the path of the server executable
+export let SERVER = ""; // will be set at the end of this file to the path of the server executable
 let PORT = 18003;
 
 function startServer(): void {
@@ -26,6 +27,7 @@ function startServer(): void {
 		child_process.execFile(SERVER, [`-port:${PORT}`, "-listen", `-client:${process.pid}`, "-timeout:60000", `-cscs_path:${CSCS}`]);
 	}
 	else {
+		
 		child_process.execFile("mono", [SERVER, `-port:${PORT}`, "-listen", `-client:${process.pid}`, "-timeout:60000", `-cscs_path:${CSCS}`]);
 	}
 }
@@ -117,7 +119,7 @@ export class Syntaxer {
 	}
 }
 
-export function DeploySyntaxer() {
+export async function DeploySyntaxer() {
 
 	function create_dir(dir: string): void {
 		// fs.mkdirSync can only create the top level dir but mkdirp creates all child sub-dirs that do not exist
@@ -167,24 +169,34 @@ export function DeploySyntaxer() {
 
 	SERVER = path.join(destDir, fileName);
 	CSCS = path.join(destDir, "..", "cscs.exe");
-	let provider =  path.join(destDir, "..", "CSSRoslynProvider.dll");
+	let provider = path.join(destDir, "..", "CSSRoslynProvider.dll");
 
-	if (fs.existsSync(SERVER)) {
-		startServer();
+	try {
+
+		if (fs.existsSync(SERVER)) {
+			startServer();
+		}
+		else {
+
+			create_dir(destDir);
+			
+			try {
+				
+				await fse.copy(path.join(sourceDir, "CSSRoslynProvider.dll"), provider);
+				await fse.copy(path.join(sourceDir, "cscs.exe"), CSCS);
+				await fse.copy(path.join(sourceDir, fileName), SERVER);
+				vscode.window.showInformationMessage('New version of CS-Script Syntaxer has been deployed.');
+
+				startServer();
+
+			} catch (error) {
+				console.error(error);
+			}
+			
+		}
+
+		purge_old_syntaxer();
+	} catch (error) {
+		vscode.window.showInformationMessage(error.toString());
 	}
-	else {
-		create_dir(destDir);
-
-		fse.copy(path.join(sourceDir, "CSSRoslynProvider.dll"), provider)
-			.catch(console.error);
-
-		fse.copy(path.join(sourceDir, "cscs.exe"), CSCS)
-			.catch(console.error);
-
-		fse.copy(path.join(sourceDir, fileName), SERVER)
-			.then(startServer)
-			// .then(() => vscode.window.showInformationMessage('New version of CS-Script Syntaxer has been deployed.'))
-			.catch(console.error);
-	}
-	purge_old_syntaxer();
 }
