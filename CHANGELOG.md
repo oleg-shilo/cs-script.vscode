@@ -1,5 +1,14 @@
 # Change Log
 
+## 1.4.0
+- Implemented Intellisense for standalone C# files:
+   - Code completion
+   - Go to definition
+   - Hover/tooltip
+   - Find all references
+   - VS style of "Find all references" result in output panel
+- Added VB.NET syntax support (Windows only)
+
 ## 1.3.5
 - Added explicit extension dependency on `mono-debug`. Seems the disclaimer "to add Mono" in the extension description does not convince users users to do so.   
 
