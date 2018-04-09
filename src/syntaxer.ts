@@ -84,6 +84,7 @@ export class Syntaxer {
 				fs.unlink(temp_file, error => { });
 			});
 	}
+	
 	public static getRefrences(code: string, file: string, position: number, resolve, reject): void {
 		let temp_file = save_as_temp(code, file);
 
@@ -94,13 +95,20 @@ export class Syntaxer {
 			});
 	}
 
+	public static doDocFormat(code: string, file: string, position: number, resolve, reject): void {
+		let temp_file = save_as_temp(code, file);
+
+		Syntaxer.send(`-client:${process.pid}\n-op:format\n-script:${temp_file}\n-pos:${position}`,
+			data => {
+				resolve(clear_temp_file_suffixes(data));
+				fs.unlink(temp_file, error => { });
+			});
+	}
+
 	public static getDefinition(code: string, file: string, position: number, resolve, reject): void {
 		let temp_file = save_as_temp(code, file);
 
-		let rich = '\n-rich'; // will need to be used in future
-		rich = '';
-
-		Syntaxer.send(`-client:${process.pid}\n-op:resolve\n-script:${temp_file}\n-pos:${position}${rich}`,
+		Syntaxer.send(`-client:${process.pid}\n-op:resolve\n-script:${temp_file}\n-pos:${position}`,
 			data => {
 				// possibly it is a temp file reference
 				resolve(clear_temp_file_suffixes(data));

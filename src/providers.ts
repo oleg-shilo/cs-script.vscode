@@ -5,7 +5,7 @@
 import * as vscode from 'vscode';
 // import * as fs from 'fs';
 // import * as path from 'path';
-import { HoverProvider, Position, CompletionItem, CancellationToken, TextDocument, Hover, Definition, ProviderResult, Range, Location, ReferenceContext} from "vscode";
+import { HoverProvider, Position, CompletionItem, CancellationToken, TextDocument, Hover, Definition, ProviderResult, Range, Location, ReferenceContext, FormattingOptions, TextEdit } from "vscode";
 // import * as cs_script from "./cs-script";
 // import * as utils from "./utils";
 import { Syntaxer } from "./syntaxer";
@@ -187,6 +187,52 @@ vscode.window.onDidChangeActiveTextEditor(editor => {
         syntaxer_navigate_selectedLine = -1;
     }
 });
+
+export class CSScriptDocFormattingProvider implements vscode.DocumentFormattingEditProvider {
+    public provideDocumentFormattingEdits(document: TextDocument, options: FormattingOptions, token: CancellationToken): ProviderResult<TextEdit[]> {
+
+        let result: TextEdit[] = [];
+        let is_workspace = isWorkspace();
+
+        if (!is_workspace)
+            return new Promise((resolve, reject) => {
+
+                let editor = vscode.window.activeTextEditor;
+                let position = editor.selection.start;
+
+
+                Syntaxer.doDocFormat(document.getText(), document.fileName, document.offsetAt(position),
+
+                    data => {
+                        if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
+                            // <position>\n<formatted text>
+                            let info = data.lines(2);
+
+                            let newText = data.substring(info[0].length + Number(document.eol));
+                            let wholeDoc = new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length));
+                            
+                            result.push(new TextEdit(wholeDoc, newText));
+
+                            // Syntaxer also returns a new mapped offset but it seems like VSCode is doing a really good job by setting the new 
+                            // offset of the formatted test withut any syntaxer assistance. Thus the offset management is disabled.
+                            // setTimeout(()=>
+                            // {
+                            //     let newPosition = document.positionAt(Number(info[0]));
+                            //     let newSelection = new vscode.Selection(newPosition, newPosition)
+                            //     editor.selection = newSelection;
+                            //     editor.revealRange(editor.selection);
+                            // }, 300);
+                        }
+
+                        resolve(result);
+                    },
+                    error => {
+                    });
+            });
+        else
+            return null;
+    }
+}
 
 export class CSScriptReferenceProvider implements vscode.ReferenceProvider {
 
