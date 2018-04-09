@@ -5,11 +5,11 @@
 import * as vscode from 'vscode';
 // import * as fs from 'fs';
 // import * as path from 'path';
-import { HoverProvider, Position, CompletionItem, CancellationToken, TextDocument, Hover, Definition, ProviderResult, Range, Location, ReferenceContext, FormattingOptions, TextEdit } from "vscode";
+import { HoverProvider, Position, CompletionItem, CancellationToken, TextDocument, Hover, Definition, ProviderResult, Range, Location, ReferenceContext, FormattingOptions, TextEdit, DocumentLink } from "vscode";
 // import * as cs_script from "./cs-script";
 // import * as utils from "./utils";
 import { Syntaxer } from "./syntaxer";
-import { ErrorInfo, select_line } from './utils';
+import { ErrorInfo, select_line, VSCodeSettings } from './utils';
 // import { Utils } from "./utils";
 // import { Syntaxer } from "./syntaxer";
 
@@ -205,12 +205,12 @@ export class CSScriptDocFormattingProvider implements vscode.DocumentFormattingE
 
                     data => {
                         if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
-                            // <position>\n<formatted text>
+                            // <position>\n<formatted text>   (note '\n' is a hardcodded separator)
                             let info = data.lines(2);
 
-                            let newText = data.substring(info[0].length + Number(document.eol));
+                            let newText = data.substring(info[0].length + 1);
                             let wholeDoc = new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length));
-                            
+
                             result.push(new TextEdit(wholeDoc, newText));
 
                             // Syntaxer also returns a new mapped offset but it seems like VSCode is doing a really good job by setting the new 
@@ -228,6 +228,44 @@ export class CSScriptDocFormattingProvider implements vscode.DocumentFormattingE
                     },
                     error => {
                     });
+            });
+        else
+            return null;
+    }
+}
+export class CSScriptLinkProvider implements vscode.DocumentLinkProvider {
+
+    private _linkPattern = /.*?\(.*?\):/g; // VS classic link pattern <file>(<line>,<column>): <info>
+
+    public provideDocumentLinks(document: TextDocument, token: CancellationToken): ProviderResult<DocumentLink[]> {
+
+        let result: DocumentLink[] = [];
+
+        let enabled = VSCodeSettings.get("cs-script.decorate_file_links_in_output", true);
+
+        if (enabled)
+            return new Promise((resolve, reject) => {
+
+                const text = document.getText();
+
+                let match: RegExpMatchArray;
+
+                while ((match = this._linkPattern.exec(text))) {
+                    let matchText = match[0];
+
+                    let info = ErrorInfo.parse(matchText);
+                    let targetPosUri = vscode.Uri.file(info.file)
+                        .with({ fragment: `${1 + info.range.start.line}` })
+
+                    let linkEnd = document.positionAt(this._linkPattern.lastIndex - 1);
+                    let linkStart = document.positionAt(this._linkPattern.lastIndex - 1 - matchText.length);
+
+                    result.push(new DocumentLink(
+                        new vscode.Range(linkStart, linkEnd),
+                        targetPosUri));
+                }
+
+                resolve(result);
             });
         else
             return null;

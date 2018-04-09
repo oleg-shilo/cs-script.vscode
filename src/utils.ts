@@ -9,7 +9,7 @@ import * as os from "os";
 import * as path from "path";
 import * as fs from "fs";
 import * as fsx from "fs-extra";
-// import * as child_process from "child_process"
+import * as child_process from "child_process"
 import { StatusBarAlignment, StatusBarItem } from "vscode";
 
 let ext_dir = path.join(__dirname, "..");
@@ -336,14 +336,18 @@ function deploy_files(): void {
         copy_file_to_sync("cscs.exe", path.join(ext_dir, 'bin'), user_dir());
         copy_file_to_sync("CSSRoslynProvider.dll", path.join(ext_dir, 'bin'), user_dir());
 
-        if (os.platform() == 'win32')
+        if (os.platform() == 'win32') {
             deploy_roslyn();
+        }
 
         fs.writeFileSync(ver_file, ext_version, { encoding: 'utf8' });
 
         ensure_default_config(path.join(user_dir(), 'cscs.exe'));
+        load_roslyn();
 
-        statusBarItem.hide();
+        statusBarItem.text = 'CS-Script is initialized...';
+        statusBarItem.show();
+        setTimeout(statusBarItem.hide, 2000);
 
         _ready = true;
 
@@ -353,6 +357,16 @@ function deploy_files(): void {
     } catch (error) {
         console.log(error);
         vscode.window.showErrorMessage('CS-Script: ' + String(error));
+    }
+}
+
+export function load_roslyn(): void {
+    let dest_dir = path.join(user_dir(), 'roslyn');
+
+    if (fs.existsSync(dest_dir)) {
+
+        let command = 'mono "' + path.join(user_dir(), 'cscs.exe') + '" -preload';
+        child_process.exec(command, null);
     }
 }
 
@@ -366,8 +380,8 @@ export function deploy_roslyn(): void {
     // process.env.css_vscode_roslyn_dir = dest_dir;
 
     if (fs.existsSync(dest_dir)) {
-        // let command = 'mono "' + path.join(user_dir(), 'cscs.exe') + '" -stop';
-        let command = '"' + path.join(ext_dir, 'bin', 'cscs.exe') + '" -stop';
+
+        let command = 'mono "' + path.join(user_dir(), 'cscs.exe') + '" -stop';
         execSync(command);
 
         fs.renameSync(dest_dir, dest_dir + ".old." + new Date().getTime());

@@ -10,7 +10,7 @@ import * as vscode from 'vscode';
 import * as cs_script from "./cs-script";
 import * as syntaxer from "./syntaxer";
 import { ProjectTreeProvider } from "./tree_view";
-import { CSScriptHoverProvider, CSScriptCompletionItemProvider, CSScriptDefinitionProvider, CSScriptReferenceProvider, CSScriptDocFormattingProvider } from "./providers";
+import { CSScriptHoverProvider, CSScriptCompletionItemProvider, CSScriptDefinitionProvider, CSScriptReferenceProvider, CSScriptDocFormattingProvider, CSScriptLinkProvider } from "./providers";
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 
@@ -39,8 +39,9 @@ export function activate(context: vscode.ExtensionContext) {
 
         context.subscriptions.push(vscode.languages.registerReferenceProvider('csharp', new CSScriptReferenceProvider()));
         context.subscriptions.push(vscode.languages.registerReferenceProvider('vb', new CSScriptReferenceProvider()));
-        
+
         context.subscriptions.push(vscode.languages.registerDocumentFormattingEditProvider('csharp', new CSScriptDocFormattingProvider()));
+        context.subscriptions.push(vscode.languages.registerDocumentLinkProvider('code-runner-output', new CSScriptLinkProvider()));
 
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.refresh_tree', () => treeViewProvider.refresh()));
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.show_tree_data', () => cs_script.print_project()));
@@ -66,7 +67,7 @@ export function activate(context: vscode.ExtensionContext) {
                 };
             }
         }));
-        
+
     } catch (error) {
         console.log(error.toSting());
     }

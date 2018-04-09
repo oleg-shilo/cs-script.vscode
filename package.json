@@ -64,7 +64,17 @@
                 "cs-script.single_click_navigate_from_output": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Allow navigation to the file location on a single click (on error info) in the output panel."
+                    "description": "Allow navigation on a single click (without any keyboard mdifiers) on the output panel text that is a file path with the location (e.g. \"C:/temp/script.cs(10,20): Error: invalid symbol\")."
+                },
+                "cs-script.select_line_on_navigate_from_output": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Select whole location line on navigation from the output panel. Related to 'cs-script.single_click_navigate_from_output'"
+                },
+                "cs-script.decorate_file_links_in_output": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Decorate file locations (e.g. error info) in the output panel as document links (underlined)."
                 },
                 "cs-script.dotnet_run_host_on_win": {
                     "type": "boolean",

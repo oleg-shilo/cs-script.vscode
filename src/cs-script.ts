@@ -361,6 +361,9 @@ export async function find_references() {
                             outputChannel.appendLine(line);
                         });
                     }
+                    else {
+                        outputChannel.clear();
+                    }
                 },
                 error => {
                     outputChannel.clear();
@@ -792,20 +795,23 @@ function onActiveEditorSelectionChange(event: vscode.TextEditorSelectionChangeEv
     // Always navigating on a sinle click on a text line in the ouput window works fine but interfere with the selection operations.
     // Thus let's do navigation if no current selection is made. 
 
-    if (event.kind == TextEditorSelectionChangeKind.Mouse &&
+
+    if (
+        event.kind == TextEditorSelectionChangeKind.Mouse &&
         event.textEditor.document.fileName.startsWith("extension-output-") &&
         event.textEditor.selection.isEmpty) {
 
         let enabled = VSCodeSettings.get("cs-script.single_click_navigate_from_output", true);
-        let single_line_selection = event.textEditor.selection.start.line == event.textEditor.selection.end.line;
+        let select_whole_line = VSCodeSettings.get("select_line_on_navigate_from_output", true);
+        let single_line_in_selection = event.textEditor.selection.start.line == event.textEditor.selection.end.line;
 
         // if (enabled && single_line_selection && output_line_last_click != event.textEditor.selection.start.line) {
-        if (enabled && single_line_selection) {
+        if (enabled && single_line_in_selection) {
+
             let line = event.textEditor.document.lineAt(event.textEditor.selection.start.line).text;
 
             let info = ErrorInfo.parse(line);
 
-            // if (info != null && fs.existsSync(info.file) && (info.file.endsWith('.cs') || info.file.endsWith('.txt') || info.file.endsWith('.vb'))) {
             if (info != null && fs.existsSync(info.file)) {
 
                 let already_active = (current_doc == info.file);
@@ -816,7 +822,6 @@ function onActiveEditorSelectionChange(event: vscode.TextEditorSelectionChangeEv
                                 let editor = vscode.window.activeTextEditor;
                                 const position = editor.selection.active;
 
-                                let select_whole_line = true;
                                 if (select_whole_line) {
                                     select_line(info.range.start.line);
                                 }
