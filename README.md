@@ -23,6 +23,38 @@ The extension is powered by the [CS-Script engine](https://github.com/oleg-shilo
 
 The extension provides a very thin layer of own functionality. Its primary responsibility is bringing together OmniSharp IntelliSense services, a full scale debugger (curtesy of "Mono Debug" team) and CS-Script seamless C# script execution. This page contains only a light overview of the extension functionality. The complete description can be found at the [project Wiki](https://github.com/oleg-shilo/cs-script.vscode/wiki).
 
+## Quick start
+
+1. Close any opened folder (workspace)
+2. Create new C# script (command: `CS-Script: New C# script`)
+3. Edit script to meet your requirements
+4. Execute or debug script in VSCode
+
+![image](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/quick_start.gif)
+
+#### Executing script outside of VSCode
+
+The extension comes with the complete CS-Script package. You can find the location of the script engine `cscs.exe` by executing `CS-Script: About` command.
+It may be a good idea to add the location of the `cscs.exe` into the system PATH environment variable.
+This is how you can execute the script from the command shell:
+
+_Windows:_
+``` txt
+cscs.exe my_script.cs
+```
+
+_Linux:_
+``` txt
+mono cscs.exe my_script.cs
+```
+
+You can also install CS-Script system wide. For Windows it is recommended to use [Chocolaty](https://chocolatey.org/) (Windows equivalent of Linux apt-get).
+On Linux you can install Debian package. See instructions here: [https://github.com/oleg-shilo/cs-script/wiki/CS-Script-on-Linux](https://github.com/oleg-shilo/cs-script/wiki/CS-Script-on-Linux)
+
+---
+
+Apart from the common VSCode C# functionality the extension brings CS-Script specific user activities in the.
+
 ![image](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/cs-s_intellisense.gif)
 
 ---
@@ -116,15 +148,11 @@ Open the C# file and execute "check" command (F7):
 
 _**Debugging**_
 
-_Command: `Debug: Start Debugging`_
-
-Open the C# file and load it with "cs-script: load project" command (Ctrl+F7). After that you can start debugging the same way as with any VSCode workspace/language: by pressing F5 (Debug: Start Debugging command):
-
-_**Debugging (without workspace)**_
-
 _Command: `cs-script: debug`_
 
 Open the C# file and execute "debug" command (Alt+F5):
+
+_Note: you can use standard VSCode debugging triggers (e.g. F5) if you load the script as a workspace. See 'Load as workspace' section._
 
 ![image](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_debug1.gif)
 
@@ -135,8 +163,6 @@ _Command: `cs-script: print project`_
 Open the C# file and execute "print project" command (Alt+F7):
 
 ![image](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_projA.gif)
-
-![image](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_projB.gif)
 
 _**Using CS-Script IntelliSense**_
 
@@ -191,6 +217,8 @@ CS-Script and VSCode are following completely different _project_ paradigm.
   - Omnisharp _Intellisense_ functionality
 
 By default, when you just open a C#/VB.NET file the all development activities are handled by the CS-Script extension infrastructure. However in some cases you may prefer to use arguably richer Omnisharp Intellisense. If it is the case you can open the script file and generate on-fly the all traditional project infrastructure - workspace (project file and folder). This can be achieved by executing the "load project" command (ctrl+F7).
+
+![image](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_projB.gif)
 
 ## Limitations
 
