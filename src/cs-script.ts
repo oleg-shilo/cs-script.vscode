@@ -8,8 +8,8 @@ import * as utils from "./utils";
 import * as syntaxer from "./syntaxer";
 import * as vscode from "vscode";
 import * as path from "path";
-import { Uri, commands, DiagnosticSeverity, TextEditorSelectionChangeKind, Location, } from "vscode";
-import { ErrorInfo, Utils, unlock, is_busy, with_lock, actual_output, settings, VSCodeSettings, user_dir, create_dir, select_line } from "./utils";
+import { Uri, commands, DiagnosticSeverity, TextEditorSelectionChangeKind, Location, window, TextEditor, } from "vscode";
+import { ErrorInfo, Utils, unlock, is_busy, with_lock, actual_output, settings, VSCodeSettings, user_dir, create_dir, select_line, ActiveEditorTracker } from "./utils";
 import { Syntaxer } from "./syntaxer";
 
 export let syntax_readme: string = path.join(user_dir(), "cs-script.syntax.txt");
@@ -246,7 +246,6 @@ export function print_project_for_document() {
 
     if (!print_project_for(file))
         outputChannel.clear();
-
 }
 // -----------------------------------
 export function print_project_for(file: string): boolean {
@@ -706,6 +705,75 @@ export function debug() {
     });
 }
 // -----------------------------------
+async function getOpenEditors(): Promise<TextEditor[]> {
+
+    const editorTracker = new ActiveEditorTracker();
+
+    let active = window.activeTextEditor;
+    let editor = active;
+    const openEditors: TextEditor[] = [];
+
+    function same(lhs: any, rhs: any): boolean { return lhs._id == rhs._id && lhs.viewColumn == rhs.viewColumn; }
+
+    do {
+        if (editor !== undefined) {
+            // If we didn't start with a valid editor, set one once we find it
+            if (active === undefined) {
+                active = editor;
+            }
+
+            openEditors.push(editor);
+        }
+
+        editor = await editorTracker.awaitNext(500);
+
+
+        if (editor !== undefined && openEditors.any(x => same(x, editor)))
+            break;
+
+    } while ((active === undefined && editor === undefined) || !same(active, editor));
+
+    editorTracker.dispose();
+    return openEditors;
+}
+
+export async function save_script_project(dependencies_only: boolean): Promise<void> {
+    let editor = vscode.window.activeTextEditor;
+    let file = editor.document.fileName;
+
+    if (!dependencies_only) {
+        editor.document.save();
+    }
+
+    let command = `mono "${cscs_exe}" -nl -l -proj:dbg "${file}"`;
+    let response = Utils.RunSynch(command);
+
+    let dependencies = response.lines()
+        .where(l => l.startsWith("file:"))
+        .select(l => l.substring(5));
+
+    let openTextEditors = await getOpenEditors();
+
+    // openTextEditors.forEach(x => {
+    //     console.log(x.document.fileName);
+    // });
+
+    // Save all opened dependency scripts. Though...
+    // Unfortunatelly `vscode.window.openTextEditors` does not exist yet: "API Access to "Open Editors" #15178"
+    // Only visibleTextEditors does. but it is useless for this tast.
+    // vscode.window.openTextEditors.forEach(ed => {
+
+    openTextEditors.forEach(ed => {
+
+        let isActiveDoc = (ed == editor);
+        let tabFileName = ed.document.fileName.toLocaleLowerCase();
+
+        if (!isActiveDoc && dependencies.any(x => x.toLocaleLowerCase() == tabFileName)) {
+            ed.document.save();
+        }
+    });
+}
+// -----------------------------------
 export function run() {
     with_lock(() => {
 
@@ -736,7 +804,7 @@ export function run() {
             outputChannel.appendLine('[Running] ' + command);
         }
 
-        editor.document.save();
+        save_script_project(true);
         outputChannel.show(true);
         outputChannel.clear();
 

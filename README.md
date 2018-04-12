@@ -5,7 +5,7 @@ A single C# file is all that is required to run the script. Support for VB.NET s
 
 ---
 
-Note this extension depends on "ms-vscode.mono-debug" and "ms-vscode.csharp". Thus if these extensions are installed/function incorrectly please log error reports at their web sites.
+Note this extension depends on "ms-vscode.mono-debug" and "ms-vscode.csharp". Thus if these extensions are installed or function incorrectly please log error reports at their corresponding web sites.
 
 ---
 
@@ -17,8 +17,8 @@ Currently VSCode support for C# is heavily oriented on development for .NET Core
 
 The extension is powered by the [CS-Script engine](https://github.com/oleg-shilo/cs-script/blob/master/README.md) - popular Open Source script engine that delivers Python scripting experience but for C# syntax. CS-Script uses ECMA-compliant C# as a programming language and it can be hosted by applications or run standalone. CS-Script is already a core of the plugins for some other popular editors/IDEs:
 
-- Sublime Text 3 - [CS-Script.ST3](https://github.com/oleg-shilo/cs-script-sublime/blob/master/README.md)
-- Notepad++  -  [CS-Script.Npp](https://github.com/oleg-shilo/cs-script.npp/blob/master/README.md)
+- Sublime Text 3          - [CS-Script.ST3](https://github.com/oleg-shilo/cs-script-sublime/blob/master/README.md)
+- Notepad++               - [CS-Script.Npp](https://github.com/oleg-shilo/cs-script.npp/blob/master/README.md)
 - Visual Studio 2015/2017 - [CS-Script.VSIX](https://github.com/oleg-shilo/CS-Script.VSIX/blob/master/README.md)
 
 The extension provides a very thin layer of own functionality. Its primary responsibility is bringing together OmniSharp IntelliSense services, a full scale debugger (curtesy of "Mono Debug" team) and CS-Script seamless C# script execution. This page contains only a light overview of the extension functionality. The complete description can be found at the [project Wiki](https://github.com/oleg-shilo/cs-script.vscode/wiki).

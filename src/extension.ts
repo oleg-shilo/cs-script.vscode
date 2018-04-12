@@ -3,6 +3,7 @@
 /* tslint:disable */
 
 // TODO:
+// - Implement saving project before run or any intellisense operations. Still waiting for VSCode feature ("API Access to "Open Editors" #15178") to be implemented:
 
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
@@ -10,9 +11,7 @@ import * as vscode from 'vscode';
 import * as cs_script from "./cs-script";
 import * as syntaxer from "./syntaxer";
 import { ProjectTreeProvider } from "./tree_view";
-import { CSScriptHoverProvider, CSScriptCompletionItemProvider, CSScriptDefinitionProvider, CSScriptReferenceProvider, CSScriptDocFormattingProvider, CSScriptLinkProvider } from "./providers";
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
+import { CSScriptHoverProvider, CSScriptCompletionItemProvider, CSScriptDefinitionProvider, CSScriptReferenceProvider, CSScriptDocFormattingProvider, CSScriptLinkProvider, CSScriptRenameProvider } from "./providers";
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -30,22 +29,24 @@ export function activate(context: vscode.ExtensionContext) {
 
         context.subscriptions.push(vscode.languages.registerHoverProvider('csharp', new CSScriptHoverProvider()));
         context.subscriptions.push(vscode.languages.registerHoverProvider('vb', new CSScriptHoverProvider()));
-
+        // --
         context.subscriptions.push(vscode.languages.registerCompletionItemProvider('csharp', new CSScriptCompletionItemProvider(), '.', '_'));
         context.subscriptions.push(vscode.languages.registerCompletionItemProvider('vb', new CSScriptCompletionItemProvider(), '.', '_'));
-
+        // --
         context.subscriptions.push(vscode.languages.registerDefinitionProvider('csharp', new CSScriptDefinitionProvider()));
         context.subscriptions.push(vscode.languages.registerDefinitionProvider('vb', new CSScriptDefinitionProvider()));
-
+        // --
         context.subscriptions.push(vscode.languages.registerReferenceProvider('csharp', new CSScriptReferenceProvider()));
         context.subscriptions.push(vscode.languages.registerReferenceProvider('vb', new CSScriptReferenceProvider()));
-
+        // --
+        context.subscriptions.push(vscode.languages.registerRenameProvider('csharp', new CSScriptRenameProvider()));
         context.subscriptions.push(vscode.languages.registerDocumentFormattingEditProvider('csharp', new CSScriptDocFormattingProvider()));
+        // --
         context.subscriptions.push(vscode.languages.registerDocumentLinkProvider('code-runner-output', new CSScriptLinkProvider()));
-
+        // --
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.refresh_tree', () => treeViewProvider.refresh()));
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.show_tree_data', () => cs_script.print_project()));
-
+        // --
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.debug', cs_script.debug));
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.run', cs_script.run));
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.run_in_terminal', cs_script.run_in_terminal));

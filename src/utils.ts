@@ -10,7 +10,7 @@ import * as path from "path";
 import * as fs from "fs";
 import * as fsx from "fs-extra";
 import * as child_process from "child_process"
-import { StatusBarAlignment, StatusBarItem } from "vscode";
+import { StatusBarAlignment, StatusBarItem, TextEditor, window, Disposable, commands } from "vscode";
 
 let ext_dir = path.join(__dirname, "..");
 let exec = require('child_process').exec;
@@ -45,6 +45,7 @@ declare global {
     interface Array<T> {
         where<T>(filter: (T) => boolean): Array<T>;
         any<T>(filter?: (T) => boolean): boolean;
+        contains<T>(item: T): boolean;
         select<U>(convert: (T) => U): Array<U>;
         cast<U>(): Array<U>;
         first<T>(filter?: (T) => boolean): T;
@@ -86,6 +87,10 @@ Array.prototype.where = function <T>(predicate): Array<T> {
 
 Array.prototype.cast = function <U>(): Array<U> {
     return this.select(x => x as U);
+}
+
+Array.prototype.contains = function <T>(item: T): boolean {
+    return this.any(x => x == item);
 }
 
 Array.prototype.any = function <T>(predicate?): boolean {
@@ -768,6 +773,74 @@ export function ensure_default_config(cscs_exe: string, on_done?: (file: string)
 
 export function actual_output(element, index, array) {
     // ignore mono test output that comes from older releases(s)  (known Mono issue)
-    return (!element.startsWith('failed to get 100ns ticks'));
+    return (
+        !element.startsWith('failed to get 100ns ticks') &&
+        !element.startsWith('Mono pdb to mdb debug symbol store converter') &&
+        !element.startsWith('Usage: pdb2mdb assembly'));
 }
 
+// -------------------
+// Curtecy of https://github.com/eamodio/vscode-restore-editors
+
+export type BuiltInCommands = 'vscode.open' | 'setContext' | 'workbench.action.closeActiveEditor' | 'workbench.action.nextEditor';
+export const BuiltInCommands = {
+    CloseActiveEditor: 'workbench.action.closeActiveEditor' as BuiltInCommands,
+    NextEditor: 'workbench.action.nextEditor' as BuiltInCommands,
+    Open: 'vscode.open' as BuiltInCommands,
+    SetContext: 'setContext' as BuiltInCommands
+};
+
+export class ActiveEditorTracker extends Disposable {
+
+    private _disposable: vscode.Disposable;
+    private _resolver: ((value?: TextEditor | PromiseLike<TextEditor>) => void) | undefined;
+
+    constructor() {
+        super(() => this.dispose());
+
+        this._disposable = window.onDidChangeActiveTextEditor(e => this._resolver && this._resolver(e));
+    }
+
+    dispose() {
+        this._disposable && this._disposable.dispose();
+    }
+
+    async awaitClose(timeout: number = 500): Promise<TextEditor> {
+        this.close();
+        return this.wait(timeout);
+    }
+
+    async awaitNext(timeout: number = 500): Promise<TextEditor> {
+        this.next();
+        return this.wait(timeout);
+    }
+
+    async close(): Promise<{} | undefined> {
+        return commands.executeCommand(BuiltInCommands.CloseActiveEditor);
+    }
+
+    async next(): Promise<{} | undefined> {
+        return commands.executeCommand(BuiltInCommands.NextEditor);
+    }
+
+    async wait(timeout: number = 500): Promise<TextEditor> {
+        const editor = await new Promise<TextEditor>((resolve, reject) => {
+            let timer: any;
+
+            this._resolver = (editor: TextEditor) => {
+                if (timer) {
+                    clearTimeout(timer as any);
+                    timer = 0;
+                    resolve(editor);
+                }
+            };
+
+            timer = setTimeout(() => {
+                resolve(window.activeTextEditor);
+                timer = 0;
+            }, timeout) as any;
+        });
+        this._resolver = undefined;
+        return editor;
+    }
+}

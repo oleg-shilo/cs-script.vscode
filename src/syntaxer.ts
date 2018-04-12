@@ -27,7 +27,7 @@ function startServer(): void {
 		child_process.execFile(SERVER, [`-port:${PORT}`, "-listen", `-client:${process.pid}`, "-timeout:60000", `-cscs_path:${CSCS}`]);
 	}
 	else {
-		
+
 		child_process.execFile("mono", [SERVER, `-port:${PORT}`, "-listen", `-client:${process.pid}`, "-timeout:60000", `-cscs_path:${CSCS}`]);
 	}
 }
@@ -64,51 +64,10 @@ export class Syntaxer {
 		});
 	}
 
-	public static getCompletions(code: string, file: string, position: number, resolve, reject): void {
+	public static send_request(request: string, code: string, file: string, position: number, resolve, reject): void {
 		let temp_file = save_as_temp(code, file);
 
-		Syntaxer.send(`-client:${process.pid}\n-op:completion\n-script:${temp_file}\n-pos:${position}\n-rich`,
-			data => {
-				resolve(data);
-				fs.unlink(temp_file, error => { });
-			});
-	}
-
-	public static getTooltip(code: string, file: string, position: number, resolve, reject): void {
-		let temp_file = save_as_temp(code, file);
-
-		let hint = '';
-		Syntaxer.send(`-client:${process.pid}\n-op:tooltip:${hint}\n-script:${temp_file}\n-pos:${position}`,
-			data => {
-				resolve(data);
-				fs.unlink(temp_file, error => { });
-			});
-	}
-	
-	public static getRefrences(code: string, file: string, position: number, resolve, reject): void {
-		let temp_file = save_as_temp(code, file);
-
-		Syntaxer.send(`-client:${process.pid}\n-op:references\n-script:${temp_file}\n-pos:${position}`,
-			data => {
-				resolve(clear_temp_file_suffixes(data));
-				fs.unlink(temp_file, error => { });
-			});
-	}
-
-	public static doDocFormat(code: string, file: string, position: number, resolve, reject): void {
-		let temp_file = save_as_temp(code, file);
-
-		Syntaxer.send(`-client:${process.pid}\n-op:format\n-script:${temp_file}\n-pos:${position}`,
-			data => {
-				resolve(clear_temp_file_suffixes(data));
-				fs.unlink(temp_file, error => { });
-			});
-	}
-
-	public static getDefinition(code: string, file: string, position: number, resolve, reject): void {
-		let temp_file = save_as_temp(code, file);
-
-		Syntaxer.send(`-client:${process.pid}\n-op:resolve\n-script:${temp_file}\n-pos:${position}`,
+		Syntaxer.send(request.replace("$temp_file$", temp_file),
 			data => {
 				// possibly it is a temp file reference
 				resolve(clear_temp_file_suffixes(data));
@@ -116,14 +75,48 @@ export class Syntaxer {
 			});
 	}
 
-	public static getMemberInfo(code: string, file: string, position: number, resolve, reject): void {
-		let temp_file = save_as_temp(code, file);
+	public static getCompletions(code: string, file: string, position: number, resolve, reject): void {
 
-		Syntaxer.send(`-client:${process.pid}\n-op:memberinfo\n-script:${temp_file}\n-pos:${position}\n-rich\n-collapseOverloads`,
-			data => {
-				resolve(data);
-				fs.unlink(temp_file, error => { });
-			});
+		let request = `-client:${process.pid}\n-op:completion\n-script:$temp_file$\n-pos:${position}\n-rich`;
+		Syntaxer.send_request(request, code, file, position, resolve, reject);
+	}
+
+	public static getTooltip(code: string, file: string, position: number, resolve, reject): void {
+
+		let hint = '';
+		let request = `-client:${process.pid}\n-op:tooltip:${hint}\n-script:$temp_file$\n-pos:${position}`;
+		Syntaxer.send_request(request, code, file, position, resolve, reject);
+	}
+
+	public static getRefrences(code: string, file: string, position: number, resolve, reject): void {
+
+		let request = `-client:${process.pid}\n-op:references\n-script:$temp_file$\n-pos:${position}`;
+		Syntaxer.send_request(request, code, file, position, resolve, reject);
+	}
+
+	public static getRenameingInfo(code: string, file: string, position: number, resolve, reject): void {
+
+		let request = `-client:${process.pid}\n-op:references\n-context:all\n-script:$temp_file$\n-pos:${position}`;
+		Syntaxer.send_request(request, code, file, position, resolve, reject);
+	}
+
+	public static doDocFormat(code: string, file: string, position: number, resolve, reject): void {
+
+		let request = `-client:${process.pid}\n-op:format\n-script:$temp_file$\n-pos:${position}`;
+		Syntaxer.send_request(request, code, file, position, resolve, reject);
+	}
+
+	public static getDefinition(code: string, file: string, position: number, resolve, reject): void {
+
+		let request = `-client:${process.pid}\n-op:resolve\n-script:$temp_file$\n-pos:${position}`;
+		Syntaxer.send_request(request, code, file, position, resolve, reject);
+	}
+
+	// not in use yet
+	public static getMemberInfo(code: string, file: string, position: number, resolve, reject): void {
+
+		let request = `-client:${process.pid}\n-op:memberinfo\n-script:$temp_file$\n-pos:${position}\n-rich\n-collapseOverloads`;
+		Syntaxer.send_request(request, code, file, position, resolve, reject);
 	}
 }
 
@@ -187,9 +180,9 @@ export async function DeploySyntaxer() {
 		else {
 
 			create_dir(destDir);
-			
+
 			try {
-				
+
 				await fse.copy(path.join(sourceDir, "CSSRoslynProvider.dll"), provider);
 				await fse.copy(path.join(sourceDir, "cscs.exe"), CSCS);
 				await fse.copy(path.join(sourceDir, fileName), SERVER);
@@ -200,7 +193,7 @@ export async function DeploySyntaxer() {
 			} catch (error) {
 				console.error(error);
 			}
-			
+
 		}
 
 		purge_old_syntaxer();

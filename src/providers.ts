@@ -5,11 +5,12 @@
 import * as vscode from 'vscode';
 // import * as fs from 'fs';
 // import * as path from 'path';
-import { HoverProvider, Position, CompletionItem, CancellationToken, TextDocument, Hover, Definition, ProviderResult, Range, Location, ReferenceContext, FormattingOptions, TextEdit, DocumentLink } from "vscode";
+import { HoverProvider, Position, CompletionItem, CancellationToken, TextDocument, Hover, Definition, ProviderResult, Range, Location, ReferenceContext, FormattingOptions, TextEdit, DocumentLink, WorkspaceEdit } from "vscode";
 // import * as cs_script from "./cs-script";
-// import * as utils from "./utils";
+import * as utils from "./utils";
 import { Syntaxer } from "./syntaxer";
 import { ErrorInfo, select_line, VSCodeSettings } from './utils';
+import { save_script_project } from './cs-script';
 // import { Utils } from "./utils";
 // import { Syntaxer } from "./syntaxer";
 
@@ -279,9 +280,8 @@ export class CSScriptReferenceProvider implements vscode.ReferenceProvider {
         let result: Location[] = [];
 
         let is_workspace = isWorkspace();
-        let is_css_directive = isCssDirective(document, position);
 
-        if (!is_workspace || is_css_directive) {
+        if (!is_workspace) {
 
             return new Promise((resolve, reject) =>
 
@@ -307,6 +307,70 @@ export class CSScriptReferenceProvider implements vscode.ReferenceProvider {
     }
 
 }
+export class CSScriptRenameProvider implements vscode.RenameProvider {
+
+    public provideRenameEdits(document: TextDocument, position: Position, newName: string, token: CancellationToken): ProviderResult<WorkspaceEdit> {
+
+        let is_workspace = isWorkspace();
+
+        if (!is_workspace) {
+
+            let word = document.getWordRangeAtPosition(position);
+            let word_width = word.end.character - word.start.character;
+
+            return new Promise((resolve, reject) =>
+
+
+                Syntaxer.getRenameingInfo(document.getText(), document.fileName, document.offsetAt(position),
+
+                    data => {
+                        let result = new WorkspaceEdit();
+
+                        try {
+                            if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
+
+                                var changes: { [id: string]: TextEdit[]; } = {};
+
+                                let lines: string[] = data.lines();
+
+                                lines.forEach(line => {
+
+                                    console.log(line);
+
+                                    let info = ErrorInfo.parse(line);
+                                    let range = new vscode.Range(info.range.start, new Position(info.range.start.line, info.range.start.character + word_width));
+
+
+                                    let edits = changes[info.file];
+                                    if (!edits) {
+                                        edits = [];
+                                        changes[info.file] = edits;
+                                    }
+
+                                    edits.push(new TextEdit(range, newName));
+                                });
+
+                                for (let file in changes) {
+                                    let edits = changes[file];
+                                    let uri = vscode.Uri.file(utils.clear_temp_file_suffixes(file));
+                                    result.set(uri, edits);
+                                }
+                            }
+                        } catch { }
+
+                        resolve(result);
+
+                        setTimeout(() => save_script_project(false), 700);
+                    },
+                    error => {
+                    }));
+
+        }
+        return null;
+    }
+
+}
+
 export class CSScriptDefinitionProvider implements vscode.DefinitionProvider {
 
     public provideDefinition(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<Definition> {
