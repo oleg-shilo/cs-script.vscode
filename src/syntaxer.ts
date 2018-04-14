@@ -77,7 +77,7 @@ export class Syntaxer {
 
 	public static getCompletions(code: string, file: string, position: number, resolve, reject): void {
 
-		let request = `-client:${process.pid}\n-op:completion\n-script:$temp_file$\n-pos:${position}\n-rich`;
+		let request = `-client:${process.pid}\n-op:completion\n-script:$temp_file$\n-pos:${position}\n-doc`;
 		Syntaxer.send_request(request, code, file, position, resolve, reject);
 	}
 
@@ -92,6 +92,16 @@ export class Syntaxer {
 
 		let request = `-client:${process.pid}\n-op:references\n-script:$temp_file$\n-pos:${position}`;
 		Syntaxer.send_request(request, code, file, position, resolve, reject);
+	}
+
+	// Just to show that it's possible to go Thenable. Used in `find_references()`.
+	// Unfortunately all intellisense providers cannot take advantage of this as their signatures are not async.  
+	public static getRefrencesAsync(code: string, file: string, position: number): Thenable<string> {
+
+		return new Promise((resolve, reject) => {
+			let request = `-client:${process.pid}\n-op:references\n-script:$temp_file$\n-pos:${position}`;
+			Syntaxer.send_request(request, code, file, position, resolve, reject);
+		});
 	}
 
 	public static getRenameingInfo(code: string, file: string, position: number, resolve, reject): void {

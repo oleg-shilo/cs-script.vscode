@@ -127,6 +127,9 @@ export function with_lock(callback: () => void): void {
         }
 }
 
+export function css_unescape_linebreaks(text: string): string {
+    return text.replace(/\${r}\${n}/g, "\n").replace(/\${n}/g, "\n");
+}
 export function is_ready(): boolean {
     return _ready;
 }

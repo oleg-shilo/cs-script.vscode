@@ -347,26 +347,25 @@ export async function find_references() {
         outputChannel.appendLine('Resolving references...');
 
         if (document.languageId == "csharp" || document.languageId == "vb") {
-            Syntaxer.getRefrences(document.getText(), document.fileName, document.offsetAt(position),
-                data => {
-                    if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
 
-                        let lines: string[] = data.lines();
+            try {
 
-                        outputChannel.clear();
-                        outputChannel.appendLine(`${lines.length} references:`);
+                let data = await Syntaxer.getRefrencesAsync(document.getText(), document.fileName, document.offsetAt(position));
+                outputChannel.clear();
 
-                        lines.forEach(line => {
-                            outputChannel.appendLine(line);
-                        });
-                    }
-                    else {
-                        outputChannel.clear();
-                    }
-                },
-                error => {
+                if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
+
+                    let lines: string[] = data.lines();
+
                     outputChannel.clear();
-                });
+                    outputChannel.appendLine(`${lines.length} references:`);
+
+                    lines.forEach(line => outputChannel.appendLine(line));
+                }
+            }
+            catch (error) {
+                outputChannel.clear();
+            }
         }
         else {
             try {

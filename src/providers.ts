@@ -5,7 +5,7 @@
 import * as vscode from 'vscode';
 // import * as fs from 'fs';
 // import * as path from 'path';
-import { HoverProvider, Position, CompletionItem, CancellationToken, TextDocument, Hover, Definition, ProviderResult, Range, Location, ReferenceContext, FormattingOptions, TextEdit, DocumentLink, WorkspaceEdit } from "vscode";
+import { HoverProvider, Position, CompletionItem, CancellationToken, TextDocument, Hover, Definition, ProviderResult, Range, Location, ReferenceContext, FormattingOptions, TextEdit, DocumentLink, WorkspaceEdit, SignatureHelp } from "vscode";
 // import * as cs_script from "./cs-script";
 import * as utils from "./utils";
 import { Syntaxer } from "./syntaxer";
@@ -135,6 +135,7 @@ export class CSScriptCompletionItemProvider implements vscode.CompletionItemProv
                             lines.forEach(line => {
                                 let parts = line.split("\t");
                                 let info = parts[1].split("|");
+                                let doc = utils.css_unescape_linebreaks(info[2]);
                                 let memberKind: vscode.CompletionItemKind;
                                 switch (info[0]) {
                                     case "method":
@@ -159,7 +160,13 @@ export class CSScriptCompletionItemProvider implements vscode.CompletionItemProv
                                         memberKind = vscode.CompletionItemKind.Text;
                                         break;
                                 }
-                                items.push({ label: parts[0], kind: memberKind, insertText: trimWordDelimeters(info[1]), sortText: '01' });
+                                items.push({
+                                    label: parts[0],
+                                    kind: memberKind,
+                                    documentation: doc,
+                                    insertText: trimWordDelimeters(info[1]),
+                                    sortText: '01'
+                                });
                             });
                         }
                         resolve(items);
@@ -273,6 +280,42 @@ export class CSScriptLinkProvider implements vscode.DocumentLinkProvider {
     }
 }
 
+export class CSScriptSignatureHelpProvider implements vscode.SignatureHelpProvider {
+    provideSignatureHelp(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<SignatureHelp> {
+
+        // let result: SignatureHelp;
+
+        // let is_workspace = isWorkspace();
+
+        // if (!is_workspace) {
+
+        //     return new Promise((resolve, reject) =>
+
+        //         // cannot call with await as provideReferences cannot be declared with
+        //         // async as it is overloaded 
+
+        //         Syntaxer.getRefrences(document.getText(), document.fileName, document.offsetAt(position),
+
+        //             data => {
+        //                 if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
+
+        //                     let lines: string[] = data.lines();
+
+        //                     lines.forEach(line => {
+        //                         let info = ErrorInfo.parse(line);
+        //                         result.push(new Location(vscode.Uri.file(info.file), info.range));
+        //                     });
+        //                 }
+        //                 resolve(result);
+        //             },
+        //             error => {
+        //             }));
+
+        // }
+        return null;
+    }
+}
+
 export class CSScriptReferenceProvider implements vscode.ReferenceProvider {
 
     public provideReferences(document: TextDocument, position: Position, context: ReferenceContext, token: CancellationToken): ProviderResult<Location[]> {
@@ -284,6 +327,9 @@ export class CSScriptReferenceProvider implements vscode.ReferenceProvider {
         if (!is_workspace) {
 
             return new Promise((resolve, reject) =>
+
+                // cannot call with await as provideReferences cannot be declared with
+                // async as it is overloaded 
 
                 Syntaxer.getRefrences(document.getText(), document.fileName, document.offsetAt(position),
 
@@ -335,7 +381,7 @@ export class CSScriptRenameProvider implements vscode.RenameProvider {
 
                                 lines.forEach(line => {
 
-                                    console.log(line);
+                                    // console.log(line);
 
                                     let info = ErrorInfo.parse(line);
                                     let range = new vscode.Range(info.range.start, new Position(info.range.start.line, info.range.start.character + word_width));

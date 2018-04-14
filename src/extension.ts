@@ -11,7 +11,7 @@ import * as vscode from 'vscode';
 import * as cs_script from "./cs-script";
 import * as syntaxer from "./syntaxer";
 import { ProjectTreeProvider } from "./tree_view";
-import { CSScriptHoverProvider, CSScriptCompletionItemProvider, CSScriptDefinitionProvider, CSScriptReferenceProvider, CSScriptDocFormattingProvider, CSScriptLinkProvider, CSScriptRenameProvider } from "./providers";
+import { CSScriptHoverProvider, CSScriptCompletionItemProvider, CSScriptDefinitionProvider, CSScriptReferenceProvider, CSScriptDocFormattingProvider, CSScriptLinkProvider, CSScriptRenameProvider, CSScriptSignatureHelpProvider } from "./providers";
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -39,6 +39,8 @@ export function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.languages.registerReferenceProvider('csharp', new CSScriptReferenceProvider()));
         context.subscriptions.push(vscode.languages.registerReferenceProvider('vb', new CSScriptReferenceProvider()));
         // --
+        context.subscriptions.push(vscode.languages.registerSignatureHelpProvider('csharp', new CSScriptSignatureHelpProvider()));
+
         context.subscriptions.push(vscode.languages.registerRenameProvider('csharp', new CSScriptRenameProvider()));
         context.subscriptions.push(vscode.languages.registerDocumentFormattingEditProvider('csharp', new CSScriptDocFormattingProvider()));
         // --
