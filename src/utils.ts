@@ -10,7 +10,7 @@ import * as path from "path";
 import * as fs from "fs";
 import * as fsx from "fs-extra";
 import * as child_process from "child_process"
-import { StatusBarAlignment, StatusBarItem, TextEditor, window, Disposable, commands } from "vscode";
+import { StatusBarAlignment, StatusBarItem, TextEditor, window, Disposable, commands, MarkdownString, ParameterInformation, SignatureInformation } from "vscode";
 
 let ext_dir = path.join(__dirname, "..");
 let exec = require('child_process').exec;
@@ -50,6 +50,8 @@ declare global {
         cast<U>(): Array<U>;
         first<T>(filter?: (T) => boolean): T;
         firstOrDefault<T>(filter?: (T) => boolean): T;
+        last<T>(filter?: (T) => boolean): T;
+        lastOrDefault<T>(filter?: (T) => boolean): T;
     }
 }
 
@@ -63,7 +65,8 @@ String.prototype.contains = function (text) {
 String.prototype.pathNormalize = function () {
     return path.normalize(this).split(/[\\\/]/g).join(path.posix.sep);
 }
-
+// --------------------
+// LINQ - light equivalent
 Array.prototype.firstOrDefault = function <T>(predicate?): T {
     for (var index = 0; index < this.length; index++) {
         var element = this[index];
@@ -72,13 +75,31 @@ Array.prototype.firstOrDefault = function <T>(predicate?): T {
     }
     return null;
 }
-Array.prototype.first = function (predicate) {
+Array.prototype.first = function <T>(predicate): T {
     for (var index = 0; index < this.length; index++) {
         var element = this[index];
         if (predicate == null || predicate(element))
             return element;
     }
     throw new Error('The collection is empty');
+}
+
+Array.prototype.last = function <T>(predicate): T {
+    for (var index = this.length - 1; index > 0; index--) {
+        var element = this[index];
+        if (predicate == null || predicate(element))
+            return element;
+    }
+    throw new Error('The collection is empty');
+}
+
+Array.prototype.lastOrDefault = function <T>(predicate): T {
+    for (var index = this.length - 1; index > 0; index--) {
+        var element = this[index];
+        if (predicate == null || predicate(element))
+            return <T>element;
+    }
+    return null;
 }
 
 Array.prototype.where = function <T>(predicate): Array<T> {
@@ -117,7 +138,7 @@ Array.prototype.select = function <T, U>(convert: (item: T) => U): Array<U> {
     }
     return result;
 };
-
+// -----------------
 export function with_lock(callback: () => void): void {
     if (lock())
         try {
@@ -497,6 +518,51 @@ export function save_as_temp(content: string, script_file: string): string {
     return temp_file;
 }
 
+export function toSignaureInfo(data: string): SignatureInformation {
+
+    let result: SignatureInformation;
+    let sig_lines = css_unescape_linebreaks(data).lines();
+
+    sig_lines.forEach(line => {
+
+        if (line.startsWith("label:")) {
+            result = new SignatureInformation(line.substr("label:".length));
+        }
+        else if (line.startsWith("doc:")) {
+            result.documentation = line.substr("doc:".length);
+        }
+        else if (line.startsWith("param_label:")) {
+            result.parameters.push(new ParameterInformation(line.substr("param_label:".length)));
+        }
+        else if (line.startsWith("param_doc:")) {
+            let param: ParameterInformation = result.parameters.lastOrDefault();
+            if (param != null) {
+                param.documentation = line.substr("param_doc:".length);
+            }
+        }
+        else {
+            // continuation of the previous text agregation 
+
+            if (result != null && result.parameters.any() && result.parameters.last<ParameterInformation>().documentation != null) {
+                result.parameters.last<ParameterInformation>().documentation += "\n" + line;
+            }
+            else if (result != null && result.parameters.any()) {
+                result.parameters.last<ParameterInformation>().label += "\n" + line;
+            }
+            else if (result != null && result.documentation != null) {
+                result.documentation += "\n" + line;
+            }
+            else if (result != null) {
+                result.label += "\n" + line;
+            }
+        }
+    });
+
+    if (result != null)
+        result.documentation = new MarkdownString(`_${result.documentation}_`);
+
+    return result;
+}
 
 export class ErrorInfo {
     public file: string;

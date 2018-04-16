@@ -81,6 +81,12 @@ export class Syntaxer {
 		Syntaxer.send_request(request, code, file, position, resolve, reject);
 	}
 
+	public static getSignatureHelp(code: string, file: string, position: number, resolve, reject): void {
+
+		let request = `-client:${process.pid}\n-op:signaturehelp\n-script:$temp_file$\n-pos:${position}`;
+		Syntaxer.send_request(request, code, file, position, resolve, reject);
+	}
+
 	public static getTooltip(code: string, file: string, position: number, resolve, reject): void {
 
 		let hint = '';
@@ -122,12 +128,6 @@ export class Syntaxer {
 		Syntaxer.send_request(request, code, file, position, resolve, reject);
 	}
 
-	// not in use yet
-	public static getMemberInfo(code: string, file: string, position: number, resolve, reject): void {
-
-		let request = `-client:${process.pid}\n-op:memberinfo\n-script:$temp_file$\n-pos:${position}\n-rich\n-collapseOverloads`;
-		Syntaxer.send_request(request, code, file, position, resolve, reject);
-	}
 }
 
 export async function DeploySyntaxer() {

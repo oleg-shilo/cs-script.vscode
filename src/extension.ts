@@ -39,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.languages.registerReferenceProvider('csharp', new CSScriptReferenceProvider()));
         context.subscriptions.push(vscode.languages.registerReferenceProvider('vb', new CSScriptReferenceProvider()));
         // --
-        context.subscriptions.push(vscode.languages.registerSignatureHelpProvider('csharp', new CSScriptSignatureHelpProvider()));
+        context.subscriptions.push(vscode.languages.registerSignatureHelpProvider('csharp', new CSScriptSignatureHelpProvider(), '(', ','));
 
         context.subscriptions.push(vscode.languages.registerRenameProvider('csharp', new CSScriptRenameProvider()));
         context.subscriptions.push(vscode.languages.registerDocumentFormattingEditProvider('csharp', new CSScriptDocFormattingProvider()));

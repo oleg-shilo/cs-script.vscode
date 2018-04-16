@@ -281,37 +281,45 @@ export class CSScriptLinkProvider implements vscode.DocumentLinkProvider {
 }
 
 export class CSScriptSignatureHelpProvider implements vscode.SignatureHelpProvider {
-    provideSignatureHelp(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<SignatureHelp> {
 
-        // let result: SignatureHelp;
+    public provideSignatureHelp(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<SignatureHelp> {
 
-        // let is_workspace = isWorkspace();
+        let result: SignatureHelp;
 
-        // if (!is_workspace) {
+        let is_workspace = isWorkspace();
 
-        //     return new Promise((resolve, reject) =>
+        if (!is_workspace) {
 
-        //         // cannot call with await as provideReferences cannot be declared with
-        //         // async as it is overloaded 
+            return new Promise((resolve, reject) =>
 
-        //         Syntaxer.getRefrences(document.getText(), document.fileName, document.offsetAt(position),
+                Syntaxer.getSignatureHelp(document.getText(), document.fileName, document.offsetAt(position),
+                    data => {
+                        if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
 
-        //             data => {
-        //                 if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
+                            let lines: string[] = data.lines();
 
-        //                     let lines: string[] = data.lines();
+                            let bestMatch = Number(lines[0]);
 
-        //                     lines.forEach(line => {
-        //                         let info = ErrorInfo.parse(line);
-        //                         result.push(new Location(vscode.Uri.file(info.file), info.range));
-        //                     });
-        //                 }
-        //                 resolve(result);
-        //             },
-        //             error => {
-        //             }));
+                            result = new SignatureHelp();
 
-        // }
+                            for (let i = 1; i < lines.length; i++) {
+
+                                let sig_info = utils.css_unescape_linebreaks(lines[i]);
+                                let sig = utils.toSignaureInfo(sig_info);
+                                result.signatures.push(sig);
+                            }
+
+                            // must be set after result.signatures are added
+                            result.activeSignature = bestMatch;
+                            // result.activeParameter = 0; // do not set it just yet as the syntaxer algorithm for detecting current param was note verified yet 
+                        }
+                        resolve(result);
+
+                    },
+                    error => {
+                    })
+            );
+        }
         return null;
     }
 }
