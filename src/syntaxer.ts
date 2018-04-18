@@ -64,7 +64,7 @@ export class Syntaxer {
 		});
 	}
 
-	public static send_request(request: string, code: string, file: string, position: number, resolve, reject): void {
+	public static send_request(request: string, code: string, file: string, resolve, reject): void {
 		let temp_file = save_as_temp(code, file);
 
 		Syntaxer.send(request.replace("$temp_file$", temp_file),
@@ -78,26 +78,32 @@ export class Syntaxer {
 	public static getCompletions(code: string, file: string, position: number, resolve, reject): void {
 
 		let request = `-client:${process.pid}\n-op:completion\n-script:$temp_file$\n-pos:${position}\n-doc`;
-		Syntaxer.send_request(request, code, file, position, resolve, reject);
+		Syntaxer.send_request(request, code, file, resolve, reject);
+	}
+
+	public static suggestUsings(code: string, file: string, word: string, resolve, reject): void {
+
+		let request = `-client:${process.pid}\n-op:suggest_usings:${word}\n-script:$temp_file$`;
+		Syntaxer.send_request(request, code, file, resolve, reject);
 	}
 
 	public static getSignatureHelp(code: string, file: string, position: number, resolve, reject): void {
-
 		let request = `-client:${process.pid}\n-op:signaturehelp\n-script:$temp_file$\n-pos:${position}`;
-		Syntaxer.send_request(request, code, file, position, resolve, reject);
+
+		Syntaxer.send_request(request, code, file, resolve, reject);
 	}
 
 	public static getTooltip(code: string, file: string, position: number, resolve, reject): void {
 
 		let hint = '';
 		let request = `-client:${process.pid}\n-op:tooltip:${hint}\n-script:$temp_file$\n-pos:${position}`;
-		Syntaxer.send_request(request, code, file, position, resolve, reject);
+		Syntaxer.send_request(request, code, file, resolve, reject);
 	}
 
 	public static getRefrences(code: string, file: string, position: number, resolve, reject): void {
 
 		let request = `-client:${process.pid}\n-op:references\n-script:$temp_file$\n-pos:${position}`;
-		Syntaxer.send_request(request, code, file, position, resolve, reject);
+		Syntaxer.send_request(request, code, file, resolve, reject);
 	}
 
 	// Just to show that it's possible to go Thenable. Used in `find_references()`.
@@ -106,26 +112,26 @@ export class Syntaxer {
 
 		return new Promise((resolve, reject) => {
 			let request = `-client:${process.pid}\n-op:references\n-script:$temp_file$\n-pos:${position}`;
-			Syntaxer.send_request(request, code, file, position, resolve, reject);
+			Syntaxer.send_request(request, code, file, resolve, reject);
 		});
 	}
 
 	public static getRenameingInfo(code: string, file: string, position: number, resolve, reject): void {
 
 		let request = `-client:${process.pid}\n-op:references\n-context:all\n-script:$temp_file$\n-pos:${position}`;
-		Syntaxer.send_request(request, code, file, position, resolve, reject);
+		Syntaxer.send_request(request, code, file, resolve, reject);
 	}
 
 	public static doDocFormat(code: string, file: string, position: number, resolve, reject): void {
 
 		let request = `-client:${process.pid}\n-op:format\n-script:$temp_file$\n-pos:${position}`;
-		Syntaxer.send_request(request, code, file, position, resolve, reject);
+		Syntaxer.send_request(request, code, file, resolve, reject);
 	}
 
 	public static getDefinition(code: string, file: string, position: number, resolve, reject): void {
 
 		let request = `-client:${process.pid}\n-op:resolve\n-script:$temp_file$\n-pos:${position}`;
-		Syntaxer.send_request(request, code, file, position, resolve, reject);
+		Syntaxer.send_request(request, code, file, resolve, reject);
 	}
 
 }

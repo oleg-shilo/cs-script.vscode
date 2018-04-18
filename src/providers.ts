@@ -5,12 +5,12 @@
 import * as vscode from 'vscode';
 // import * as fs from 'fs';
 // import * as path from 'path';
-import { HoverProvider, Position, CompletionItem, CancellationToken, TextDocument, Hover, Definition, ProviderResult, Range, Location, ReferenceContext, FormattingOptions, TextEdit, DocumentLink, WorkspaceEdit, SignatureHelp } from "vscode";
+import { HoverProvider, Position, CompletionItem, CancellationToken, TextDocument, Hover, Definition, ProviderResult, Range, Location, ReferenceContext, FormattingOptions, TextEdit, DocumentLink, WorkspaceEdit, SignatureHelp, CodeAction, Command, TextLine, EndOfLine } from "vscode";
 // import * as cs_script from "./cs-script";
 import * as utils from "./utils";
 import { Syntaxer } from "./syntaxer";
 import { ErrorInfo, select_line, VSCodeSettings } from './utils';
-import { save_script_project } from './cs-script';
+import { save_script_project, check } from './cs-script';
 // import { Utils } from "./utils";
 // import { Syntaxer } from "./syntaxer";
 
@@ -277,6 +277,128 @@ export class CSScriptLinkProvider implements vscode.DocumentLinkProvider {
             });
         else
             return null;
+    }
+}
+
+export class CSScriptCodeActionProvider implements vscode.CodeActionProvider {
+
+    public provideCodeActions(document: vscode.TextDocument, range: vscode.Range, context: vscode.CodeActionContext, token: vscode.CancellationToken): vscode.ProviderResult<(Command | CodeAction)[]> {
+
+        let result: CodeAction[] = [];
+
+        let is_workspace = isWorkspace();
+
+        if (!is_workspace) {
+
+            return new Promise((resolve, reject) => {
+
+                let offset = document.offsetAt(range.end) - 1; // to ensure it is at word
+
+                let word_range = document.getWordRangeAtPosition(document.positionAt(offset));
+
+                let word = document.getText(word_range);
+
+                if (word != "")
+                    Syntaxer.suggestUsings(document.getText(), document.fileName, word,
+                        data => {
+                            if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
+
+                                let eol = document.eol == EndOfLine.CRLF ? "\r\n" : "\n";
+
+                                let usings: TextLine[] = [];
+                                for (let index = 0; index <= range.start.line; index++) {
+                                    let line = document.lineAt(index);
+                                    if (line.text.trim().startsWith("using "))
+                                        usings.push(line);
+                                }
+
+                                function find_using_placement(text: string): Position {
+                                    if (usings.any())
+                                        return usings.firstOrDefault<TextLine>().range.start;
+                                    else
+                                        return new Position(0, 0);
+                                }
+
+                                let new_usings: CodeAction[] = [];
+                                let new_replacements: CodeAction[] = [];
+                                let lines: string[] = data.lines();
+
+                                // abort if any missing 'using' is already handled; If this var is not checked the user 
+                                // will be presented with alternative handling/'using' optionso  
+                                let already_handled = false;
+
+                                lines.forEach(line => {
+                                    if (!already_handled) {
+                                        let insert_action: CodeAction;
+                                        let replace_action: CodeAction;
+
+                                        let new_using = `using ${line};`
+                                        let already_present = usings.any(x => x.text == new_using);
+
+                                        if (!already_present) {
+
+                                            let insertion_pos = find_using_placement(new_using);
+
+                                            if (insertion_pos) {
+
+                                                insert_action = new CodeAction(`Add "${new_using}"`);
+                                                insert_action.kind = vscode.CodeActionKind.RefactorRewrite;
+                                                insert_action.edit = new WorkspaceEdit();
+
+                                                insert_action.edit.insert(vscode.Uri.file(document.fileName), insertion_pos, new_using + eol);
+                                            }
+                                        }
+                                        else
+                                            already_handled = true;
+
+                                        let replacement_word = `${line}.${word}`;
+                                        let already_fully_specified = false;
+
+                                        // checking if the word is already (a part of) the whole replacement_word
+                                        let start_of_expression: number = word_range.end.character - replacement_word.length;
+                                        if (start_of_expression >= 0) {
+
+                                            let whole_word_range = new Range(new Position(word_range.start.line, start_of_expression), word_range.end);
+                                            let whole_word = document.getText(whole_word_range);
+
+                                            if (whole_word == replacement_word) {
+                                                already_fully_specified = true;
+                                                already_handled = true;
+                                            }
+                                        }
+
+                                        if (!already_fully_specified && !already_present) {
+                                            replace_action = new CodeAction(`Change "${word}" to "${line}.${word}"`);
+                                            replace_action.kind = vscode.CodeActionKind.RefactorRewrite;
+                                            replace_action.edit = new WorkspaceEdit();
+                                            replace_action.edit.replace(vscode.Uri.file(document.fileName), word_range, replacement_word);
+                                        }
+
+                                        if (insert_action && replace_action) {
+                                            new_usings.push(insert_action);
+                                            new_replacements.push(replace_action);
+                                        }
+                                    }
+                                });
+
+                                if (!already_handled) {
+                                    new_usings.forEach(x => result.push(x));
+                                    let enable_grouping = VSCodeSettings.get("cs-script.group_suggested_code_actions", true);
+                                    if (enable_grouping)
+                                        result.push(new CodeAction(`--------------------------`));
+                                    new_replacements.forEach(x => result.push(x));
+                                }
+                            }
+
+
+                            resolve(result);
+                        },
+                        error => {
+                        })
+            }
+            );
+        }
+        return null;
     }
 }
 
