@@ -148,8 +148,18 @@ export function with_lock(callback: () => void): void {
         }
 }
 
-export function css_unescape_linebreaks(text: string): string {
-    return text.replace(/\${r}\${n}/g, "\n").replace(/\${n}/g, "\n");
+export function get_line_indent(text: string): number {
+    let line_indent = 0;
+    let curr_line = text;
+    for (; line_indent < curr_line.length; line_indent++) {
+        if (curr_line.charAt(line_indent) != " ")
+            break;
+    }
+    return line_indent;
+}
+
+export function css_unescape_linebreaks(text: string, eol: string): string {
+    return text.replace(/\${r}\${n}/g, "\n").replace(/\${n}/g, eol);
 }
 export function is_ready(): boolean {
     return _ready;

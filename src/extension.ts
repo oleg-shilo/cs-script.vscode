@@ -30,8 +30,8 @@ export function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.languages.registerHoverProvider('csharp', new CSScriptHoverProvider()));
         context.subscriptions.push(vscode.languages.registerHoverProvider('vb', new CSScriptHoverProvider()));
         // --
-        context.subscriptions.push(vscode.languages.registerCompletionItemProvider('csharp', new CSScriptCompletionItemProvider(), '.', '_'));
-        context.subscriptions.push(vscode.languages.registerCompletionItemProvider('vb', new CSScriptCompletionItemProvider(), '.', '_'));
+        context.subscriptions.push(vscode.languages.registerCompletionItemProvider('csharp', new CSScriptCompletionItemProvider(), '.', '_', '=', " "));
+        context.subscriptions.push(vscode.languages.registerCompletionItemProvider('vb', new CSScriptCompletionItemProvider(), '.', '_', '='));
         // --
         context.subscriptions.push(vscode.languages.registerDefinitionProvider('csharp', new CSScriptDefinitionProvider()));
         context.subscriptions.push(vscode.languages.registerDefinitionProvider('vb', new CSScriptDefinitionProvider()));

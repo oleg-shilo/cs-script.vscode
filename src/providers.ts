@@ -10,7 +10,7 @@ import { HoverProvider, Position, CompletionItem, CancellationToken, TextDocumen
 import * as utils from "./utils";
 import { Syntaxer } from "./syntaxer";
 import { ErrorInfo, select_line, VSCodeSettings } from './utils';
-import { save_script_project, check } from './cs-script';
+import { save_script_project } from './cs-script';
 // import { Utils } from "./utils";
 // import { Syntaxer } from "./syntaxer";
 
@@ -123,6 +123,7 @@ export class CSScriptCompletionItemProvider implements vscode.CompletionItemProv
 
         let is_workspace = isWorkspace();
         let is_css_directive = isCssDirective(document, position);
+        let eol = document.eol == EndOfLine.CRLF ? "\r\n" : "\n";
 
         if (!is_workspace || is_css_directive) {
 
@@ -131,11 +132,28 @@ export class CSScriptCompletionItemProvider implements vscode.CompletionItemProv
                 Syntaxer.getCompletions(document.getText(), document.fileName, document.offsetAt(position),
                     data => {
                         if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
+
+                            let line_indent = utils.get_line_indent(document.lineAt(position.line).text);
+
                             let lines: string[] = data.lines();
                             lines.forEach(line => {
-                                let parts = line.split("\t");
+                                // "$|$" is a caret position after completion is accepted
+                                // it does interfere with |-split and also VSCode is not really
+                                // suitable for placing the cursor after accepting the suggestion
+                                // as there is no "OnAccepted" event available.
+                                // Thus just removing "$|$"
+                                let parts = line.replace("$|$", "").split("\t");
                                 let info = parts[1].split("|");
-                                let doc = utils.css_unescape_linebreaks(info[2]);
+                                let completionText = utils.css_unescape_linebreaks(info[1], eol);
+                                completionText = trimWordDelimeters(completionText);
+
+                                let pattern = new RegExp("\\n\\s{" + line_indent + "}", 'g');
+                                completionText = completionText.replace(pattern, "\n");
+
+                                let doc: string;
+                                if (info.length > 2)
+                                    doc = utils.css_unescape_linebreaks(info[2], eol);
+
                                 let memberKind: vscode.CompletionItemKind;
                                 switch (info[0]) {
                                     case "method":
@@ -153,7 +171,7 @@ export class CSScriptCompletionItemProvider implements vscode.CompletionItemProv
                                     case "property":
                                         memberKind = vscode.CompletionItemKind.Property;
                                         break;
-                                    case "_event":
+                                    case "event":
                                         memberKind = vscode.CompletionItemKind.Event;
                                         break;
                                     default:
@@ -164,7 +182,7 @@ export class CSScriptCompletionItemProvider implements vscode.CompletionItemProv
                                     label: parts[0],
                                     kind: memberKind,
                                     documentation: doc,
-                                    insertText: trimWordDelimeters(info[1]),
+                                    insertText: completionText,
                                     sortText: '01'
                                 });
                             });
@@ -304,19 +322,22 @@ export class CSScriptCodeActionProvider implements vscode.CodeActionProvider {
                             if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
 
                                 let eol = document.eol == EndOfLine.CRLF ? "\r\n" : "\n";
+                                let lastCssDirective: TextLine;
 
                                 let usings: TextLine[] = [];
                                 for (let index = 0; index <= range.start.line; index++) {
                                     let line = document.lineAt(index);
                                     if (line.text.trim().startsWith("using "))
                                         usings.push(line);
+                                    else if (line.text.trim().startsWith("//css_"))
+                                        lastCssDirective = line;
                                 }
 
                                 function find_using_placement(text: string): Position {
                                     if (usings.any())
                                         return usings.firstOrDefault<TextLine>().range.start;
                                     else
-                                        return new Position(0, 0);
+                                        return lastCssDirective ? new Position(lastCssDirective.range.end.line + 1, 0) : new Position(0, 0);
                                 }
 
                                 let new_usings: CodeAction[] = [];
@@ -411,6 +432,7 @@ export class CSScriptSignatureHelpProvider implements vscode.SignatureHelpProvid
         let is_workspace = isWorkspace();
 
         if (!is_workspace) {
+            let eol = document.eol == EndOfLine.CRLF ? "\r\n" : "\n";
 
             return new Promise((resolve, reject) =>
 
@@ -426,7 +448,7 @@ export class CSScriptSignatureHelpProvider implements vscode.SignatureHelpProvid
 
                             for (let i = 1; i < lines.length; i++) {
 
-                                let sig_info = utils.css_unescape_linebreaks(lines[i]);
+                                let sig_info = utils.css_unescape_linebreaks(lines[i], eol);
                                 let sig = utils.toSignaureInfo(sig_info);
                                 result.signatures.push(sig);
                             }
