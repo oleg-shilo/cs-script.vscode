@@ -158,7 +158,7 @@ export function get_line_indent(text: string): number {
     return line_indent;
 }
 
-export function css_unescape_linebreaks(text: string, eol: string): string {
+export function css_unescape_linebreaks(text: string, eol: string = "\n"): string {
     return text.replace(/\${r}\${n}/g, "\n").replace(/\${n}/g, eol);
 }
 export function is_ready(): boolean {

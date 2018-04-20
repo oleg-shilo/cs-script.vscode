@@ -115,6 +115,28 @@ export class CSScriptHoverProvider implements HoverProvider {
     }
 }
 
+export function process_snipet_cursor_placeholders(startLine: number, endLine: number): void {
+
+    let editor = vscode.window.activeTextEditor;
+
+    for (let index = startLine; index < endLine; index++) {
+
+        let line_text = editor.document.lineAt(index).text;
+
+        let cursor_pos = line_text.indexOf("$0");
+        if (cursor_pos != -1) {
+
+            editor
+                .edit(editBuilder =>
+                    editBuilder.replace(new Range(index, cursor_pos, index, cursor_pos + 2), ''))
+                .then(() =>
+                    editor.selection = new vscode.Selection(index, cursor_pos, index, cursor_pos))
+
+            break;
+        }
+    }
+}
+
 export class CSScriptCompletionItemProvider implements vscode.CompletionItemProvider {
 
     public provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Thenable<vscode.CompletionItem[]> {
@@ -128,7 +150,6 @@ export class CSScriptCompletionItemProvider implements vscode.CompletionItemProv
         if (!is_workspace || is_css_directive) {
 
             return new Promise((resolve, reject) =>
-
                 Syntaxer.getCompletions(document.getText(), document.fileName, document.offsetAt(position),
                     data => {
                         if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
@@ -137,22 +158,36 @@ export class CSScriptCompletionItemProvider implements vscode.CompletionItemProv
 
                             let lines: string[] = data.lines();
                             lines.forEach(line => {
-                                // "$|$" is a caret position after completion is accepted
-                                // it does interfere with |-split and also VSCode is not really
-                                // suitable for placing the cursor after accepting the suggestion
-                                // as there is no "OnAccepted" event available.
-                                // Thus just removing "$|$"
-                                let parts = line.replace("$|$", "").split("\t");
+                                // "$|$" is a Syntaxer specific caret position placeholder after completion is accepted.
+                                // It does interfere with |-split so it needs to be escaped in one or another way.
+                                // 
+                                // VSCode supposed to respect snippet's placeholders (e.g. "$0") suitable for placing the cursor after 
+                                // accepting the suggestion. However this feature is undocummented and as of 19-Apr-2018 it just does not work.
+                                // The undocumented placeholders (to move cursor) supposed to work - https://github.com/Microsoft/vscode/issues/3210
+                                // 
+                                // Thus implemente post-event cursor placement with 'cs-script.on_completion_accepted' extension command.
+
+                                // escaping |-delimiter, setting up the cursor placeholder, splitting completion display text fom the completion data
+                                let parts = line.replace("$|$", "$0").split("\t");
+
+                                // splitting completion data into logical parts
                                 let info = parts[1].split("|");
-                                let completionText = utils.css_unescape_linebreaks(info[1], eol);
+
+                                let completionText = utils.css_unescape_linebreaks(info[1], eol)
+
+                                // remove word delimiters (e.g. '//') otherwise they will get duplicated on insertion
                                 completionText = trimWordDelimeters(completionText);
 
+                                // trimm start of the line by the size of line_indent, which will be injected by VSCode on insertion anyway
                                 let pattern = new RegExp("\\n\\s{" + line_indent + "}", 'g');
                                 completionText = completionText.replace(pattern, "\n");
 
+                                // note, documentation is optional so it may not be present in the data
                                 let doc: string;
                                 if (info.length > 2)
                                     doc = utils.css_unescape_linebreaks(info[2], eol);
+
+                                let command: Command;
 
                                 let memberKind: vscode.CompletionItemKind;
                                 switch (info[0]) {
@@ -172,19 +207,35 @@ export class CSScriptCompletionItemProvider implements vscode.CompletionItemProv
                                         memberKind = vscode.CompletionItemKind.Property;
                                         break;
                                     case "event":
-                                        memberKind = vscode.CompletionItemKind.Event;
-                                        break;
+                                        {
+                                            // CompletionItem.additionalTextEdits cannot be used as it will overlap with the primary edit 
+                                            // and also it may be executed before the primary edit, not after. So use command custom command instead
+                                            command = {
+                                                title: "",
+                                                command: "cs-script.on_completion_accepted",
+                                                arguments: [() => {
+                                                    process_snipet_cursor_placeholders(position.line, position.line + completionText.lines().length);
+                                                }]
+                                            };
+
+                                            memberKind = vscode.CompletionItemKind.Event;
+                                            break;
+                                        }
                                     default:
                                         memberKind = vscode.CompletionItemKind.Text;
                                         break;
                                 }
+
                                 items.push({
                                     label: parts[0],
                                     kind: memberKind,
                                     documentation: doc,
                                     insertText: completionText,
+                                    command: command,
+                                    // additionalTextEdits: postInsertEdits,
                                     sortText: '01'
                                 });
+
                             });
                         }
                         resolve(items);

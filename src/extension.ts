@@ -63,6 +63,8 @@ export function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.engine_help', cs_script.engine_help));
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.build_exe', cs_script.build_exe));
 
+        context.subscriptions.push(vscode.commands.registerCommand('cs-script.on_completion_accepted', callback => callback()));
+
         context.subscriptions.push(vscode.commands.registerCommand("csharp.startSessionCommand", debugConfig => {
             if (Object.keys(debugConfig).length === 0) {
                 return {
