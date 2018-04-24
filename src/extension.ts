@@ -9,7 +9,6 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as cs_script from "./cs-script";
-import * as syntaxer from "./syntaxer";
 import { ProjectTreeProvider } from "./tree_view";
 import { CSScriptHoverProvider, CSScriptCompletionItemProvider, CSScriptDefinitionProvider, CSScriptReferenceProvider, CSScriptDocFormattingProvider, CSScriptLinkProvider, CSScriptRenameProvider, CSScriptSignatureHelpProvider, CSScriptCodeActionProvider } from "./providers";
 
@@ -22,7 +21,7 @@ export function activate(context: vscode.ExtensionContext) {
         // console.log('"cs-script" extension is now active...');
 
         cs_script.ActivateDiagnostics(context);
-        syntaxer.DeploySyntaxer();
+        // syntaxer.DeploySyntaxer();
 
         const treeViewProvider = new ProjectTreeProvider(cs_script.get_project_tree_items);
         vscode.window.registerTreeDataProvider('cs-script', treeViewProvider);

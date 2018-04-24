@@ -11,6 +11,9 @@ import * as fs from "fs";
 import * as fsx from "fs-extra";
 import * as child_process from "child_process"
 import { StatusBarAlignment, StatusBarItem, TextEditor, window, Disposable, commands, MarkdownString, ParameterInformation, SignatureInformation } from "vscode";
+import { start_syntaxer, Syntaxer } from "./syntaxer";
+import * as syntaxer from "./syntaxer";
+// import { Syntax } from "./cs-script";
 
 let ext_dir = path.join(__dirname, "..");
 let exec = require('child_process').exec;
@@ -239,6 +242,24 @@ export function copy_file_to_sync(fileName: string, srcDir: string, destDir: str
     }
 }
 
+export function copy_file_to_sync2(fileName: string, newFileName: string, srcDir: string, destDir: string): void {
+
+    try {
+        fsx.copySync(path.join(srcDir, fileName), path.join(destDir, newFileName));
+    } catch (error) {
+        console.log(error.toString());
+    }
+}
+
+export function del_file(filePath: string): void {
+
+    try {
+        fs.unlink(filePath);
+    } catch (error) {
+        console.log(error.toString());
+    }
+}
+
 export function user_dir(): string {
 
     // ext_context.storagePath cannot be used as it is undefined if no workspace loaded
@@ -300,8 +321,12 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
 
 export function deploy_engine(): void {
     try {
-        // all copy_file* calls are  async operations
 
+        syntaxer.init(
+            path.join(user_dir(), "cscs.exe"),
+            path.join(user_dir(), "Roslyn", "syntaxer.exe"));
+
+        // all copy_file* calls are  async operations
         let need_to_deploy = true;
 
         if (fs.existsSync(ver_file)) {
@@ -313,6 +338,7 @@ export function deploy_engine(): void {
         }
 
         if (need_to_deploy) {
+            vscode.window.showInformationMessage('Preparing new version of CS-Script for deployment.');
             statusBarItem.text = '$(versions) Deploying CS-Script...';
             statusBarItem.show();
             setTimeout(deploy_files, 100);
@@ -321,6 +347,7 @@ export function deploy_engine(): void {
             ensure_default_config(path.join(user_dir(), 'cscs.exe'));
             _ready = true;
             setTimeout(preload_roslyn, 100);
+            setTimeout(start_syntaxer, 100);
         }
     } catch (error) {
         console.log(error);
@@ -372,21 +399,31 @@ function check_environment(): void {
 
 function deploy_files(): void {
     try {
+
         copy_file_to_sync("cscs.exe", path.join(ext_dir, 'bin'), user_dir());
         copy_file_to_sync("CSSRoslynProvider.dll", path.join(ext_dir, 'bin'), user_dir());
 
         if (os.platform() == 'win32') {
+            copy_file_to_sync2("nuget.win.exe", "nuget.exe", path.join(ext_dir, 'bin'), user_dir());
             deploy_roslyn();
         }
-
-        fs.writeFileSync(ver_file, ext_version, { encoding: 'utf8' });
+        else {
+            // on non-Win os nuget will be probed in well known locations (e.g. Mono folder)
+            del_file(path.join(ext_dir, 'bin', "nuget.win.exe"));
+        }
 
         ensure_default_config(path.join(user_dir(), 'cscs.exe'));
+
+        start_syntaxer(); // will also deploy embedded Roslyn binaries
         load_roslyn();
+
+        fs.writeFileSync(ver_file, ext_version, { encoding: 'utf8' });
 
         statusBarItem.text = 'CS-Script is initialized...';
         statusBarItem.show();
         setTimeout(statusBarItem.hide, 2000);
+
+        vscode.window.showInformationMessage('New version of CS-Script binaries has been deployed.');
 
         _ready = true;
 
@@ -410,18 +447,23 @@ export function load_roslyn(): void {
 }
 
 export function deploy_roslyn(): void {
+
+
     // Copy all roslyn related files
     // Dest folder must be versioned as Roslyn server may stay in memory between the sessions so the
     // extension update would not be interfered with.
-    let src_dir = path.join(ext_dir, 'bin', 'roslyn');
     let dest_dir = path.join(user_dir(), 'roslyn');
-
-    // process.env.css_vscode_roslyn_dir = dest_dir;
 
     if (fs.existsSync(dest_dir)) {
 
-        let command = 'mono "' + path.join(user_dir(), 'cscs.exe') + '" -stop';
-        execSync(command);
+        Syntaxer.sentStopRequest();
+
+        if (os.platform() == 'win32') {
+            // on Windows need to stp local deployment of Roslyn compiler VBCSCompiler.exe
+            // on Linux it is always a global deployment of Roslyn so no need to sop it.
+            let command = '"' + path.join(user_dir(), 'cscs.exe') + '" -stop';
+            execSync(command);
+        }
 
         fs.renameSync(dest_dir, dest_dir + ".old." + new Date().getTime());
         // delete old roslyn async
@@ -441,10 +483,10 @@ export function deploy_roslyn(): void {
 
     create_dir(dest_dir);
 
-    fs.readdirSync(src_dir).forEach(file => {
-        copy_file_to_sync(file, src_dir, dest_dir); // async operation
-    });
+    copy_file_to_sync("syntaxer.exe", path.join(ext_dir, 'bin'), dest_dir);
 
+    let command = 'mono "' + path.join(dest_dir, 'syntaxer.exe') + '" -dr';
+    execSync(command);
 }
 
 export function prepare_new_script(): string {
@@ -786,7 +828,27 @@ export class Utils {
         let output: string = '';
 
         let p = exec(command);
-        p.stdout.on('data', data => output += data);
+        p.stdout.on('data', data => {
+            let buf: string = data;
+            output += data;
+            if (buf.indexOf('Processing NuGet packages...') != -1)
+                vscode.window.showInformationMessage('Restoring NuGet packages...');
+        });
+        p.stderr.on('data', data => output += data);
+        p.on('close', code => {
+            if (on_done) on_done(code, output);
+        });
+    }
+
+    public static Run2(command: string, on_data: (string) => void, on_done?: (number, string) => void) {
+
+        let output: string = '';
+
+        let p = exec(command);
+        p.stdout.on('data', data => {
+            output += data;
+            on_data(data);
+        });
         p.stderr.on('data', data => output += data);
         p.on('close', code => {
             if (on_done) on_done(code, output);
@@ -798,7 +860,7 @@ export function preload_roslyn() {
     try {
 
         let exe = path.join(user_dir(), 'cscs.exe');
-        let command = 'mono "' + exe + '" -nl -preload';
+        let command = 'mono "' + exe + '" -preload';
         Utils.Run(command);
 
     } catch (error) {

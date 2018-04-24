@@ -1,23 +1,23 @@
 
 import * as fs from 'fs';
-import * as fse from 'fs-extra';
-import * as path from 'path';
-import * as os from 'os';
 import * as net from "net";
-import * as vscode from 'vscode';
-import * as mkdirp from "mkdirp";
 import * as process from "process";
 import * as child_process from "child_process"
 import { save_as_temp, clear_temp_file_suffixes } from "./utils";
 import * as utils from "./utils";
 
-let SYNTAXER_VERSION = "1.2.5.0";
+export let CSCS; // will be set at the end of this file to the path of the CS-Script engine executable
+export var SERVER; // will be set at the end of this file to the path of the server executable
 
-let CSCS = ""; // will be set at the end of this file to the path of the CS-Script engine executable
-export let SERVER = ""; // will be set at the end of this file to the path of the server executable
+export function init(cscs: string, server: string): void {
+	CSCS = cscs;
+	SERVER = server;
+}
+// export let SERVER = path.join(utils.user_dir(), "Roslyn", "syntaxer.exe");
+// export let CSCS = path.join(utils.user_dir(), "cscs.exe");
 let PORT = 18003;
 
-function startServer(): void {
+export function start_syntaxer(): void {
 
 	if (utils.isWin) {
 		// SERVER = "E:\\<company_name>\\Projects\\Sublime\\cs-script\\syntaxer\\bin\\Debug\\syntaxer.exe";
@@ -27,7 +27,6 @@ function startServer(): void {
 		child_process.execFile(SERVER, [`-port:${PORT}`, "-listen", `-client:${process.pid}`, "-timeout:60000", `-cscs_path:${CSCS}`]);
 	}
 	else {
-
 		child_process.execFile("mono", [SERVER, `-port:${PORT}`, "-listen", `-client:${process.pid}`, "-timeout:60000", `-cscs_path:${CSCS}`]);
 	}
 }
@@ -35,7 +34,15 @@ function startServer(): void {
 export class Syntaxer {
 
 	public static init(): void {
-		DeploySyntaxer();
+		// DeploySyntaxer();
+	}
+
+	public static sentStopRequest(): void {
+
+		let client = new net.Socket();
+		client.connect(PORT, '127.0.0.1', function () {
+			client.write('-exit');
+		});
 	}
 
 	private static send(request: string, onData: (data: string) => void): void {
@@ -52,7 +59,7 @@ export class Syntaxer {
 
 		client.on('error', function (error) {
 			if (fs.existsSync(SERVER)) { // may not started yet (or crashed)
-				startServer();
+				start_syntaxer();
 			}
 		});
 
@@ -136,84 +143,84 @@ export class Syntaxer {
 
 }
 
-export async function DeploySyntaxer() {
+// export async function DeploySyntaxer() {
 
-	function create_dir(dir: string): void {
-		// fs.mkdirSync can only create the top level dir but mkdirp creates all child sub-dirs that do not exist
-		const allRWEPermissions = parseInt("0777", 8);
-		mkdirp.sync(dir, allRWEPermissions);
-	}
+// 	function create_dir(dir: string): void {
+// 		// fs.mkdirSync can only create the top level dir but mkdirp creates all child sub-dirs that do not exist
+// 		const allRWEPermissions = parseInt("0777", 8);
+// 		mkdirp.sync(dir, allRWEPermissions);
+// 	}
 
-	function user_dir(): string {
-		// ext_context.storagePath cannot be used as it is undefined if no workspace loaded
+// 	function user_dir(): string {
+// 		// ext_context.storagePath cannot be used as it is undefined if no workspace loaded
 
-		// vscode:
-		// Windows %appdata%\Code\User\settings.json
-		// Mac $HOME/Library/Application Support/Code/User/settings.json
-		// Linux $HOME/.config/Code/User/settings.json
+// 		// vscode:
+// 		// Windows %appdata%\Code\User\settings.json
+// 		// Mac $HOME/Library/Application Support/Code/User/settings.json
+// 		// Linux $HOME/.config/Code/User/settings.json
 
-		if (os.platform() == 'win32') {
-			return path.join(process.env.APPDATA, 'Code', 'User', 'cs-script.user');
-		}
-		else if (os.platform() == 'darwin') {
-			return path.join(process.env.HOME, 'Library', 'Application Support', 'Code', 'User', 'script.user');
-		}
-		else {
-			return path.join(process.env.HOME, '.config', 'Code', 'User', 'script.user');
-		}
-	}
+// 		if (os.platform() == 'win32') {
+// 			return path.join(process.env.APPDATA, 'Code', 'User', 'cs-script.user');
+// 		}
+// 		else if (os.platform() == 'darwin') {
+// 			return path.join(process.env.HOME, 'Library', 'Application Support', 'Code', 'User', 'script.user');
+// 		}
+// 		else {
+// 			return path.join(process.env.HOME, '.config', 'Code', 'User', 'script.user');
+// 		}
+// 	}
 
-	function purge_old_syntaxer(): void {
-		let syntaxer_dir = path.join(user_dir(), 'syntaxer');
+// 	function purge_old_syntaxer(): void {
+// 		let syntaxer_dir = path.join(user_dir(), 'syntaxer');
 
-		const is_dir = source => fs.lstatSync(source).isDirectory();
+// 		const is_dir = source => fs.lstatSync(source).isDirectory();
 
-		fs.readdir(syntaxer_dir, (err, items) => {
-			items.forEach(item => {
-				if (item != SYNTAXER_VERSION) {
-					let dir = path.join(syntaxer_dir, item);
-					if (is_dir(dir))
-						utils.delete_dir(dir);
-				}
-			});
-		});
-	}
+// 		fs.readdir(syntaxer_dir, (err, items) => {
+// 			items.forEach(item => {
+// 				if (item != SYNTAXER_VERSION) {
+// 					let dir = path.join(syntaxer_dir, item);
+// 					if (is_dir(dir))
+// 						utils.delete_dir(dir);
+// 				}
+// 			});
+// 		});
+// 	}
 
-	let fileName = "syntaxer.exe";
-	let ext_dir = path.join(__dirname, "..");
-	let sourceDir = path.join(ext_dir, 'bin');
-	let destDir = path.join(user_dir(), 'syntaxer', SYNTAXER_VERSION, "Roslyn");
+// 	let fileName = "syntaxer.exe";
+// 	let ext_dir = path.join(__dirname, "..");
+// 	let sourceDir = path.join(ext_dir, 'bin');
+// 	let destDir = path.join(user_dir(), 'syntaxer', SYNTAXER_VERSION, "Roslyn");
 
-	SERVER = path.join(destDir, fileName);
-	CSCS = path.join(destDir, "..", "cscs.exe");
-	let provider = path.join(destDir, "..", "CSSRoslynProvider.dll");
+// 	SERVER = path.join(destDir, fileName);
+// 	CSCS = path.join(destDir, "..", "cscs.exe");
+// 	let provider = path.join(destDir, "..", "CSSRoslynProvider.dll");
 
-	try {
+// 	try {
 
-		if (fs.existsSync(SERVER)) {
-			startServer();
-		}
-		else {
+// 		if (fs.existsSync(SERVER)) {
+// 			start_syntaxer();
+// 		}
+// 		else {
 
-			create_dir(destDir);
+// 			create_dir(destDir);
 
-			try {
+// 			try {
 
-				await fse.copy(path.join(sourceDir, "CSSRoslynProvider.dll"), provider);
-				await fse.copy(path.join(sourceDir, "cscs.exe"), CSCS);
-				await fse.copy(path.join(sourceDir, fileName), SERVER);
-				vscode.window.showInformationMessage('New version of CS-Script Syntaxer has been deployed.');
+// 				await fse.copy(path.join(sourceDir, "CSSRoslynProvider.dll"), provider);
+// 				await fse.copy(path.join(sourceDir, "cscs.exe"), CSCS);
+// 				await fse.copy(path.join(sourceDir, fileName), SERVER);
+// 				vscode.window.showInformationMessage('New version of CS-Script Syntaxer has been deployed.');
 
-				startServer();
+// 				start_syntaxer();
 
-			} catch (error) {
-				console.error(error);
-			}
+// 			} catch (error) {
+// 				console.error(error);
+// 			}
 
-		}
+// 		}
 
-		purge_old_syntaxer();
-	} catch (error) {
-		vscode.window.showInformationMessage(error.toString());
-	}
-}
+// 		purge_old_syntaxer();
+// 	} catch (error) {
+// 		vscode.window.showInformationMessage(error.toString());
+// 	}
+// }

@@ -3,16 +3,11 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-// import * as fs from 'fs';
-// import * as path from 'path';
 import { HoverProvider, Position, CompletionItem, CancellationToken, TextDocument, Hover, Definition, ProviderResult, Range, Location, ReferenceContext, FormattingOptions, TextEdit, DocumentLink, WorkspaceEdit, SignatureHelp, CodeAction, Command, TextLine, EndOfLine } from "vscode";
-// import * as cs_script from "./cs-script";
 import * as utils from "./utils";
 import { Syntaxer } from "./syntaxer";
 import { ErrorInfo, select_line, VSCodeSettings } from './utils';
 import { save_script_project } from './cs-script';
-// import { Utils } from "./utils";
-// import { Syntaxer } from "./syntaxer";
 
 
 function isWorkspace(): boolean { return vscode.workspace.rootPath != undefined; }
@@ -493,7 +488,10 @@ export class CSScriptSignatureHelpProvider implements vscode.SignatureHelpProvid
 
                             let lines: string[] = data.lines();
 
-                            let bestMatch = Number(lines[0]);
+                            // #/# - <signature index>/<parameter index>
+                            let bestMatch = lines[0].split('/');
+                            let bestSigIndex = Number(bestMatch[0]);
+                            let bestParamIndex = Number(bestMatch[1]);
 
                             result = new SignatureHelp();
 
@@ -505,8 +503,12 @@ export class CSScriptSignatureHelpProvider implements vscode.SignatureHelpProvid
                             }
 
                             // must be set after result.signatures are added
-                            result.activeSignature = bestMatch;
-                            // result.activeParameter = 0; // do not set it just yet as the syntaxer algorithm for detecting current param was note verified yet 
+                            result.activeSignature = bestSigIndex;
+                            if (bestSigIndex != -1) {
+                                // do not set it if params are not matched (== -1)  as the syntaxer algorithm for detecting current
+                                // param was note verified yet 
+                                result.activeParameter = bestParamIndex;
+                            }
                         }
                         resolve(result);
 

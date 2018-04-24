@@ -156,7 +156,7 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
     try {
 
         let proj_file = path.join(proj_dir, script_proj_name);
-        let command = `mono "${cscs_exe}" -nl -l -proj:dbg "${scriptFile}"`;
+        let command = build_command(`"${cscs_exe}" -l -proj:dbg "${scriptFile}"`);
 
         let output = Utils.RunSynch(command);
 
@@ -205,7 +205,7 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
             "type": "mono",
             "request": "launch",
             "program": "${cscs_exe}",
-            "args": ["-nl", "-d", "-l", "-inmem:0", "${extra_args()}", "-ac:2", "${scriptFile}"],
+            "args": ["-d", "-l", "-inmem:0", "${extra_args()}", "-ac:2", "${scriptFile}"],
             "cwd": "${path.dirname(scriptFile)}",
             "console": "internalConsole"
         }
@@ -252,7 +252,7 @@ export function print_project_for(file: string): boolean {
 
     if (Utils.IsScript(file)) {
         with_lock(() => {
-            let command = `mono "${cscs_exe}" -nl -l -proj:dbg "${file}"`;
+            let command = build_command(`"${cscs_exe}" -l -proj:dbg "${file}"`);
 
             Utils.Run(command, (code, output) => {
                 let lines: string[] = output.lines().filter(actual_output);
@@ -289,7 +289,7 @@ export function get_project_tree_items() {
         if (!is_busy())
             with_lock(() => {
                 // no need to include debug.cs into the view so drop the ':dbg' switch
-                let output: string = Utils.RunSynch(`mono "${cscs_exe}" -nl -l -proj "${file}"`);
+                let output: string = Utils.RunSynch(build_command(`"${cscs_exe}" -l -proj "${file}"`));
                 lines = output.lines().filter(actual_output);
                 unlock();
             });
@@ -310,27 +310,56 @@ export function check() {
         outputChannel.clear();
         outputChannel.appendLine('Checking...');
 
-        let command = `mono "${cscs_exe}" -nl -l -check "${file}"`;
+        let command = build_command(`"${cscs_exe}" -l -check "${file}"`);
 
-        Utils.Run(command, (code, output) => {
+        // Utils.Run(command, (code, output) => {
 
-            let lines = output.split(/\r?\n/g).filter(actual_output);
+        //     let lines = output.split(/\r?\n/g).filter(actual_output);
 
-            outputChannel.clear();
+        //     outputChannel.clear();
 
-            let errors: ErrorInfo[] = [];
-            lines.forEach((line, i) => {
-                outputChannel.appendLine(line);
-                let error = ErrorInfo.parse(line);
-                if (error && (error.severity == DiagnosticSeverity.Error || error.severity == DiagnosticSeverity.Warning)) {
-                    errors.push(error);
+        //     let errors: ErrorInfo[] = [];
+        //     lines.forEach((line, i) => {
+        //         outputChannel.appendLine(line);
+        //         let error = ErrorInfo.parse(line);
+        //         if (error && (error.severity == DiagnosticSeverity.Error || error.severity == DiagnosticSeverity.Warning)) {
+        //             errors.push(error);
+        //         }
+        //     });
+
+        //     Utils.SentToDiagnostics(errors);
+
+        //     unlock();
+        // });
+
+        let cleared = false;
+        Utils.Run2(
+            command,
+
+            (data) => {
+                if (!cleared) {
+                    cleared = true;
+                    outputChannel.clear();
                 }
+
+                outputChannel.append(data);
+            },
+
+            (code, output) => {
+                let lines = output.split(/\r?\n/g).filter(actual_output);
+
+                let errors: ErrorInfo[] = [];
+                lines.forEach((line, i) => {
+                    let error = ErrorInfo.parse(line);
+                    if (error && (error.severity == DiagnosticSeverity.Error || error.severity == DiagnosticSeverity.Warning)) {
+                        errors.push(error);
+                    }
+                });
+
+                Utils.SentToDiagnostics(errors);
+
+                unlock();
             });
-
-            Utils.SentToDiagnostics(errors);
-
-            unlock();
-        });
     });
 }
 // -----------------------------------
@@ -423,7 +452,7 @@ export function about() {
         outputChannel.clear();
         outputChannel.appendLine('Analyzing...');
 
-        let command = `mono "${cscs_exe}" -ver`;
+        let command = build_command(`"${cscs_exe}" -ver`);
 
         Utils.Run(command, (code, output) => {
             outputChannel.clear();
@@ -456,7 +485,7 @@ export function run_in_terminal() {
         terminal.sendText(`cd "${dir}"`);
         if (os.platform() == 'win32')
             terminal.sendText("cls");
-        terminal.sendText(`mono "${cscs_exe}" -nl -l "${file}"`);
+        terminal.sendText(build_command(`"${cscs_exe}" -l "${file}"`));
 
         unlock();
     });
@@ -537,7 +566,7 @@ export function engine_help() {
         // let editor = vscode.window.activeTextEditor;
         // let file = editor.document.fileName;
 
-        let command = `mono "${cscs_exe}" -help`;
+        let command = build_command(`"${cscs_exe}" -help`);
 
         Utils.Run(command, (code, output) => {
             fs.writeFileSync(readme, output, { encoding: 'utf8' });
@@ -549,7 +578,7 @@ export function engine_help() {
 }
 // -----------------------------------
 export function generate_syntax_help(force: boolean = false): string {
-    let command = `mono "${cscs_exe}" -syntax`;
+    let command = build_command(`"${cscs_exe}" -syntax`);
     let output = Utils.RunSynch(command);
     fs.writeFileSync(syntax_readme, output, { encoding: 'utf8' });
     return output;
@@ -650,7 +679,7 @@ export function build_exe() {
         let ext = path.extname(file);
         let exe_file = file.replace(ext, '.exe');
 
-        let command = `mono "${cscs_exe}" -nl -l -e "${file}"`;
+        let command = build_command(`"${cscs_exe}" -l -e "${file}"`);
 
         Utils.Run(command, (code, output) => {
             outputChannel.appendLine(output);
@@ -665,43 +694,54 @@ export function build_exe() {
 
 // -----------------------------------
 export function debug() {
-    let editor = vscode.window.activeTextEditor;
-    editor.document.save();
-    if (!fs.existsSync(editor.document.fileName)) {
-        vscode.window.showInformationMessage('Cannot find file "' + editor.document.fileName + '"');
-        return;
+
+    if (vscode.workspace.rootPath != undefined) { // workspace is loaded so use its launch confg
+
+        const launchFile = vscode.workspace.getConfiguration("launch");
+        const configs = launchFile.get<any[]>("configurations");
+        vscode.debug.startDebugging(vscode.workspace.workspaceFolders[0], configs[0]);
     }
+    else {
 
-    with_lock(() => {
-        // todo
-        // - check if document is saved or untitled (and probably save it)
-        // - check if process is already running
-        // - read cscs location from config
-        // - clear dbg output
-        // - ensure running via mono (at least on Linux) - CONFIG BASED
+        let editor = vscode.window.activeTextEditor;
+        editor.document.save();
+        if (!fs.existsSync(editor.document.fileName)) {
+            vscode.window.showInformationMessage('Cannot find file "' + editor.document.fileName + '"');
+            return;
+        }
 
-        let launchConfig = {
-            "name": "Launch",
-            "type": "mono",
-            "request": "launch",
-            "program": cscs_exe,
-            // mono debugger requires non-inmemory asms and injection of the breakpoint ("-ac:2)
-            "args": ["-nl", "-d", "-l", "-inmem:0", extra_args(), "-ac:2", editor.document.fileName],
-            "env": {
-                // "css_vscode_roslyn_dir": process.env.css_vscode_roslyn_dir
-                // "CSS_PROVIDER_TRACE": 'true'
-            }
-        };
+        vscode.window.createOutputChannel('Debug').show(true);
 
-        // vscode.startDebug has been deprecated
-        // vscode.commands.executeCommand('vscode.startDebug', launchConfig)
-        vscode.debug.startDebugging(undefined, launchConfig).then(() => {
-        }, err => {
-            vscode.window.showInformationMessage('Error: ' + err.message);
+        with_lock(() => {
+            // todo
+            // - check if document is saved or untitled (and probably save it)
+            // - check if process is already running
+            // - read cscs location from config
+            // - clear dbg output
+            // - ensure running via mono (at least on Linux) - CONFIG BASED
+
+            let launchConfig = {
+                "name": "Launch",
+                "type": "mono",
+                "request": "launch",
+                "program": cscs_exe,
+                // mono debugger requires non-inmemory asms and injection of the breakpoint ("-ac:2)
+                "args": ["-d", "-l", "-inmem:0", extra_args(), "-ac:2", editor.document.fileName],
+                "env": {
+                    // "css_vscode_roslyn_dir": process.env.css_vscode_roslyn_dir
+                    // "CSS_PROVIDER_TRACE": 'true'
+                }
+            };
+
+            // vscode.startDebug has been deprecated
+            vscode.debug.startDebugging(undefined, launchConfig).then(() => {
+            }, err => {
+                vscode.window.showInformationMessage('Error: ' + err.message);
+            });
+
+            unlock();
         });
-
-        unlock();
-    });
+    }
 }
 // -----------------------------------
 async function getOpenEditors(): Promise<TextEditor[]> {
@@ -744,7 +784,7 @@ export async function save_script_project(dependencies_only: boolean): Promise<v
         editor.document.save();
     }
 
-    let command = `mono "${cscs_exe}" -nl -l -proj:dbg "${file}"`;
+    let command = build_command(`"${cscs_exe}" -l -proj:dbg "${file}"`);
     let response = Utils.RunSynch(command);
 
     let dependencies = response.lines()
@@ -772,6 +812,19 @@ export async function save_script_project(dependencies_only: boolean): Promise<v
         }
     });
 }
+
+function build_command(raw_command: string): string {
+    let command = `mono ` + raw_command;
+
+
+    if (os.platform() == 'win32') {
+        let run_as_dotnet = VSCodeSettings.get("cs-script.dotnet_run_host_on_win", false);
+        if (run_as_dotnet)
+            command = raw_command;
+    }
+
+    return command;
+}
 // -----------------------------------
 export function run() {
     with_lock(() => {
@@ -780,7 +833,6 @@ export function run() {
         // - check if process is already running
         // - read cscs location from config
 
-        outputChannel.appendLine("data");
         let editor = vscode.window.activeTextEditor;
 
         let exec = require('child_process').exec;
@@ -790,14 +842,7 @@ export function run() {
 
         let file = editor.document.fileName;
 
-        let command = `mono "${cscs_exe}" -nl -l "${file}"`;
-
-
-        if (os.platform() == 'win32') {
-            let run_as_dotnet = VSCodeSettings.get("cs-script.dotnet_run_host_on_win", false);
-            if (run_as_dotnet)
-                command = `"${cscs_exe}" -nl -l "${file}"`;
-        }
+        let command = build_command(`"${cscs_exe}" -l "${file}"`);
 
         if (showExecutionMessage) {
             outputChannel.appendLine('[Running] ' + command);
@@ -805,7 +850,6 @@ export function run() {
 
         save_script_project(true);
         outputChannel.show(true);
-        outputChannel.clear();
 
         let startTime = new Date();
         process = exec(command);
