@@ -156,7 +156,7 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
     try {
 
         let proj_file = path.join(proj_dir, script_proj_name);
-        let command = build_command(`"${cscs_exe}" -l -proj:dbg "${scriptFile}"`);
+        let command = build_command(`"${cscs_exe}" -proj:dbg "${scriptFile}"`);
 
         let output = Utils.RunSynch(command);
 
@@ -205,7 +205,7 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
             "type": "mono",
             "request": "launch",
             "program": "${cscs_exe}",
-            "args": ["-d", "-l", "-inmem:0", "${extra_args()}", "-ac:2", "${scriptFile}"],
+            "args": ["-d", "-inmem:0", "${extra_args()}", "-ac:2", "${scriptFile}"],
             "cwd": "${path.dirname(scriptFile)}",
             "console": "internalConsole"
         }
@@ -310,7 +310,7 @@ export function check() {
         outputChannel.clear();
         outputChannel.appendLine('Checking...');
 
-        let command = build_command(`"${cscs_exe}" -l -check "${file}"`);
+        let command = build_command(`"${cscs_exe}" -check "${file}"`);
 
         // Utils.Run(command, (code, output) => {
 
@@ -485,7 +485,7 @@ export function run_in_terminal() {
         terminal.sendText(`cd "${dir}"`);
         if (os.platform() == 'win32')
             terminal.sendText("cls");
-        terminal.sendText(build_command(`"${cscs_exe}" -l "${file}"`));
+        terminal.sendText(build_command(`"${cscs_exe}" "${file}"`));
 
         unlock();
     });
@@ -679,7 +679,7 @@ export function build_exe() {
         let ext = path.extname(file);
         let exe_file = file.replace(ext, '.exe');
 
-        let command = build_command(`"${cscs_exe}" -l -e "${file}"`);
+        let command = build_command(`"${cscs_exe}" -e "${file}"`);
 
         Utils.Run(command, (code, output) => {
             outputChannel.appendLine(output);
@@ -727,17 +727,20 @@ export function debug() {
 
                     config = `-config:css_config.xml`;
                     // config = `-config:${path.join(path.dirname(cscs_exe), "css_config.xml")}`;
-                    // let command = `"${cscs_exe}" -ca -d -l -inmem:0 ${extra_args()} -ac:2 "${editor.document.fileName}"`;
+                    // let command = `"${cscs_exe}" -ca -d -inmem:0 ${extra_args()} -ac:2 "${editor.document.fileName}"`;
                     // let output: string = execSync(command).toString();
                 }
             }
 
-            // "externalConsole": "true", // shows external console. Full wquivalent of Ctrl+F5 in VS
+            // "externalConsole": "true", // shows external console. Full equivalent of Ctrl+F5 in VS.
+            let debug_as_external_console = VSCodeSettings.get("cs-script.debug_as_external_console", false);
+
             let launchConfig = {
                 "name": "Launch",
                 "type": "mono",
                 "request": "launch",
                 "program": cscs_exe,
+                "externalConsole": debug_as_external_console.toString(),
                 "showOutput": "always",
                 // mono debugger requires non-inmemory asms and injection of the breakpoint ("-ac:2)
                 "args": ["-d", "-inmem:0", extra_args(), config, "-ac:2", editor.document.fileName],
@@ -799,7 +802,7 @@ export async function save_script_project(dependencies_only: boolean): Promise<v
         editor.document.save();
     }
 
-    let command = build_command(`"${cscs_exe}" -l -proj:dbg "${file}"`);
+    let command = build_command(`"${cscs_exe}" -proj:dbg "${file}"`);
     let response = Utils.RunSynch(command);
 
     let dependencies = response.lines()
