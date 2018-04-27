@@ -14,8 +14,13 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectItem>
 			// no need to do it so often
 			// this._onDidChangeTreeData.fire();
 		});
+
 		vscode.workspace.onDidChangeTextDocument(e => {
-		})
+		});
+
+		vscode.workspace.onDidSaveTextDocument(doc => {
+			this._onDidChangeTreeData.fire();
+		});
 	}
 
 	public refresh(): void {
@@ -115,7 +120,7 @@ export class ProjectItem extends vscode.TreeItem {
 			else if (context == 'primary') {
 				icon = 'css';
 			}
-			 else if (context == 'assembly' || context == 'assembly_group') {
+			else if (context == 'assembly' || context == 'assembly_group') {
 				icon = 'asm';
 			}
 

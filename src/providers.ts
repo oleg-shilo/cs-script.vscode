@@ -473,6 +473,17 @@ export class CSScriptSignatureHelpProvider implements vscode.SignatureHelpProvid
 
     public provideSignatureHelp(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<SignatureHelp> {
 
+        // let res = new SignatureHelp();
+        // let sig = new vscode.SignatureInformation('*TestMethod* (int param_a, int param_a)');
+        // sig.documentation = "General description";
+        // sig.parameters.push(new vscode.ParameterInformation('param_a', "param_a description"));
+        // sig.parameters.push(new vscode.ParameterInformation('param_b', "param_b description"));
+        // res.signatures.push(sig);
+        // res.activeSignature = 0;
+        // res.activeParameter = 1;
+        // return res;
+
+
         let result: SignatureHelp;
 
         let is_workspace = isWorkspace();

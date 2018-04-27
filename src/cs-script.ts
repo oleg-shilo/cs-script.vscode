@@ -710,8 +710,6 @@ export function debug() {
             return;
         }
 
-        vscode.window.createOutputChannel('Debug').show(true);
-
         with_lock(() => {
             // todo
             // - check if document is saved or untitled (and probably save it)
@@ -720,15 +718,32 @@ export function debug() {
             // - clear dbg output
             // - ensure running via mono (at least on Linux) - CONFIG BASED
 
+
+            let config = "";
+            if (os.platform() == 'win32') {
+                // to allow assemblies to be resolved on Windows Mono build the same way as under .NET
+                let run_as_dotnet = VSCodeSettings.get("cs-script.dotnet_run_host_on_win", false);
+                if (run_as_dotnet) {
+
+                    config = `-config:css_config.xml`;
+                    // config = `-config:${path.join(path.dirname(cscs_exe), "css_config.xml")}`;
+                    // let command = `"${cscs_exe}" -ca -d -l -inmem:0 ${extra_args()} -ac:2 "${editor.document.fileName}"`;
+                    // let output: string = execSync(command).toString();
+                }
+            }
+
+            // "externalConsole": "true", // shows external console. Full wquivalent of Ctrl+F5 in VS
             let launchConfig = {
                 "name": "Launch",
                 "type": "mono",
                 "request": "launch",
                 "program": cscs_exe,
+                "showOutput": "always",
                 // mono debugger requires non-inmemory asms and injection of the breakpoint ("-ac:2)
-                "args": ["-d", "-l", "-inmem:0", extra_args(), "-ac:2", editor.document.fileName],
+                "args": ["-d", "-inmem:0", extra_args(), config, "-ac:2", editor.document.fileName],
                 "env": {
                     // "css_vscode_roslyn_dir": process.env.css_vscode_roslyn_dir
+                    // "cscs_exe_dir": path.dirname(cscs_exe)
                     // "CSS_PROVIDER_TRACE": 'true'
                 }
             };
@@ -791,26 +806,37 @@ export async function save_script_project(dependencies_only: boolean): Promise<v
         .where(l => l.startsWith("file:"))
         .select(l => l.substring(5));
 
-    let openTextEditors = await getOpenEditors();
+    // do not include current file in dirty_docs as it is either saved 10 lines above 
+    // or doesn't need to be saved because of `dependencies_only`
+    // Note 'where' filter is case sensetive 
+    let dirty_docs = unsaved_documents.where(x => x != file).select(x => x.toLocaleLowerCase());
+    let relevant_files = dependencies.select(x => x.toLocaleLowerCase());
 
-    // openTextEditors.forEach(x => {
-    //     console.log(x.document.fileName);
-    // });
+    let there_are_unsaved: boolean = relevant_files.any(x => dirty_docs.contains(x));
 
-    // Save all opened dependency scripts. Though...
-    // Unfortunatelly `vscode.window.openTextEditors` does not exist yet: "API Access to "Open Editors" #15178"
-    // Only visibleTextEditors does. but it is useless for this tast.
-    // vscode.window.openTextEditors.forEach(ed => {
+    if (there_are_unsaved) {
 
-    openTextEditors.forEach(ed => {
+        let openTextEditors = await getOpenEditors();
 
-        let isActiveDoc = (ed == editor);
-        let tabFileName = ed.document.fileName.toLocaleLowerCase();
+        // openTextEditors.forEach(x => {
+        //     console.log(x.document.fileName);
+        // });
 
-        if (!isActiveDoc && dependencies.any(x => x.toLocaleLowerCase() == tabFileName)) {
-            ed.document.save();
-        }
-    });
+        // Save all opened dependency scripts. Though...
+        // Unfortunatelly `vscode.window.openTextEditors` does not exist yet: "API Access to "Open Editors" #15178"
+        // Only visibleTextEditors does. but it is useless for this tast.
+        // vscode.window.openTextEditors.forEach(ed => {
+
+        openTextEditors.forEach(ed => {
+
+            let isActiveDoc = (ed == editor);
+            let tabFileName = ed.document.fileName.toLocaleLowerCase();
+
+            if (!isActiveDoc && dependencies.any(x => x.toLocaleLowerCase() == tabFileName)) {
+                ed.document.save();
+            }
+        });
+    }
 }
 
 function build_command(raw_command: string): string {
@@ -827,7 +853,7 @@ function build_command(raw_command: string): string {
 }
 // -----------------------------------
 export function run() {
-    with_lock(() => {
+    with_lock(async () => {
 
         // todo
         // - check if process is already running
@@ -841,14 +867,14 @@ export function run() {
         outputChannel.clear();
 
         let file = editor.document.fileName;
+        await save_script_project(false);
 
-        let command = build_command(`"${cscs_exe}" -l "${file}"`);
+        let command = build_command(`"${cscs_exe}" "${file}"`);
 
         if (showExecutionMessage) {
             outputChannel.appendLine('[Running] ' + command);
         }
 
-        save_script_project(true);
         outputChannel.show(true);
 
         let startTime = new Date();
@@ -949,7 +975,26 @@ function onActiveEditorSelectionChange(event: vscode.TextEditorSelectionChangeEv
     }
 }
 // -----------------------------------
-function onDidSaveWorkspaceTextDocument(document: vscode.TextDocument) {
+var unsaved_documents = [];
+
+function add_to_unsaved(file: string): void {
+    if (fs.existsSync(file)) {
+        var index = unsaved_documents.indexOf(file, 0);
+        if (index == -1) {
+            unsaved_documents.push(file);
+        }
+    }
+}
+
+function remove_from_unsaved(file: string): void {
+    if (fs.existsSync(file)) {
+        var index = unsaved_documents.indexOf(file, 0);
+        if (index > -1)
+            unsaved_documents.splice(index, 1);
+    }
+}
+
+function onDidSaveTextDocument(document: vscode.TextDocument) {
 
     if (Utils.IsSamePath(vscode.workspace.rootPath, csproj_dir)) {
         let proj_file = path.join(csproj_dir, 'script.csproj');
@@ -959,6 +1004,15 @@ function onDidSaveWorkspaceTextDocument(document: vscode.TextDocument) {
             generate_proj_file(csproj_dir, scripts.first());
     }
 
+    remove_from_unsaved(document.fileName);
+}
+
+function onDidCloseTextDocument(document: vscode.TextDocument) {
+    remove_from_unsaved(document.fileName);
+}
+
+function onDidChangeTextDocument(documentEvent: vscode.TextDocumentChangeEvent) {
+    add_to_unsaved(documentEvent.document.fileName);
 }
 // -----------------------------------
 
@@ -967,7 +1021,10 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
         ext_context = context;
         vscode.window.onDidChangeActiveTextEditor(onActiveEditorChange);
         vscode.window.onDidChangeTextEditorSelection(onActiveEditorSelectionChange);
-        vscode.workspace.onDidSaveTextDocument(onDidSaveWorkspaceTextDocument);
+
+        vscode.workspace.onDidSaveTextDocument(onDidSaveTextDocument);
+        vscode.workspace.onDidChangeTextDocument(onDidChangeTextDocument);
+        vscode.workspace.onDidCloseTextDocument(onDidCloseTextDocument);
 
         let file = ext_context.globalState.get('cs-script.open_file_at_startup', '');
         if (file != null) {

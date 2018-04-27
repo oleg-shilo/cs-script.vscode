@@ -129,6 +129,15 @@ export class Syntaxer {
 		Syntaxer.send_request(request, code, file, resolve, reject);
 	}
 
+	public static ping(resolve, reject): void {
+
+		let request = `-client:${process.pid}\n-op:ping`;
+		Syntaxer.send(request,
+			data => {
+				resolve(data);
+			});
+	}
+
 	public static doDocFormat(code: string, file: string, position: number, resolve, reject): void {
 
 		let request = `-client:${process.pid}\n-op:format\n-script:$temp_file$\n-pos:${position}`;

@@ -54,6 +54,7 @@ declare global {
         first<T>(filter?: (T) => boolean): T;
         firstOrDefault<T>(filter?: (T) => boolean): T;
         last<T>(filter?: (T) => boolean): T;
+        remove<T>(item: T): Array<T>;
         lastOrDefault<T>(filter?: (T) => boolean): T;
     }
 }
@@ -88,7 +89,7 @@ Array.prototype.first = function <T>(predicate): T {
 }
 
 Array.prototype.last = function <T>(predicate): T {
-    for (var index = this.length - 1; index > 0; index--) {
+    for (var index = this.length - 1; index >= 0; index--) {
         var element = this[index];
         if (predicate == null || predicate(element))
             return element;
@@ -97,7 +98,7 @@ Array.prototype.last = function <T>(predicate): T {
 }
 
 Array.prototype.lastOrDefault = function <T>(predicate): T {
-    for (var index = this.length - 1; index > 0; index--) {
+    for (var index = this.length - 1; index >= 0; index--) {
         var element = this[index];
         if (predicate == null || predicate(element))
             return <T>element;
@@ -105,6 +106,16 @@ Array.prototype.lastOrDefault = function <T>(predicate): T {
     return null;
 }
 
+Array.prototype.remove = function <T>(item: T): Array<T> {
+    while (true) {
+        var index = this.indexOf(item, 0);
+        if (index > -1)
+            this.splice(index, 1);
+        else
+            break;
+    }
+    return this;
+}
 Array.prototype.where = function <T>(predicate): Array<T> {
     return this.filter(predicate);
 }
@@ -319,6 +330,23 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     return diagnosticCollection;
 }
 
+function check_syntaxer_ready(ms: number): void {
+
+    setTimeout(() =>
+        Syntaxer.ping(data => {
+            if (data == "ready") {
+                statusBarItem.text = 'CS-Script Intellisense services are ready...';
+            }
+            else {
+                statusBarItem.text = 'CS-Script Intellisense services are not ready yet...';
+                check_syntaxer_ready(1000);
+            }
+            statusBarItem.show();
+            setTimeout(() => statusBarItem.hide(), 3000);
+        }, null)
+        , ms);
+}
+
 export function deploy_engine(): void {
     try {
 
@@ -347,7 +375,12 @@ export function deploy_engine(): void {
             ensure_default_config(path.join(user_dir(), 'cscs.exe'));
             _ready = true;
             setTimeout(preload_roslyn, 100);
-            setTimeout(start_syntaxer, 100);
+            setTimeout(() => {
+                start_syntaxer();
+                check_syntaxer_ready(500);
+            }, 100);
+
+
         }
     } catch (error) {
         console.log(error);
@@ -416,12 +449,9 @@ function deploy_files(): void {
 
         start_syntaxer(); // will also deploy embedded Roslyn binaries
         load_roslyn();
+        check_syntaxer_ready(500);
 
         fs.writeFileSync(ver_file, ext_version, { encoding: 'utf8' });
-
-        statusBarItem.text = 'CS-Script is initialized...';
-        statusBarItem.show();
-        setTimeout(statusBarItem.hide, 2000);
 
         vscode.window.showInformationMessage('New version of CS-Script binaries has been deployed.');
 
@@ -589,7 +619,7 @@ export function toSignaureInfo(data: string): SignatureInformation {
         else if (line.startsWith("param_doc:")) {
             let param: ParameterInformation = result.parameters.lastOrDefault();
             if (param != null) {
-                param.documentation = line.substr("param_doc:".length);
+                param.documentation = new MarkdownString(`\`${param.label}\` - ${line.substr("param_doc:".length)}`);
             }
         }
         else {
