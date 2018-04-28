@@ -332,18 +332,28 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
 
 function check_syntaxer_ready(ms: number): void {
 
+    let attempts_count = 0;
+
     setTimeout(() =>
         Syntaxer.ping(data => {
+
+            attempts_count++;
+
             if (data == "ready") {
                 statusBarItem.text = 'CS-Script Intellisense services are ready...';
+                statusBarItem.show();
+                setTimeout(() => statusBarItem.hide(), 5000);
             }
             else {
                 statusBarItem.text = 'CS-Script Intellisense services are not ready yet...';
-                check_syntaxer_ready(1000);
+                statusBarItem.show();
+                if (attempts_count < 10)
+                    check_syntaxer_ready(1000);
+                else
+                    statusBarItem.hide();
             }
-            statusBarItem.show();
-            setTimeout(() => statusBarItem.hide(), 3000);
-        }, null)
+
+        })
         , ms);
 }
 
@@ -352,7 +362,7 @@ export function deploy_engine(): void {
 
         syntaxer.init(
             path.join(user_dir(), "cscs.exe"),
-            path.join(user_dir(), "Roslyn", "syntaxer.exe"));
+            path.join(user_dir(), "roslyn", "syntaxer.exe"));
 
         // all copy_file* calls are  async operations
         let need_to_deploy = true;
@@ -438,12 +448,13 @@ function deploy_files(): void {
 
         if (os.platform() == 'win32') {
             copy_file_to_sync2("nuget.win.exe", "nuget.exe", path.join(ext_dir, 'bin'), user_dir());
-            deploy_roslyn();
         }
         else {
             // on non-Win os nuget will be probed in well known locations (e.g. Mono folder)
             del_file(path.join(ext_dir, 'bin', "nuget.win.exe"));
         }
+
+        deploy_roslyn();
 
         ensure_default_config(path.join(user_dir(), 'cscs.exe'));
 
@@ -496,15 +507,24 @@ export function deploy_roslyn(): void {
         }
 
         fs.renameSync(dest_dir, dest_dir + ".old." + new Date().getTime());
-        // delete old roslyn async
+
+        // delete old roslyn asyncronously
+
+        // older version (v1.0.4.0) had syntaxer installed in '..\script.user\syntaxer' folder
+        try { delete_dir(path.join(user_dir(), '..', 'script.user')); } catch  { }
+
         fs.readdir(user_dir(), (err, items) => {
             items.forEach(item => {
                 try {
+
                     let dir = path.join(user_dir(), item);
                     let is_dir = fs.lstatSync(dir).isDirectory();
-                    if (is_dir && item.startsWith('roslyn') && item != 'roslyn') {
+
+                    // remove old renamed 'foslyn.old.{date}' folder
+                    if (is_dir && item.startsWith('roslyn.old.')) {
                         delete_dir(dir);
                     }
+
                 } catch (error) {
                 }
             });
@@ -607,40 +627,43 @@ export function toSignaureInfo(data: string): SignatureInformation {
 
     sig_lines.forEach(line => {
 
-        if (line.startsWith("label:")) {
-            result = new SignatureInformation(line.substr("label:".length));
-        }
-        else if (line.startsWith("doc:")) {
-            result.documentation = line.substr("doc:".length);
-        }
-        else if (line.startsWith("param_label:")) {
-            result.parameters.push(new ParameterInformation(line.substr("param_label:".length)));
-        }
-        else if (line.startsWith("param_doc:")) {
-            let param: ParameterInformation = result.parameters.lastOrDefault();
-            if (param != null) {
-                param.documentation = new MarkdownString(`\`${param.label}\` - ${line.substr("param_doc:".length)}`);
-            }
-        }
-        else {
-            // continuation of the previous text agregation 
+        if (line.length > 1) {
 
-            if (result != null && result.parameters.any() && result.parameters.last<ParameterInformation>().documentation != null) {
-                result.parameters.last<ParameterInformation>().documentation += "\n" + line;
+            if (line.startsWith("label:")) {
+                result = new SignatureInformation(line.substr("label:".length));
             }
-            else if (result != null && result.parameters.any()) {
-                result.parameters.last<ParameterInformation>().label += "\n" + line;
+            else if (line.startsWith("doc:")) {
+                result.documentation = line.substr("doc:".length);
             }
-            else if (result != null && result.documentation != null) {
-                result.documentation += "\n" + line;
+            else if (line.startsWith("param_label:")) {
+                result.parameters.push(new ParameterInformation(line.substr("param_label:".length)));
             }
-            else if (result != null) {
-                result.label += "\n" + line;
+            else if (line.startsWith("param_doc:")) {
+                let param: ParameterInformation = result.parameters.lastOrDefault();
+                if (param != null) {
+                    param.documentation = new MarkdownString(`\`${param.label}\` - ${line.substr("param_doc:".length)}`);
+                }
+            }
+            else {
+                // continuation of the previous text agregation 
+
+                if (result != null && result.parameters.any() && result.parameters.last<ParameterInformation>().documentation != null) {
+                    result.parameters.last<ParameterInformation>().documentation += "\n" + line;
+                }
+                else if (result != null && result.parameters.any()) {
+                    result.parameters.last<ParameterInformation>().label += "\n" + line;
+                }
+                else if (result != null && result.documentation != null) {
+                    result.documentation += "\n" + line;
+                }
+                else if (result != null) {
+                    result.label += "\n" + line;
+                }
             }
         }
     });
 
-    if (result != null)
+    if (result != null && result.documentation)
         result.documentation = new MarkdownString(`_${result.documentation}_`);
 
     return result;

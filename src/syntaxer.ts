@@ -129,13 +129,23 @@ export class Syntaxer {
 		Syntaxer.send_request(request, code, file, resolve, reject);
 	}
 
-	public static ping(resolve, reject): void {
+	public static ping(resolve): void {
 
 		let request = `-client:${process.pid}\n-op:ping`;
-		Syntaxer.send(request,
-			data => {
-				resolve(data);
-			});
+
+		let client = new net.Socket();
+
+		client.connect(PORT, '127.0.0.1', () =>
+			client.write(request)
+		);
+
+		client.on('data', data => {
+			let response = data.toString();
+			client.destroy();
+			resolve(response);
+		});
+
+		client.on('error', () => resolve("error"));
 	}
 
 	public static doDocFormat(code: string, file: string, position: number, resolve, reject): void {
@@ -151,85 +161,3 @@ export class Syntaxer {
 	}
 
 }
-
-// export async function DeploySyntaxer() {
-
-// 	function create_dir(dir: string): void {
-// 		// fs.mkdirSync can only create the top level dir but mkdirp creates all child sub-dirs that do not exist
-// 		const allRWEPermissions = parseInt("0777", 8);
-// 		mkdirp.sync(dir, allRWEPermissions);
-// 	}
-
-// 	function user_dir(): string {
-// 		// ext_context.storagePath cannot be used as it is undefined if no workspace loaded
-
-// 		// vscode:
-// 		// Windows %appdata%\Code\User\settings.json
-// 		// Mac $HOME/Library/Application Support/Code/User/settings.json
-// 		// Linux $HOME/.config/Code/User/settings.json
-
-// 		if (os.platform() == 'win32') {
-// 			return path.join(process.env.APPDATA, 'Code', 'User', 'cs-script.user');
-// 		}
-// 		else if (os.platform() == 'darwin') {
-// 			return path.join(process.env.HOME, 'Library', 'Application Support', 'Code', 'User', 'script.user');
-// 		}
-// 		else {
-// 			return path.join(process.env.HOME, '.config', 'Code', 'User', 'script.user');
-// 		}
-// 	}
-
-// 	function purge_old_syntaxer(): void {
-// 		let syntaxer_dir = path.join(user_dir(), 'syntaxer');
-
-// 		const is_dir = source => fs.lstatSync(source).isDirectory();
-
-// 		fs.readdir(syntaxer_dir, (err, items) => {
-// 			items.forEach(item => {
-// 				if (item != SYNTAXER_VERSION) {
-// 					let dir = path.join(syntaxer_dir, item);
-// 					if (is_dir(dir))
-// 						utils.delete_dir(dir);
-// 				}
-// 			});
-// 		});
-// 	}
-
-// 	let fileName = "syntaxer.exe";
-// 	let ext_dir = path.join(__dirname, "..");
-// 	let sourceDir = path.join(ext_dir, 'bin');
-// 	let destDir = path.join(user_dir(), 'syntaxer', SYNTAXER_VERSION, "Roslyn");
-
-// 	SERVER = path.join(destDir, fileName);
-// 	CSCS = path.join(destDir, "..", "cscs.exe");
-// 	let provider = path.join(destDir, "..", "CSSRoslynProvider.dll");
-
-// 	try {
-
-// 		if (fs.existsSync(SERVER)) {
-// 			start_syntaxer();
-// 		}
-// 		else {
-
-// 			create_dir(destDir);
-
-// 			try {
-
-// 				await fse.copy(path.join(sourceDir, "CSSRoslynProvider.dll"), provider);
-// 				await fse.copy(path.join(sourceDir, "cscs.exe"), CSCS);
-// 				await fse.copy(path.join(sourceDir, fileName), SERVER);
-// 				vscode.window.showInformationMessage('New version of CS-Script Syntaxer has been deployed.');
-
-// 				start_syntaxer();
-
-// 			} catch (error) {
-// 				console.error(error);
-// 			}
-
-// 		}
-
-// 		purge_old_syntaxer();
-// 	} catch (error) {
-// 		vscode.window.showInformationMessage(error.toString());
-// 	}
-// }

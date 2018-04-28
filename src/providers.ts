@@ -512,7 +512,7 @@ export class CSScriptSignatureHelpProvider implements vscode.SignatureHelpProvid
                                 let sig = utils.toSignaureInfo(sig_info);
                                 result.signatures.push(sig);
                             }
-
+                            // script.user    
                             // must be set after result.signatures are added
                             result.activeSignature = bestSigIndex;
                             if (bestSigIndex != -1) {
