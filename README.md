@@ -232,7 +232,7 @@ The extension comes with C# 7 support (via Roslyn) enabled by default. However R
 
 A good indication of the extension being ready for Intellisense operations is the script project tree being populated and the status bar having "CS-Script ready" message at status bar. Note, the message stays only for 5 seconds:
 
-![image](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/syntaxer_ready.gif) 
+![image](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/syntaxer_ready.png) 
 
 Roslyn team did a good job by caching runtime instances of the compilers thus any consequent compilations will require only milliseconds to be accomplished. Unfortunately on Linux/Mono the same caching mechanism is not available so the compilation will consistently take up to 1.5 seconds (tested on VMWare Mint 18.1 4GB RAM on i7-5500U 2*2.40 GHz). Hopefully Roslyn team will extend runtime caching in the future releases of Mono.
 
