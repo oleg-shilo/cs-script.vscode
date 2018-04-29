@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.5.1
+
+- Added the logo icon into the package/distro
+
 ## 1.5.0
 
 - Implemented Intellisense for standalone C# files:
