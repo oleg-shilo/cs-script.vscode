@@ -345,10 +345,11 @@ function check_syntaxer_ready(ms: number): void {
                 setTimeout(() => statusBarItem.hide(), 5000);
             }
             else {
-                statusBarItem.text = 'CS-Script Intellisense services are not ready yet...';
+                statusBarItem.text = 'CS-Script initializing...';
                 statusBarItem.show();
-                if (attempts_count < 10)
-                    check_syntaxer_ready(1000);
+                let delay = 1000;
+                if (attempts_count < (10000 / delay))
+                    check_syntaxer_ready(delay);
                 else
                     statusBarItem.hide();
             }
@@ -387,7 +388,7 @@ export function deploy_engine(): void {
             setTimeout(preload_roslyn, 100);
             setTimeout(() => {
                 start_syntaxer();
-                check_syntaxer_ready(500);
+                check_syntaxer_ready(5);
             }, 100);
 
 

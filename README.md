@@ -1,11 +1,12 @@
 # CS-Script - VSCode Extension (CS-Script.VSCode)
 
-Execution, debugging and editing C# scripts that target .NET and Mono (no .NET Core required).</br>
-A single C# file is all that is required to run the script. Support for VB.NET scripts is currently limited to Windows only.
+Execution, debugging and editing C# scripts (powered by CS-Script engine) that target .NET and Mono (no .NET Core required).
+A single C# file is all that is required to run the script. </br>
+This extension Intellisense support for VB.NET scripts is currently limited to Windows only.</br>
 
 ---
 
-Note this extension depends on "ms-vscode.mono-debug" and "ms-vscode.csharp". Thus if these extensions are installed or function incorrectly please log error reports at their corresponding web sites.
+Note this extension depends on "ms-vscode.mono-debug" and "ms-vscode.csharp". Thus if these extensions are installed but function incorrectly please log error reports at their corresponding web sites.
 
 ---
 
@@ -21,7 +22,7 @@ The extension is powered by the [CS-Script engine](https://github.com/oleg-shilo
 - Notepad++               - [CS-Script.Npp](https://github.com/oleg-shilo/cs-script.npp/blob/master/README.md)
 - Visual Studio 2015/2017 - [CS-Script.VSIX](https://github.com/oleg-shilo/CS-Script.VSIX/blob/master/README.md)
 
-The extension provides a very thin layer of own functionality. Its primary responsibility is bringing together OmniSharp IntelliSense services, a full scale debugger (curtesy of "Mono Debug" team) and CS-Script seamless C# script execution. This page contains only a light overview of the extension functionality. The complete description can be found at the [project Wiki](https://github.com/oleg-shilo/cs-script.vscode/wiki).
+The extension provides a thin layer of own functionality. Its primary responsibility is bringing together IntelliSense services, a full scale debugger (curtesy of "Mono Debug" team) and CS-Script seamless C# script execution. This page contains only a light overview of the extension functionality. The complete description can be found at the [project Wiki](https://github.com/oleg-shilo/cs-script.vscode/wiki).
 
 ## Quick start
 
@@ -29,6 +30,7 @@ The extension provides a very thin layer of own functionality. Its primary respo
 2. Create new C# script (command: `CS-Script: New C# script`)
 3. Edit script to meet your requirements
 4. Execute or debug script in VSCode
+5. If required, execute the script outside of VSCode (see next section)
 
 ![image](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/quick_start.gif)
 
@@ -53,7 +55,7 @@ On Linux you can install Debian package. See instructions here: [https://github.
 
 ---
 
-Apart from the common VSCode C# functionality the extension brings CS-Script specific user activities in the.
+Apart from the common VSCode C# functionality the extension brings CS-Script specific user activities in the picture.
 
 ![image](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/cs-s_intellisense.gif)
 
@@ -61,11 +63,11 @@ Apart from the common VSCode C# functionality the extension brings CS-Script spe
 
 ## Minimal set of dependencies (third-party extensions)
 
-Latest Mono from [http://www.mono-project.com/download/](http://www.mono-project.com/download/) and the following VSCode extensions:
-
-Note, you may need to add Mono to the system path manually if it didn't happen for you during the Mono installation.
+You will need the latest Mono from [http://www.mono-project.com/download/](http://www.mono-project.com/download/) and the following VSCode extensions:
 
 ![image](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/dependencies.png)
+
+Note, you may need to add Mono to the system path manually if it didn't happen for you during the Mono installation.
 
 ---
 
@@ -73,7 +75,7 @@ Note, you may need to add Mono to the system path manually if it didn't happen f
 
 - _**Editing**_
 
-  All C# editing support available with OmniSharp, including Syntax Highlighting, IntelliSense, Go to Definition, Find All References, etc.
+  All C# editing support available with VSCode, including Syntax Highlighting, IntelliSense, Go to Definition, Find All References, etc.
 
 - _**Debugging**_
 
@@ -104,7 +106,7 @@ Below are the road map highlights only. Some more detailed information are avail
 - Integrate CS-Script specific autocompletion with default C# autocompletion (OmniSharp). (**_Done in v1.3.0_**)
 - Integrate CS-Script run/debug commands with the default launch actions. (**_Done in v1.3.0_**)
 - Allow fallback autocompletion (similar to Sublime Text) when OmniSharp is not activated. (**_Done in v1.4.0_**)
-- Allow OmniSharp autocompletion to be integrated without loading the folder. May not be possible due to the OmniSharp limitations.
+- Full scale Intellisense support (via its own Intellisense services) without loading the folder. (**_Done in v1.5.0_**)
 
 ---
 
@@ -112,7 +114,7 @@ Below are the road map highlights only. Some more detailed information are avail
 
 _CS-Script.VSCode_ allows convenient editing and execution of the C# code directly from the editor. A "C# script" is a file containing any ECMA-compliant C# code. While other C# based runtimes require C# code to be compiled into assemblies CS-Script allows direct C# execution by generating the assemblies on-fly. Thus you don't need to have any script specific configuration for executing your script. A single script file is fully sufficient as it contains everything that CS-Script needs to know to execute the script.
 
-When your C# script depend on other (source code or compiled) C# modules you can express this in your code in a very simple way via `//css_*` directives. These directives are conceptually similar to Python `import *`, which appear on top of the script. CS-Script has only a handful directives that are easy to remember. And of course you can find the complete CS-Script documentation on GigHub: [https://github.com/oleg-shilo/cs-script/wiki](https://github.com/oleg-shilo/cs-script/wiki)
+When your C# script depend on other (source code, assembly or NuGet package) C# modules you can express this in your code in a very simple way via `//css_*` directives. These directives are conceptually similar to Python `import *`, which appear on top of the script. CS-Script has only a handful directives that are easy to remember. And of course you can find the complete CS-Script documentation on GigHub: [https://github.com/oleg-shilo/cs-script/wiki](https://github.com/oleg-shilo/cs-script/wiki)
 
 The following is the overview of the CS-Script functionality available with VS Code. The overview also highlights the major CS-Script featured:
 
@@ -120,7 +122,7 @@ Note: the most frequently used CS-Script command can also be accessed directly v
 
 ![image](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/toolbar.png)
 
-Be aware that apart from allowing typical C# Intellisense this extension also provides C-Script specific code assistance features (mouse hover, go-to-definition and autocompletion):
+Be aware that apart from allowing typical C# Intellisense this extension also provides C-Script specific code assistance features (mouse hover, go-to-definition and autocompletion) as well as script project tree "CS-SCRIPT- ACTIVE":
 
 ![image](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/cs-s_intellisense.gif)
 
@@ -185,8 +187,10 @@ The supported _Intellisense_ features are:
 3. Find all references
 4. Find all references (classic)
 5. Show symbol info as tooltip on mouse over the expression
-6. Format document (in next release)
-7. Rename symbol (in next release)
+6. Format document
+7. Rename symbol
+8. Signature help
+9. Assignment autocomplete
 
 "Find all references (classic)" is an alternative result representation of the standard VSCode "Find all references" for C#, TypeScript and VB.NET code (supported syntaxes can be extended). This presentation in conjunction with a single-click navigation is more consistent with the traditional Visual Studio experience:
 
@@ -206,7 +210,7 @@ CS-Script and VSCode are following completely different _project_ paradigm.
   - referenced scripts (directly in code)
   - referenced assemblies (directly in code)
   - referenced NuGet packages (directly in code)
-  - CS-Script extension _Intellisense_ functionality
+  - CS-Script.VSCode _Intellisense_ functionality
 
 - _VSCode_
 
@@ -214,9 +218,9 @@ CS-Script and VSCode are following completely different _project_ paradigm.
   - referenced scripts (in project file)
   - referenced assemblies (in project file)
   - referenced NuGet packages (in project file)
-  - Omnisharp _Intellisense_ functionality
+  - OmniSharp _Intellisense_ functionality
 
-By default, when you just open a C#/VB.NET file the all development activities are handled by the CS-Script extension infrastructure. However in some cases you may prefer to use arguably richer Omnisharp Intellisense. If it is the case you can open the script file and generate on-fly the all traditional project infrastructure - workspace (project file and folder). This can be achieved by executing the "load project" command (ctrl+F7).
+By default, when you just open a C#/VB.NET file the all development activities are handled by the CS-Script extension infrastructure. However sometimes you may prefer to use OmniSharp Intellisense. If it is the case you can open the script file and generate on-fly the all traditional project infrastructure - workspace (project file and folder). This can be achieved by executing the "load project" command (ctrl+F7).
 
 ![image](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_projB.gif)
 
@@ -226,16 +230,10 @@ _**C# 7**_
 
 The extension comes with C# 7 support (via Roslyn) enabled by default. However Roslyn has an unfortunate limitation - it is extremely heavy and slow on startup. Thus it can take ~3-5 seconds to do the first compilation of a script or an _Intellisense_ request. Any further successive operations do not exhibit any delays.
 
+A good indication of the extension being ready for Intellisense operations is the script project tree being populated and the status bar having "CS-Script ready" message at status bar. Note, the message stays only for 5 seconds:
+
+![image](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/syntaxer_ready.gif) 
+
 Roslyn team did a good job by caching runtime instances of the compilers thus any consequent compilations will require only milliseconds to be accomplished. Unfortunately on Linux/Mono the same caching mechanism is not available so the compilation will consistently take up to 1.5 seconds (tested on VMWare Mint 18.1 4GB RAM on i7-5500U 2*2.40 GHz). Hopefully Roslyn team will extend runtime caching in the future releases of Mono.
 
 Note, the Roslyn startup delay has no affect on script **execution**. CS-Script uses application level JIT compilation (similar to Python caching) that avoids compiling scripts if they are not changed since the last execution.
-
----
-
-## Road map (details)
-
-- Extension _Intellisense_ functionality:
-  - Document formatting
-  - Rename symbol
-- VB.NET syntax support on Linux
-- VB.NET project tree support
