@@ -96,13 +96,13 @@ Note, you may need to add Mono to the system path manually if it didn't happen f
 
   The extension is supported on all OSs where VSCode can run.
 
-### **Road map (highlights)**
+### **Road map**
 
 Below are the road map highlights only. Some more detailed information are available in the last section of this document.
 
 - Add support fro C# 7 just out of box. (**_Done in v1.2.0_**)
 - Add toolbar buttons for most frequent CS-Script commands. (**_Done in v1.2.0_**)
-- Adding a [custom view](https://code.visualstudio.com/updates/v1_13#_custom-views)  containing all script dependencies (e.g. imported scripts, DLLs) (**_Done in v1.3.0_**)
+- Adding a [custom view](https://code.visualstudio.com/updates/v1_13#_custom-views) (script project tree) containing all script dependencies (e.g. imported scripts, DLLs) (**_Done in v1.3.0_**)
 - Integrate CS-Script specific autocompletion with default C# autocompletion (OmniSharp). (**_Done in v1.3.0_**)
 - Integrate CS-Script run/debug commands with the default launch actions. (**_Done in v1.3.0_**)
 - Allow fallback autocompletion (similar to Sublime Text) when OmniSharp is not activated. (**_Done in v1.4.0_**)
@@ -122,7 +122,7 @@ Note: the most frequently used CS-Script command can also be accessed directly v
 
 ![image](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/toolbar.png)
 
-Be aware that apart from allowing typical C# Intellisense this extension also provides C-Script specific code assistance features (mouse hover, go-to-definition and autocompletion) as well as script project tree "CS-SCRIPT- ACTIVE":
+Be aware that apart from allowing typical C# Intellisense this extension also provides C-Script specific code assistance features (mouse hover, go-to-definition and autocompletion) as well as the script project tree `CS-SCRIPT- ACTIVE`:
 
 ![image](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/cs-s_intellisense.gif)
 
