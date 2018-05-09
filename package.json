@@ -1,375 +1,372 @@
 {
-    "name": "cs-script",
-    "displayName": "CS-Script",
-    "description": "Execution, debugging and editing C# code that targets .NET and Mono (no .NET Core required)",
-    "version": "1.5.1",
-    "license": "MIT",
-    "publisher": "oleg-shilo",
-    "icon": "images/css_logo.png",
-    "engines": {
-        "vscode": "^1.21.0"
+  "name": "cs-script",
+  "displayName": "CS-Script",
+  "description":
+    "Execution, debugging and editing C# code that targets .NET and Mono (no .NET Core required)",
+  "version": "1.5.1",
+  "license": "MIT",
+  "publisher": "oleg-shilo",
+  "icon": "images/css_logo.png",
+  "engines": {
+    "vscode": "^1.21.0"
+  },
+  "categories": ["Languages", "Debuggers", "Other"],
+  "keywords": ["C#", "C# script", "CS-Script", "scripting", "debugging"],
+  "bugs": {
+    "url": "https://github.com/oleg-shilo/cs-script.vscode/issues",
+    "email": "oshilo@gmail.com"
+  },
+  "homepage":
+    "https://github.com/oleg-shilo/cs-script.vscode/blob/master/README.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oleg-shilo/cs-script.vscode.git"
+  },
+  "activationEvents": [
+    "onLanguage:csharp",
+    "onLanguage:vb",
+    "onLanguage:typescript",
+    "workspaceContains:script.csproj",
+    "onCommand:cs-script.debug",
+    "onCommand:cs-script.run",
+    "onCommand:cs-script.run_in_terminal",
+    "onCommand:cs-script.new_script",
+    "onCommand:cs-script.new_script_vb",
+    "onCommand:cs-script.print_project",
+    "onCommand:cs-script.load_project",
+    "onCommand:cs-script.about",
+    "onCommand:cs-script.css_config",
+    "onCommand:cs-script.build_exe",
+    "onCommand:cs-script.engine_help",
+    "onCommand:cs-script.check"
+  ],
+  "main": "./out/extension",
+  "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "id": "cs-script",
+          "name": "CS-Script - Active"
+        }
+      ]
     },
-    "categories": [
-        "Languages",
-        "Debuggers",
-        "Other"
-    ],
-    "keywords": [
-        "C#",
-        "C# script",
-        "CS-Script",
-        "scripting",
-        "debugging"
-    ],
-    "bugs": {
-        "url": "https://github.com/oleg-shilo/cs-script.vscode/issues",
-        "email": "oshilo@gmail.com"
-    },
-    "homepage": "https://github.com/oleg-shilo/cs-script.vscode/blob/master/README.md",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/oleg-shilo/cs-script.vscode.git"
-    },
-    "activationEvents": [
-        "onLanguage:csharp",
-        "onLanguage:vb",
-        "onLanguage:typescript",
-        "workspaceContains:script.csproj",
-        "onCommand:cs-script.debug",
-        "onCommand:cs-script.run",
-        "onCommand:cs-script.run_in_terminal",
-        "onCommand:cs-script.new_script",
-        "onCommand:cs-script.new_script_vb",
-        "onCommand:cs-script.print_project",
-        "onCommand:cs-script.load_project",
-        "onCommand:cs-script.about",
-        "onCommand:cs-script.css_config",
-        "onCommand:cs-script.build_exe",
-        "onCommand:cs-script.engine_help",
-        "onCommand:cs-script.check"
-    ],
-    "main": "./out/extension",
-    "contributes": {
-        "views": {
-            "explorer": [
-                {
-                    "id": "cs-script",
-                    "name": "CS-Script - Active"
-                }
-            ]
+    "configuration": {
+      "type": "object",
+      "title": "CS-Script configuration",
+      "properties": {
+        "cs-script.single_click_navigate_from_output": {
+          "type": "boolean",
+          "default": true,
+          "description":
+            "Allow navigation on a single click (without any keyboard mdifiers) on the output panel text that is a file path with the location (e.g. \"C:/temp/script.cs(10,20): Error: invalid symbol\")."
         },
-        "configuration": {
-            "type": "object",
-            "title": "CS-Script configuration",
-            "properties": {
-                "cs-script.single_click_navigate_from_output": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Allow navigation on a single click (without any keyboard mdifiers) on the output panel text that is a file path with the location (e.g. \"C:/temp/script.cs(10,20): Error: invalid symbol\")."
-                },
-                "cs-script.select_line_on_navigate_from_output": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Select whole location line on navigation from the output panel. Related to 'cs-script.single_click_navigate_from_output'"
-                },
-                "cs-script.decorate_file_links_in_output": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Decorate file locations (e.g. error info) in the output panel as document links (underlined)."
-                },
-                "cs-script.dotnet_run_host_on_win": {
-                    "type": "boolean",
-                    "default": "false",
-                    "description": "Allows running scripts ('CS-Script: run' command) on Windows under .NET instead of Mono. Other command are not affected. Lets achieve a faster script loading on Windows."
-                },
-                "cs-script.debug_as_external_console": {
-                    "type": "boolean",
-                    "default": "false",
-                    "description": "Runs the script in external console during debugging."
-                },
-                "cs-script.extra_args_for_debug": {
-                    "type": "string",
-                    "default": "-co:/debug:pdbonly",
-                    "description": "Extra arguments to be passed to the script engine for debug command (e.g. compiler options fro Roslyn compiler)."
-                }
-            }
+        "cs-script.select_line_on_navigate_from_output": {
+          "type": "boolean",
+          "default": true,
+          "description":
+            "Select whole location line on navigation from the output panel. Related to 'cs-script.single_click_navigate_from_output'"
         },
-        "commands": [
-            {
-                "command": "cs-script.refresh_tree",
-                "title": "Refresh active project tree",
-                "icon": {
-                    "light": "./images/icons/refresh.light.svg",
-                    "dark": "./images/icons/refresh.svg"
-                }
-            },
-            {
-                "command": "cs-script.show_tree_data",
-                "title": "Show project info in Output panel",
-                "icon": {
-                    "light": "./images/icons/document.light.svg",
-                    "dark": "./images/icons/document.svg"
-                }
-            },
-            {
-                "command": "cs-script.debug",
-                "title": "CS-Script: Debug",
-                "icon": {
-                    "light": "./images/icons/debug.light.svg",
-                    "dark": "./images/icons/debug.svg"
-                }
-            },
-            {
-                "command": "cs-script.run",
-                "title": "CS-Script: Run",
-                "icon": {
-                    "light": "./images/icons/run.light.svg",
-                    "dark": "./images/icons/run.svg"
-                }
-            },
-            {
-                "command": "cs-script.run_in_terminal",
-                "title": "CS-Script: Run in terminal",
-                "icon": {
-                    "light": "./images/icons/run.terminal.light.svg",
-                    "dark": "./images/icons/run.terminal.svg"
-                }
-            },
-            {
-                "command": "cs-script.print_project",
-                "title": "CS-Script: Show project"
-            },
-            {
-                "command": "cs-script.load_project",
-                "title": "CS-Script: Load project",
-                "icon": {
-                    "light": "./images/icons/load.light.svg",
-                    "dark": "./images/icons/load.svg"
-                }
-            },
-            {
-                "command": "cs-script.css_config",
-                "title": "CS-Script: Engine Settings"
-            },
-            {
-                "command": "cs-script.new_script",
-                "title": "CS-Script: New C# script"
-            },
-            {
-                "command": "cs-script.new_script_vb",
-                "title": "CS-Script: New VB.NET script"
-            },
-            {
-                "command": "cs-script.build_exe",
-                "title": "CS-Script: Build exe"
-            },
-            {
-                "command": "cs-script.find_references",
-                "title": "Find all references (classic)"
-            },
-            {
-                "command": "cs-script.check",
-                "title": "CS-Script: Check syntax",
-                "icon": {
-                    "light": "./images/icons/check.light.svg",
-                    "dark": "./images/icons/check.svg"
-                }
-            },
-            {
-                "command": "cs-script.engine_help",
-                "title": "CS-Script: Help"
-            },
-            {
-                "command": "cs-script.about",
-                "title": "CS-Script: About"
-            }
-        ],
-        "menus": {
-            "view/title": [
-                {
-                    "command": "cs-script.show_tree_data",
-                    "when": "view == cs-script",
-                    "group": "navigation"
-                },
-                {
-                    "command": "cs-script.refresh_tree",
-                    "when": "view == cs-script",
-                    "group": "navigation"
-                }
-            ],
-            "view/item/context": [
-                {
-                    "command": "cs-script.show_tree_data",
-                    "when": "view == cs-script"
-                }
-            ],
-            "editor/title": [
-                {
-                    "when": "resourceLangId == csharp",
-                    "command": "cs-script.run",
-                    "group": "navigation@1"
-                },
-                {
-                    "when": "resourceLangId == vb",
-                    "command": "cs-script.run",
-                    "group": "navigation@1"
-                },
-                {
-                    "when": "resourceLangId == csharp",
-                    "command": "cs-script.debug",
-                    "group": "navigation@2"
-                },
-                {
-                    "when": "resourceLangId == vb",
-                    "command": "cs-script.debug",
-                    "group": "navigation@2"
-                },
-                {
-                    "when": "resourceLangId == csharp",
-                    "command": "cs-script.run_in_terminal",
-                    "group": "navigation@2"
-                },
-                {
-                    "when": "resourceLangId == vb",
-                    "command": "cs-script.run_in_terminal",
-                    "group": "navigation@2"
-                },
-                {
-                    "when": "resourceLangId == csharp",
-                    "command": "cs-script.check",
-                    "group": "navigation@3"
-                },
-                {
-                    "when": "resourceLangId == vb",
-                    "command": "cs-script.check",
-                    "group": "navigation@3"
-                },
-                {
-                    "when": "resourceLangId == csharp",
-                    "command": "cs-script.load_project",
-                    "group": "navigation@4"
-                },
-                {
-                    "when": "resourceLangId == csharp",
-                    "command": "cs-script.print_project",
-                    "group": "cs-script.2"
-                },
-                {
-                    "when": "resourceLangId == vb",
-                    "command": "cs-script.print_project",
-                    "group": "cs-script.2"
-                },
-                {
-                    "when": "resourceLangId == csharp",
-                    "command": "cs-script.new_script",
-                    "group": "cs-script.2"
-                },
-                {
-                    "when": "resourceLangId == vb",
-                    "command": "cs-script.new_script_vb",
-                    "group": "cs-script.2"
-                },
-                {
-                    "when": "resourceLangId == csharp",
-                    "command": "cs-script.build_exe",
-                    "group": "cs-script.2"
-                },
-                {
-                    "when": "resourceLangId == vb",
-                    "command": "cs-script.build_exe",
-                    "group": "cs-script.2"
-                },
-                {
-                    "when": "resourceLangId == csharp",
-                    "command": "cs-script.css_config",
-                    "group": "cs-script.3"
-                },
-                {
-                    "when": "resourceLangId == vb",
-                    "command": "cs-script.about",
-                    "group": "cs-script.3"
-                }
-            ],
-            "editor/context": [
-                {
-                    "when": "resourceLangId == csharp",
-                    "command": "cs-script.find_references",
-                    "group": "cs-script.0"
-                },
-                {
-                    "when": "resourceLangId == vb",
-                    "command": "cs-script.find_references",
-                    "group": "cs-script.0"
-                },
-                {
-                    "when": "resourceLangId == typescript",
-                    "command": "cs-script.find_references",
-                    "group": "cs-script.0"
-                },
-                {
-                    "when": "resourceLangId == csharp",
-                    "command": "cs-script.run",
-                    "group": "cs-script.0"
-                },
-                {
-                    "when": "resourceLangId == csharp",
-                    "command": "cs-script.debug",
-                    "group": "cs-script.0"
-                },
-                {
-                    "when": "resourceLangId == csharp",
-                    "command": "cs-script.about",
-                    "group": "cs-script.1"
-                },
-                {
-                    "when": "resourceLangId == csharp",
-                    "command": "cs-script.check",
-                    "group": "cs-script.0"
-                }
-            ]
+        "cs-script.decorate_file_links_in_output": {
+          "type": "boolean",
+          "default": true,
+          "description":
+            "Decorate file locations (e.g. error info) in the output panel as document links (underlined)."
         },
-        "keybindings": [
-            {
-                "key": "alt+f5",
-                "command": "cs-script.debug"
-            },
-            {
-                "key": "ctrl+f5",
-                "command": "cs-script.run"
-            },
-            {
-                "key": "f7",
-                "command": "cs-script.check"
-            },
-            {
-                "key": "ctrl+f12",
-                "command": "cs-script.find_references"
-            },
-            {
-                "key": "ctrl+f7",
-                "command": "cs-script.load_project"
-            },
-            {
-                "key": "shift+f7",
-                "command": "cs-script.print_project"
-            }
-        ]
+        "cs-script.dotnet_run_host_on_win": {
+          "type": "boolean",
+          "default": "false",
+          "description":
+            "Allows running scripts ('CS-Script: run' command) on Windows under .NET instead of Mono. Other command are not affected. Lets achieve a faster script loading on Windows."
+        },
+        "cs-script.debug_as_external_console": {
+          "type": "boolean",
+          "default": "false",
+          "description": "Runs the script in external console during debugging."
+        },
+        "cs-script.extra_args_for_debug": {
+          "type": "string",
+          "default": "-co:/debug:pdbonly",
+          "description":
+            "Extra arguments to be passed to the script engine for debug command (e.g. compiler options fro Roslyn compiler)."
+        }
+      }
     },
-    "scripts": {
-        "vscode:prepublish": "npm run compile",
-        "compile": "tsc -p ./",
-        "watch": "tsc -watch -p ./",
-        "postinstall": "node ./node_modules/vscode/bin/install",
-        "test": "npm run compile && node ./node_modules/vscode/bin/test"
+    "commands": [
+      {
+        "command": "cs-script.refresh_tree",
+        "title": "Refresh active project tree",
+        "icon": {
+          "light": "./images/icons/refresh.light.svg",
+          "dark": "./images/icons/refresh.svg"
+        }
+      },
+      {
+        "command": "cs-script.show_tree_data",
+        "title": "Show project info in Output panel",
+        "icon": {
+          "light": "./images/icons/document.light.svg",
+          "dark": "./images/icons/document.svg"
+        }
+      },
+      {
+        "command": "cs-script.debug",
+        "title": "CS-Script: Debug",
+        "icon": {
+          "light": "./images/icons/debug.light.svg",
+          "dark": "./images/icons/debug.svg"
+        }
+      },
+      {
+        "command": "cs-script.run",
+        "title": "CS-Script: Run",
+        "icon": {
+          "light": "./images/icons/run.light.svg",
+          "dark": "./images/icons/run.svg"
+        }
+      },
+      {
+        "command": "cs-script.run_in_terminal",
+        "title": "CS-Script: Run in terminal",
+        "icon": {
+          "light": "./images/icons/run.terminal.light.svg",
+          "dark": "./images/icons/run.terminal.svg"
+        }
+      },
+      {
+        "command": "cs-script.print_project",
+        "title": "CS-Script: Show project"
+      },
+      {
+        "command": "cs-script.load_project",
+        "title": "CS-Script: Load project",
+        "icon": {
+          "light": "./images/icons/load.light.svg",
+          "dark": "./images/icons/load.svg"
+        }
+      },
+      {
+        "command": "cs-script.css_config",
+        "title": "CS-Script: Engine Settings"
+      },
+      {
+        "command": "cs-script.new_script",
+        "title": "CS-Script: New C# script"
+      },
+      {
+        "command": "cs-script.new_script_vb",
+        "title": "CS-Script: New VB.NET script"
+      },
+      {
+        "command": "cs-script.build_exe",
+        "title": "CS-Script: Build exe"
+      },
+      {
+        "command": "cs-script.find_references",
+        "title": "Find all references (classic)"
+      },
+      {
+        "command": "cs-script.check",
+        "title": "CS-Script: Check syntax",
+        "icon": {
+          "light": "./images/icons/check.light.svg",
+          "dark": "./images/icons/check.svg"
+        }
+      },
+      {
+        "command": "cs-script.engine_help",
+        "title": "CS-Script: Help"
+      },
+      {
+        "command": "cs-script.about",
+        "title": "CS-Script: About"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "cs-script.show_tree_data",
+          "when": "view == cs-script",
+          "group": "navigation"
+        },
+        {
+          "command": "cs-script.refresh_tree",
+          "when": "view == cs-script",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "cs-script.show_tree_data",
+          "when": "view == cs-script"
+        }
+      ],
+      "editor/title": [
+        {
+          "when": "resourceLangId == csharp",
+          "command": "cs-script.run",
+          "group": "navigation@1"
+        },
+        {
+          "when": "resourceLangId == vb",
+          "command": "cs-script.run",
+          "group": "navigation@1"
+        },
+        {
+          "when": "resourceLangId == csharp",
+          "command": "cs-script.debug",
+          "group": "navigation@2"
+        },
+        {
+          "when": "resourceLangId == vb",
+          "command": "cs-script.debug",
+          "group": "navigation@2"
+        },
+        {
+          "when": "resourceLangId == csharp",
+          "command": "cs-script.run_in_terminal",
+          "group": "navigation@2"
+        },
+        {
+          "when": "resourceLangId == vb",
+          "command": "cs-script.run_in_terminal",
+          "group": "navigation@2"
+        },
+        {
+          "when": "resourceLangId == csharp",
+          "command": "cs-script.check",
+          "group": "navigation@3"
+        },
+        {
+          "when": "resourceLangId == vb",
+          "command": "cs-script.check",
+          "group": "navigation@3"
+        },
+        {
+          "when": "resourceLangId == csharp",
+          "command": "cs-script.load_project",
+          "group": "navigation@4"
+        },
+        {
+          "when": "resourceLangId == csharp",
+          "command": "cs-script.print_project",
+          "group": "cs-script.2"
+        },
+        {
+          "when": "resourceLangId == vb",
+          "command": "cs-script.print_project",
+          "group": "cs-script.2"
+        },
+        {
+          "when": "resourceLangId == csharp",
+          "command": "cs-script.new_script",
+          "group": "cs-script.2"
+        },
+        {
+          "when": "resourceLangId == vb",
+          "command": "cs-script.new_script_vb",
+          "group": "cs-script.2"
+        },
+        {
+          "when": "resourceLangId == csharp",
+          "command": "cs-script.build_exe",
+          "group": "cs-script.2"
+        },
+        {
+          "when": "resourceLangId == vb",
+          "command": "cs-script.build_exe",
+          "group": "cs-script.2"
+        },
+        {
+          "when": "resourceLangId == csharp",
+          "command": "cs-script.css_config",
+          "group": "cs-script.3"
+        },
+        {
+          "when": "resourceLangId == vb",
+          "command": "cs-script.about",
+          "group": "cs-script.3"
+        },
+        {
+          "when": "resourceLangId == csharp",
+          "command": "cs-script.about",
+          "group": "cs-script.3"
+        }
+      ],
+      "editor/context": [
+        {
+          "when": "resourceLangId == csharp",
+          "command": "cs-script.find_references",
+          "group": "cs-script.0"
+        },
+        {
+          "when": "resourceLangId == vb",
+          "command": "cs-script.find_references",
+          "group": "cs-script.0"
+        },
+        {
+          "when": "resourceLangId == typescript",
+          "command": "cs-script.find_references",
+          "group": "cs-script.0"
+        },
+        {
+          "when": "resourceLangId == csharp",
+          "command": "cs-script.run",
+          "group": "cs-script.0"
+        },
+        {
+          "when": "resourceLangId == csharp",
+          "command": "cs-script.debug",
+          "group": "cs-script.0"
+        },
+        {
+          "when": "resourceLangId == csharp",
+          "command": "cs-script.check",
+          "group": "cs-script.0"
+        }
+      ]
     },
-    "dependencies": {
-        "fs-extra": "^3.0.1",
-        "mkdirp": "^0.5.1"
-    },
-    "devDependencies": {
-        "typescript": "^2.6.1",
-        "vscode": "^1.1.6",
-        "@types/node": "^7.0.43",
-        "@types/mocha": "^2.2.42"
-    }
+    "keybindings": [
+      {
+        "key": "alt+f5",
+        "command": "cs-script.debug"
+      },
+      {
+        "key": "ctrl+f5",
+        "command": "cs-script.run"
+      },
+      {
+        "key": "f7",
+        "command": "cs-script.check"
+      },
+      {
+        "key": "ctrl+f12",
+        "command": "cs-script.find_references"
+      },
+      {
+        "key": "ctrl+f7",
+        "command": "cs-script.load_project"
+      },
+      {
+        "key": "shift+f7",
+        "command": "cs-script.print_project"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "test": "npm run compile && node ./node_modules/vscode/bin/test"
+  },
+  "dependencies": {
+    "fs-extra": "^3.0.1",
+    "mkdirp": "^0.5.1"
+  },
+  "devDependencies": {
+    "typescript": "^2.6.1",
+    "vscode": "^1.1.6",
+    "@types/node": "^7.0.43",
+    "@types/mocha": "^2.2.42"
+  }
 }
