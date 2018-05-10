@@ -1,5 +1,13 @@
 # Change Log
 
+## 1.5.2
+
+- Add option to suppress execute/debug in workspace mode (`cs-script.suppress_script_debug_for_workspaces`).
+- Add option to tunnel CS-Script StartDebug request to the workspace launch.json algorithm (`cs-script.fallback_to_launch_json`).
+- Start Debug now activates DebugConsole output panel.
+- Issue #9: Add an option to hide "CS-Script: About" from the context menu.
+- Default CS-Script config file now contains `-l` switch, which sets the current directory to the location of the script at the start of the execution.
+
 ## 1.5.1
 
 - Added the logo icon into the package/distro
@@ -73,7 +81,7 @@
 
 ## 1.0.1
 
-- Implemented work around to allow single-step loading of OmniSharp project for enabling IntellisSense.
+- Implemented work around to allow single-step loading of OmniSharp project for enabling Intellisense.
 - Implemented navigation to the file location on a single click (on error info) in the output panel.
 - Added `extensionDependencies` to the manifest file. This should bring C# and Mono Debug plugins if they are not installed.
 

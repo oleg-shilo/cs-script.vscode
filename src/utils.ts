@@ -936,7 +936,7 @@ export function ensure_default_config(cscs_exe: string, on_done?: (file: string)
             // C:\Program Files (x86)\Mono\lib\mono\4.5\Facades</searchDirs>
 
             let updated_config = output
-                .replace("</defaultArguments>", " -ac:1</defaultArguments>")
+                .replace("</defaultArguments>", " -l -ac:1</defaultArguments>")
                 .replace("</searchDirs>", "%MONO%/4.5/Facades</searchDirs>")
                 .replace("</defaultRefAssemblies>", "System.dll;System.ValueTuple.dll</defaultRefAssemblies>")
                 .replace("<useAlternativeCompiler></useAlternativeCompiler>", "<useAlternativeCompiler>CSSRoslynProvider.dll</useAlternativeCompiler>");
@@ -946,7 +946,7 @@ export function ensure_default_config(cscs_exe: string, on_done?: (file: string)
             if (os.platform() == 'win32') {
                 let config_file_win = path.join(path.dirname(cscs_exe), 'css_config.xml');
                 let updated_config = output
-                    .replace("</defaultArguments>", " -ac:1</defaultArguments>")
+                    .replace("</defaultArguments>", " -l -ac:1</defaultArguments>")
                     .replace("</searchDirs>", "%cscs_exe_dir%/roslyn</searchDirs>")
                     // after .NET4.7 referencing System.dll;System.ValueTuple.dll is no longer required
                     // .replace("</defaultRefAssemblies>", "System.dll;System.ValueTuple.dll</defaultRefAssemblies>") 
