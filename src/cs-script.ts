@@ -8,23 +8,23 @@ import * as utils from "./utils";
 import * as syntaxer from "./syntaxer";
 import * as vscode from "vscode";
 import * as path from "path";
-import { Uri, commands, DiagnosticSeverity, TextEditorSelectionChangeKind, Location, window, TextEditor } from "vscode";
-import { ErrorInfo, Utils, unlock, is_busy, with_lock, actual_output, settings, VSCodeSettings, user_dir, create_dir, select_line, ActiveEditorTracker } from "./utils";
+import { Uri, commands, DiagnosticSeverity, TextEditorSelectionChangeKind, Location, window, TextEditor, workspace, Terminal, TextEditorSelectionChangeEvent, Selection, TextDocument, TextDocumentChangeEvent, ExtensionContext } from "vscode";
+import { ErrorInfo, Utils, unlock, is_busy, with_lock, actual_output, settings, vsc_config, user_dir, create_dir, select_line, ActiveEditorTracker } from "./utils";
 import { Syntaxer } from "./syntaxer";
 
 export let syntax_readme: string = path.join(user_dir(), "cs-script.syntax.txt");
-let ext_context: vscode.ExtensionContext;
+let ext_context: ExtensionContext;
 let cscs_exe: string = path.join(user_dir(), "cscs.exe");
 let readme: string = path.join(user_dir(), "cs-script.help.txt");
 let csproj_template = __dirname + "/../bin/script.csproj";
-let outputChannel = vscode.window.createOutputChannel("CS-Script");
+let outputChannel = window.createOutputChannel("CS-Script");
 
 // it is extremely important to keep project file name in sync with the activation event trigger in manifest file )"workspaceContains:script.csproj")
 let script_proj_name = "script.csproj";
 let startup_file_key = "cs-script.open_file_at_startup";
 export let csproj_dir = path.join(os.tmpdir(), "CSSCRIPT", "VSCode", "cs-script - OmniSharp");
 
-function extra_args(): string { return VSCodeSettings.get("cs-script.extra_args_for_debug", "-co:/debug:pdbonly"); }
+function extra_args(): string { return vsc_config.get("cs-script.extra_args_for_debug", "-co:/debug:pdbonly"); }
 // -----------------------------------
 export function load_project() {
   with_lock(() => {
@@ -43,13 +43,13 @@ export function load_project() {
     // let proj_dir = path.join(os.tmpdir(), 'CSSCRIPT', 'VSCode', 'cs-script.vscode');
     // let current_folder = vscode.workspace.rootPath;
 
-    let editor = vscode.window.activeTextEditor;
+    let editor = window.activeTextEditor;
 
-    let workspaceIsAlreadyLoaded = Utils.IsSamePath(vscode.workspace.rootPath, csproj_dir);
+    let workspaceIsAlreadyLoaded = Utils.IsSamePath(workspace.rootPath, csproj_dir);
 
     if (workspaceIsAlreadyLoaded) {
       if (editor != null && !Utils.IsScript(editor.document.fileName)) {
-        vscode.window.showErrorMessage("The active document is not a C# code file. Please open a C# document and try again.");
+        window.showErrorMessage("The active document is not a C# code file. Please open a C# document and try again.");
       }
       else {
         outputChannel.show(true);
@@ -77,10 +77,10 @@ export function load_project() {
     }
     else {
       if (editor == null) {
-        vscode.window.showErrorMessage("No active document found. Please open a C# document and try again.");
+        window.showErrorMessage("No active document found. Please open a C# document and try again.");
       }
       else if (!Utils.IsScript(editor.document.fileName)) {
-        vscode.window.showErrorMessage("The active document is not a C# code file. Please open a C# document and try again.");
+        window.showErrorMessage("The active document is not a C# code file. Please open a C# document and try again.");
       }
       else {
         outputChannel.clear();
@@ -110,7 +110,7 @@ export function load_project() {
           let ok_dont_show_again = "OK, Don't show this message again";
           let ok = "OK";
 
-          vscode.window
+          window
             .showInformationMessage(info_msg, { modal: true }, ok, ok_dont_show_again)
             .then(response => {
               if (response == ok) {
@@ -221,13 +221,13 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
     commands.executeCommand("cs-script.refresh_tree");
   }
   catch (error) {
-    vscode.window.showErrorMessage(`Cannot generate project from the script. Check the //css_ref and //css_in directives.`);
+    window.showErrorMessage(`Cannot generate project from the script. Check the //css_ref and //css_in directives.`);
     throw error;
   }
 }
 // -----------------------------------
 export function print_project() {
-  if (Utils.IsSamePath(vscode.workspace.rootPath, csproj_dir)) { // cs-script workspace
+  if (Utils.IsSamePath(workspace.rootPath, csproj_dir)) { // cs-script workspace
     let proj_file = path.join(csproj_dir, "script.csproj");
     let file = Utils.getScriptName(proj_file);
     print_project_for(file);
@@ -238,7 +238,7 @@ export function print_project() {
 }
 // -----------------------------------
 export function print_project_for_document() {
-  let editor = vscode.window.activeTextEditor;
+  let editor = window.activeTextEditor;
   let file = editor.document.fileName;
 
   editor.document.save();
@@ -267,17 +267,17 @@ export function print_project_for(file: string): boolean {
     return true;
   }
   else {
-    vscode.window.showErrorMessage(`"${file}" is not a valid C# script file.`);
+    window.showErrorMessage(`"${file}" is not a valid C# script file.`);
     return false;
   }
 }
 // -----------------------------------
 export function get_project_tree_items() {
   let lines: string[];
-  let editor = vscode.window.activeTextEditor;
+  let editor = window.activeTextEditor;
   let file: string;
 
-  if (Utils.IsSamePath(vscode.workspace.rootPath, csproj_dir)) { // cs-script workspace
+  if (Utils.IsSamePath(workspace.rootPath, csproj_dir)) { // cs-script workspace
     let proj_file = path.join(csproj_dir, "script.csproj");
     file = Utils.getScriptName(proj_file);
   }
@@ -303,7 +303,7 @@ export function get_project_tree_items() {
 // -----------------------------------
 export function check() {
   with_lock(() => {
-    let editor = vscode.window.activeTextEditor;
+    let editor = window.activeTextEditor;
     let file = editor.document.fileName;
 
     editor.document.save();
@@ -365,7 +365,7 @@ export function check() {
 }
 // -----------------------------------
 export async function find_references() {
-  let editor = vscode.window.activeTextEditor;
+  let editor = window.activeTextEditor;
   let document = editor.document;
   let position = editor.selection.active;
 
@@ -376,7 +376,7 @@ export async function find_references() {
 
     if (document.languageId == "csharp" || document.languageId == "vb") {
       try {
-        let data = await Syntaxer.getRefrencesAsync(document.getText(), document.fileName, document.offsetAt(position));
+        let data = await Syntaxer.getReferencesAsync(document.getText(), document.fileName, document.offsetAt(position));
         outputChannel.clear();
 
         if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
@@ -394,7 +394,7 @@ export async function find_references() {
     }
     else {
       try {
-        let locations = await vscode.commands.executeCommand("vscode.executeReferenceProvider", Uri.file(document.fileName), position);
+        let locations = await commands.executeCommand("vscode.executeReferenceProvider", Uri.file(document.fileName), position);
         let lines = locations as Location[];
         outputChannel.clear();
         outputChannel.appendLine(`Found ${lines.length} references:`);
@@ -463,15 +463,15 @@ export function about() {
 }
 // -----------------------------------
 
-let terminal: vscode.Terminal = null;
+let terminal: Terminal = null;
 export function run_in_terminal() {
   with_lock(() => {
-    let editor = vscode.window.activeTextEditor;
+    let editor = window.activeTextEditor;
     let file = editor.document.fileName;
     editor.document.save();
 
     if (terminal == null)
-      terminal = vscode.window.createTerminal("Ext Terminal cs-script");
+      terminal = window.createTerminal("Ext Terminal cs-script");
 
     let dir = path.dirname(file);
 
@@ -485,66 +485,66 @@ export function run_in_terminal() {
   });
 }
 
-// function test_activate(context: vscode.ExtensionContext) {
-//     let terminalStack: vscode.Terminal[] = [];
+// function test_activate(context: ExtensionContext) {
+//     let terminalStack: Terminal[] = [];
 
-//     context.subscriptions.push(vscode.commands.registerCommand('terminalTest.createTerminal', () => {
-//         terminalStack.push(vscode.window.createTerminal(`Ext Terminal #${terminalStack.length + 1}`));
+//     context.subscriptions.push(commands.registerCommand('terminalTest.createTerminal', () => {
+//         terminalStack.push(window.createTerminal(`Ext Terminal #${terminalStack.length + 1}`));
 //     }));
 
-//     context.subscriptions.push(vscode.commands.registerCommand('terminalTest.hide', () => {
+//     context.subscriptions.push(commands.registerCommand('terminalTest.hide', () => {
 //         if (terminalStack.length === 0) {
-//             vscode.window.showErrorMessage('No active terminals');
+//             window.showErrorMessage('No active terminals');
 //         }
 //         getLatestTerminal().hide();
 //     }));
-//     context.subscriptions.push(vscode.commands.registerCommand('terminalTest.show', () => {
+//     context.subscriptions.push(commands.registerCommand('terminalTest.show', () => {
 //         if (terminalStack.length === 0) {
-//             vscode.window.showErrorMessage('No active terminals');
+//             window.showErrorMessage('No active terminals');
 //         }
 //         getLatestTerminal().show();
 //     }));
-//     context.subscriptions.push(vscode.commands.registerCommand('terminalTest.showPreserveFocus', () => {
+//     context.subscriptions.push(commands.registerCommand('terminalTest.showPreserveFocus', () => {
 //         if (terminalStack.length === 0) {
-//             vscode.window.showErrorMessage('No active terminals');
+//             window.showErrorMessage('No active terminals');
 //         }
 //         getLatestTerminal().show(true);
 //     }));
-//     context.subscriptions.push(vscode.commands.registerCommand('terminalTest.sendText', () => {
+//     context.subscriptions.push(commands.registerCommand('terminalTest.sendText', () => {
 //         if (terminalStack.length === 0) {
-//             vscode.window.showErrorMessage('No active terminals');
+//             window.showErrorMessage('No active terminals');
 //         }
 //         getLatestTerminal().sendText("echo 'Hello world!'");
 //     }));
-//     context.subscriptions.push(vscode.commands.registerCommand('terminalTest.sendTextNoNewLine', () => {
+//     context.subscriptions.push(commands.registerCommand('terminalTest.sendTextNoNewLine', () => {
 //         if (terminalStack.length === 0) {
-//             vscode.window.showErrorMessage('No active terminals');
+//             window.showErrorMessage('No active terminals');
 //         }
 //         getLatestTerminal().sendText("echo 'Hello world!'", false);
 //     }));
-//     context.subscriptions.push(vscode.commands.registerCommand('terminalTest.dispose', () => {
+//     context.subscriptions.push(commands.registerCommand('terminalTest.dispose', () => {
 //         if (terminalStack.length === 0) {
-//             vscode.window.showErrorMessage('No active terminals');
+//             window.showErrorMessage('No active terminals');
 //         }
 //         getLatestTerminal().dispose();
 //         terminalStack.pop();
 //     }));
-//     context.subscriptions.push(vscode.commands.registerCommand('terminalTest.createAndSend', () => {
-//         terminalStack.push(vscode.window.createTerminal(`Ext Terminal #${terminalStack.length + 1}`));
+//     context.subscriptions.push(commands.registerCommand('terminalTest.createAndSend', () => {
+//         terminalStack.push(window.createTerminal(`Ext Terminal #${terminalStack.length + 1}`));
 //         getLatestTerminal().sendText("echo 'Sent text immediately after creating'");
 //     }));
 
 //     // Below coming in version v1.6
-//     context.subscriptions.push(vscode.commands.registerCommand('terminalTest.createZshLoginShell', () => {
-//         terminalStack.push((<any>vscode.window).createTerminal(`Ext Terminal #${terminalStack.length + 1}`, '/bin/zsh', ['-l']));
+//     context.subscriptions.push(commands.registerCommand('terminalTest.createZshLoginShell', () => {
+//         terminalStack.push((<any>window).createTerminal(`Ext Terminal #${terminalStack.length + 1}`, '/bin/zsh', ['-l']));
 //     }));
-//     context.subscriptions.push(vscode.commands.registerCommand('terminalTest.processId', () => {
+//     context.subscriptions.push(commands.registerCommand('terminalTest.processId', () => {
 //         (<any>getLatestTerminal()).processId.then((processId) => {
 //             console.log(`Shell process ID: ${processId}`);
 //         });
 //     }));
-//     if ('onDidCloseTerminal' in <any>vscode.window) {
-//         (<any>vscode.window).onDidCloseTerminal((terminal) => {
+//     if ('onDidCloseTerminal' in <any>window) {
+//         (<any>window).onDidCloseTerminal((terminal) => {
 //             console.log('Terminal closed', terminal);
 //         });
 //     }
@@ -661,7 +661,7 @@ export function Syntax() {
 // -----------------------------------
 export function build_exe() {
   with_lock(() => {
-    let editor = vscode.window.activeTextEditor;
+    let editor = window.activeTextEditor;
     let file = editor.document.fileName;
 
     outputChannel.show(true);
@@ -687,75 +687,85 @@ export function build_exe() {
 
 // -----------------------------------
 export function debug() {
-  if (vscode.workspace.rootPath != undefined) { // workspace is loaded so use its launch confg
 
-    const launchFile = vscode.workspace.getConfiguration("launch");
-    const configs = launchFile.get<any[]>("configurations");
-    vscode.debug.startDebugging(vscode.workspace.workspaceFolders[0], configs[0]);
+  let workspace_loaded = workspace.workspaceFolders != undefined;
+  let suppress_for_workspaces = vsc_config.get("cs-script.suppress_script_debug_for_workspaces");
+  let fallback_to_launch_json = vsc_config.get("cs-script.fallback_to_launch_json");
+
+  if (workspace_loaded && !suppress_for_workspaces) {
+
+    if (fallback_to_launch_json) {
+      if (workspace.workspaceFolders != undefined) {
+        // workspace is loaded so use its launch confg
+        const launchFile = workspace.getConfiguration("launch");
+        const configs = launchFile.get<any[]>("configurations");
+        vscode.debug.startDebugging(workspace.workspaceFolders[0], configs[0]);
+      }
+    }
+    return;
   }
-  else {
-    let editor = vscode.window.activeTextEditor;
-    editor.document.save();
-    if (!fs.existsSync(editor.document.fileName)) {
-      vscode.window.showInformationMessage('Cannot find file "' + editor.document.fileName + '"');
-      return;
+
+  let editor = window.activeTextEditor;
+  editor.document.save();
+  if (!fs.existsSync(editor.document.fileName)) {
+    window.showInformationMessage('Cannot find file "' + editor.document.fileName + '"');
+    return;
+  }
+
+  with_lock(() => {
+    // todo
+    // + check if document is saved or untitled (and probably save it)
+    // - check if process is already running
+    // - read cscs location from config
+    // - clear dbg output
+    // - ensure running via mono (at least on Linux) - CONFIG BASED
+
+    let config = "";
+    if (os.platform() == "win32") {
+      // to allow assemblies to be resolved on Windows Mono build the same way as under .NET
+      let run_as_dotnet = vsc_config.get("cs-script.dotnet_run_host_on_win", false);
+      if (run_as_dotnet) {
+        config = `-config:css_config.xml`;
+        // config = `-config:${path.join(path.dirname(cscs_exe), "css_config.xml")}`;
+        // let command = `"${cscs_exe}" -ca -d -inmem:0 ${extra_args()} -ac:2 "${editor.document.fileName}"`;
+        // let output: string = execSync(command).toString();
+      }
     }
 
-    with_lock(() => {
-      // todo
-      // + check if document is saved or untitled (and probably save it)
-      // - check if process is already running
-      // - read cscs location from config
-      // - clear dbg output
-      // - ensure running via mono (at least on Linux) - CONFIG BASED
+    // "externalConsole": "true", // shows external console. Full equivalent of Ctrl+F5 in VS.
+    let debug_as_external_console = vsc_config.get(
+      "cs-script.debug_as_external_console",
+      false
+    );
 
-      let config = "";
-      if (os.platform() == "win32") {
-        // to allow assemblies to be resolved on Windows Mono build the same way as under .NET
-        let run_as_dotnet = VSCodeSettings.get("cs-script.dotnet_run_host_on_win", false);
-        if (run_as_dotnet) {
-          config = `-config:css_config.xml`;
-          // config = `-config:${path.join(path.dirname(cscs_exe), "css_config.xml")}`;
-          // let command = `"${cscs_exe}" -ca -d -inmem:0 ${extra_args()} -ac:2 "${editor.document.fileName}"`;
-          // let output: string = execSync(command).toString();
-        }
+    let launchConfig = {
+      name: "Launch",
+      type: "mono",
+      request: "launch",
+      program: cscs_exe,
+      externalConsole: debug_as_external_console.toString(),
+      showOutput: "always",
+      // mono debugger requires non-inmemory asms and injection of the breakpoint ("-ac:2)
+      args: ["-d", "-inmem:0", extra_args(), config, "-ac:2", editor.document.fileName],
+      env: {
+        // "css_vscode_roslyn_dir": process.env.css_vscode_roslyn_dir
+        // "cscs_exe_dir": path.dirname(cscs_exe)
+        // "CSS_PROVIDER_TRACE": 'true'
       }
+    };
 
-      // "externalConsole": "true", // shows external console. Full equivalent of Ctrl+F5 in VS.
-      let debug_as_external_console = VSCodeSettings.get(
-        "cs-script.debug_as_external_console",
-        false
-      );
+    // vscode.startDebug has been deprecated
+    vscode.debug.startDebugging(undefined, launchConfig).then(
+      () => {
+        commands.executeCommand("workbench.debug.action.focusRepl");
+      },
+      err => {
+        window.showInformationMessage("Error: " + err.message);
+      }
+    );
 
-      let launchConfig = {
-        name: "Launch",
-        type: "mono",
-        request: "launch",
-        program: cscs_exe,
-        externalConsole: debug_as_external_console.toString(),
-        showOutput: "always",
-        // mono debugger requires non-inmemory asms and injection of the breakpoint ("-ac:2)
-        args: ["-d", "-inmem:0", extra_args(), config, "-ac:2", editor.document.fileName],
-        env: {
-          // "css_vscode_roslyn_dir": process.env.css_vscode_roslyn_dir
-          // "cscs_exe_dir": path.dirname(cscs_exe)
-          // "CSS_PROVIDER_TRACE": 'true'
-        }
-      };
-
-      // vscode.startDebug has been deprecated
-      vscode.debug.startDebugging(undefined, launchConfig).then(
-        () => {
-          commands.executeCommand("workbench.debug.action.focusRepl");
-        },
-        err => {
-          vscode.window.showInformationMessage("Error: " + err.message);
-        }
-      );
-
-      unlock();
-    });
-  }
+    unlock();
+  });
 }
 // -----------------------------------
 async function getOpenEditors(): Promise<TextEditor[]> {
@@ -791,7 +801,7 @@ async function getOpenEditors(): Promise<TextEditor[]> {
 }
 
 export async function save_script_project(dependencies_only: boolean): Promise<void> {
-  let editor = vscode.window.activeTextEditor;
+  let editor = window.activeTextEditor;
   let file = editor.document.fileName;
 
   if (!dependencies_only) {
@@ -844,7 +854,7 @@ function build_command(raw_command: string): string {
   let command = `mono ` + raw_command;
 
   if (os.platform() == "win32") {
-    let run_as_dotnet = VSCodeSettings.get("cs-script.dotnet_run_host_on_win", false);
+    let run_as_dotnet = vsc_config.get("cs-script.dotnet_run_host_on_win", false);
     if (run_as_dotnet) command = raw_command;
   }
 
@@ -857,7 +867,7 @@ export function run() {
     // - check if process is already running
     // - read cscs location from config
 
-    let editor = vscode.window.activeTextEditor;
+    let editor = window.activeTextEditor;
 
     let exec = require("child_process").exec;
     let showExecutionMessage = true;
@@ -903,7 +913,7 @@ export function run() {
 
 // intercepting Modifier_MouseClick https://github.com/Microsoft/vscode/issues/3130
 let current_doc = "";
-function onActiveEditorChange(editor: vscode.TextEditor) {
+function onActiveEditorChange(editor: TextEditor) {
   if (editor != null) {
     // if (editor != null && editor.document.languageId == "code-runner-output") {
 
@@ -914,7 +924,7 @@ function onActiveEditorChange(editor: vscode.TextEditor) {
 
 // let output_line_last_click = -1;
 function onActiveEditorSelectionChange(
-  event: vscode.TextEditorSelectionChangeEvent
+  event: TextEditorSelectionChangeEvent
 ) {
   // The idea is to allow user to click the link (e.g. `script.cs (10, 23)`) printed in the output window
   // and navigate to the file location defined in the printed link.
@@ -937,8 +947,8 @@ function onActiveEditorSelectionChange(
     event.textEditor.document.fileName.startsWith("extension-output-") &&
     event.textEditor.selection.isEmpty
   ) {
-    let enabled = VSCodeSettings.get("cs-script.single_click_navigate_from_output", true);
-    let select_whole_line = VSCodeSettings.get("select_line_on_navigate_from_output", true);
+    let enabled = vsc_config.get("cs-script.single_click_navigate_from_output", true);
+    let select_whole_line = vsc_config.get("select_line_on_navigate_from_output", true);
     let single_line_in_selection = (event.textEditor.selection.start.line == event.textEditor.selection.end.line);
 
     // if (enabled && single_line_selection && output_line_last_click != event.textEditor.selection.start.line) {
@@ -955,7 +965,7 @@ function onActiveEditorSelectionChange(
               commands
                 .executeCommand("vscode.open", Uri.file(info.file))
                 .then(value => {
-                  let editor = vscode.window.activeTextEditor;
+                  let editor = window.activeTextEditor;
                   const position = editor.selection.active;
 
                   if (select_whole_line) {
@@ -963,7 +973,7 @@ function onActiveEditorSelectionChange(
                   }
                   else {
                     let start = position.with(info.range.start.line, info.range.start.character);
-                    let newSelection = new vscode.Selection(start, start);
+                    let newSelection = new Selection(start, start);
                     editor.selection = newSelection;
                   }
                 }),
@@ -994,8 +1004,8 @@ function remove_from_unsaved(file: string): void {
   }
 }
 
-function onDidSaveTextDocument(document: vscode.TextDocument) {
-  if (Utils.IsSamePath(vscode.workspace.rootPath, csproj_dir)) {
+function onDidSaveTextDocument(document: TextDocument) {
+  if (Utils.IsSamePath(workspace.rootPath, csproj_dir)) {
     let proj_file = path.join(csproj_dir, "script.csproj");
 
     let scripts = Utils.getScriptFiles(proj_file);
@@ -1006,24 +1016,24 @@ function onDidSaveTextDocument(document: vscode.TextDocument) {
   remove_from_unsaved(document.fileName);
 }
 
-function onDidCloseTextDocument(document: vscode.TextDocument) {
+function onDidCloseTextDocument(document: TextDocument) {
   remove_from_unsaved(document.fileName);
 }
 
-function onDidChangeTextDocument(documentEvent: vscode.TextDocumentChangeEvent) {
+function onDidChangeTextDocument(documentEvent: TextDocumentChangeEvent) {
   add_to_unsaved(documentEvent.document.fileName);
 }
 // -----------------------------------
 
-export function ActivateDiagnostics(context: vscode.ExtensionContext) {
+export function ActivateDiagnostics(context: ExtensionContext) {
   try {
     ext_context = context;
-    vscode.window.onDidChangeActiveTextEditor(onActiveEditorChange);
-    vscode.window.onDidChangeTextEditorSelection(onActiveEditorSelectionChange);
+    window.onDidChangeActiveTextEditor(onActiveEditorChange);
+    window.onDidChangeTextEditorSelection(onActiveEditorSelectionChange);
 
-    vscode.workspace.onDidSaveTextDocument(onDidSaveTextDocument);
-    vscode.workspace.onDidChangeTextDocument(onDidChangeTextDocument);
-    vscode.workspace.onDidCloseTextDocument(onDidCloseTextDocument);
+    workspace.onDidSaveTextDocument(onDidSaveTextDocument);
+    workspace.onDidChangeTextDocument(onDidChangeTextDocument);
+    workspace.onDidCloseTextDocument(onDidCloseTextDocument);
 
     let file = ext_context.globalState.get("cs-script.open_file_at_startup", "");
     if (file != null) {
@@ -1035,7 +1045,7 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
   }
   catch (error) {
     // console.log(error);
-    vscode.window.showErrorMessage(String(error));
+    window.showErrorMessage(String(error));
   }
 }
 // -----------------------------------

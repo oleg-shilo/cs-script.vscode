@@ -734,7 +734,7 @@ export class ErrorInfo {
     }
 }
 
-export class VSCodeSettings {
+export class vsc_config {
     public static get<T>(section_value: string, defaultValue?: T): T {
         let tokens = section_value.split('.')
         return vscode.workspace.getConfiguration(tokens[0]).get(tokens[1], defaultValue);

@@ -6,10 +6,9 @@
     "search.exclude": {
         "out": true // set this to false to include "out" folder in search results
     },
-    "spellright.language": "en",
-    "spellright.documentTypes": [
-        "markdown",
-        "latex",
-        "plaintext"
+    "cSpell.words": [
+        "rect",
+        "shiming",
+        "tmpl"
     ]
 }

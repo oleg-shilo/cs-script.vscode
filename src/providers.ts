@@ -2,15 +2,15 @@
 
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
-import { HoverProvider, Position, CompletionItem, CancellationToken, TextDocument, Hover, Definition, ProviderResult, Range, Location, ReferenceContext, FormattingOptions, TextEdit, DocumentLink, WorkspaceEdit, SignatureHelp, CodeAction, Command, TextLine, EndOfLine } from "vscode";
+// import * as vscode from 'vscode';
+import { HoverProvider, Position, CompletionItem, CancellationToken, TextDocument, Hover, Definition, ProviderResult, Range, Location, ReferenceContext, FormattingOptions, TextEdit, DocumentLink, WorkspaceEdit, SignatureHelp, CodeAction, Command, TextLine, EndOfLine, DocumentLinkProvider, Uri, CodeActionProvider, CodeActionContext, CodeActionKind, SignatureHelpProvider, ReferenceProvider, RenameProvider, DefinitionProvider, workspace, window, CompletionItemProvider, CompletionItemKind, DocumentFormattingEditProvider, Selection } from "vscode";
 import * as utils from "./utils";
 import { Syntaxer } from "./syntaxer";
-import { ErrorInfo, select_line, VSCodeSettings } from './utils';
+import { ErrorInfo, select_line, vsc_config } from './utils';
 import { save_script_project } from './cs-script';
 
 
-function isWorkspace(): boolean { return vscode.workspace.rootPath != undefined; }
+function isWorkspace(): boolean { return workspace.rootPath != undefined; }
 
 function isCssDirective(document: TextDocument, position: Position): boolean {
     return getCssDirective(document, position) != undefined;
@@ -112,7 +112,7 @@ export class CSScriptHoverProvider implements HoverProvider {
 
 export function process_snipet_cursor_placeholders(startLine: number, endLine: number): void {
 
-    let editor = vscode.window.activeTextEditor;
+    let editor = window.activeTextEditor;
 
     for (let index = startLine; index < endLine; index++) {
 
@@ -125,16 +125,16 @@ export function process_snipet_cursor_placeholders(startLine: number, endLine: n
                 .edit(editBuilder =>
                     editBuilder.replace(new Range(index, cursor_pos, index, cursor_pos + 2), ''))
                 .then(() =>
-                    editor.selection = new vscode.Selection(index, cursor_pos, index, cursor_pos))
+                    editor.selection = new Selection(index, cursor_pos, index, cursor_pos))
 
             break;
         }
     }
 }
 
-export class CSScriptCompletionItemProvider implements vscode.CompletionItemProvider {
+export class CSScriptCompletionItemProvider implements CompletionItemProvider {
 
-    public provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Thenable<vscode.CompletionItem[]> {
+    public provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken): Thenable<CompletionItem[]> {
 
         let items: CompletionItem[] = [];
 
@@ -184,22 +184,22 @@ export class CSScriptCompletionItemProvider implements vscode.CompletionItemProv
 
                                 let command: Command;
 
-                                let memberKind: vscode.CompletionItemKind;
+                                let memberKind: CompletionItemKind;
                                 switch (info[0]) {
                                     case "method":
-                                        memberKind = vscode.CompletionItemKind.Method;
+                                        memberKind = CompletionItemKind.Method;
                                         break;
                                     case "extension_method":
-                                        memberKind = vscode.CompletionItemKind.Method;
+                                        memberKind = CompletionItemKind.Method;
                                         break;
                                     case "constructor":
-                                        memberKind = vscode.CompletionItemKind.Constructor;
+                                        memberKind = CompletionItemKind.Constructor;
                                         break;
                                     case "field":
-                                        memberKind = vscode.CompletionItemKind.Field;
+                                        memberKind = CompletionItemKind.Field;
                                         break;
                                     case "property":
-                                        memberKind = vscode.CompletionItemKind.Property;
+                                        memberKind = CompletionItemKind.Property;
                                         break;
                                     case "event":
                                         {
@@ -213,11 +213,11 @@ export class CSScriptCompletionItemProvider implements vscode.CompletionItemProv
                                                 }]
                                             };
 
-                                            memberKind = vscode.CompletionItemKind.Event;
+                                            memberKind = CompletionItemKind.Event;
                                             break;
                                         }
                                     default:
-                                        memberKind = vscode.CompletionItemKind.Text;
+                                        memberKind = CompletionItemKind.Text;
                                         break;
                                 }
 
@@ -246,7 +246,7 @@ export class CSScriptCompletionItemProvider implements vscode.CompletionItemProv
 
 let syntaxer_navigate_selectedLine = -1;
 
-vscode.window.onDidChangeActiveTextEditor(editor => {
+window.onDidChangeActiveTextEditor(editor => {
 
     // 'new Location(...' in CSScriptDefinitionProvider does scrolling correctly but does not do the selection
 
@@ -260,7 +260,7 @@ vscode.window.onDidChangeActiveTextEditor(editor => {
     }
 });
 
-export class CSScriptDocFormattingProvider implements vscode.DocumentFormattingEditProvider {
+export class CSScriptDocFormattingProvider implements DocumentFormattingEditProvider {
     public provideDocumentFormattingEdits(document: TextDocument, options: FormattingOptions, token: CancellationToken): ProviderResult<TextEdit[]> {
 
         let result: TextEdit[] = [];
@@ -269,7 +269,7 @@ export class CSScriptDocFormattingProvider implements vscode.DocumentFormattingE
         if (!is_workspace)
             return new Promise((resolve, reject) => {
 
-                let editor = vscode.window.activeTextEditor;
+                let editor = window.activeTextEditor;
                 let position = editor.selection.start;
 
 
@@ -281,7 +281,7 @@ export class CSScriptDocFormattingProvider implements vscode.DocumentFormattingE
                             let info = data.lines(2);
 
                             let newText = data.substring(info[0].length + 1);
-                            let wholeDoc = new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length));
+                            let wholeDoc = new Range(document.positionAt(0), document.positionAt(document.getText().length));
 
                             result.push(new TextEdit(wholeDoc, newText));
 
@@ -290,7 +290,7 @@ export class CSScriptDocFormattingProvider implements vscode.DocumentFormattingE
                             // setTimeout(()=>
                             // {
                             //     let newPosition = document.positionAt(Number(info[0]));
-                            //     let newSelection = new vscode.Selection(newPosition, newPosition)
+                            //     let newSelection = new Selection(newPosition, newPosition)
                             //     editor.selection = newSelection;
                             //     editor.revealRange(editor.selection);
                             // }, 300);
@@ -305,7 +305,7 @@ export class CSScriptDocFormattingProvider implements vscode.DocumentFormattingE
             return null;
     }
 }
-export class CSScriptLinkProvider implements vscode.DocumentLinkProvider {
+export class CSScriptLinkProvider implements DocumentLinkProvider {
 
     private _linkPattern = /.*?\(.*?\):/g; // VS classic link pattern <file>(<line>,<column>): <info>
 
@@ -313,7 +313,7 @@ export class CSScriptLinkProvider implements vscode.DocumentLinkProvider {
 
         let result: DocumentLink[] = [];
 
-        let enabled = VSCodeSettings.get("cs-script.decorate_file_links_in_output", true);
+        let enabled = vsc_config.get("cs-script.decorate_file_links_in_output", true);
 
         if (enabled)
             return new Promise((resolve, reject) => {
@@ -326,14 +326,14 @@ export class CSScriptLinkProvider implements vscode.DocumentLinkProvider {
                     let matchText = match[0];
 
                     let info = ErrorInfo.parse(matchText);
-                    let targetPosUri = vscode.Uri.file(info.file)
+                    let targetPosUri = Uri.file(info.file)
                         .with({ fragment: `${1 + info.range.start.line}` })
 
                     let linkEnd = document.positionAt(this._linkPattern.lastIndex - 1);
                     let linkStart = document.positionAt(this._linkPattern.lastIndex - 1 - matchText.length);
 
                     result.push(new DocumentLink(
-                        new vscode.Range(linkStart, linkEnd),
+                        new Range(linkStart, linkEnd),
                         targetPosUri));
                 }
 
@@ -344,9 +344,9 @@ export class CSScriptLinkProvider implements vscode.DocumentLinkProvider {
     }
 }
 
-export class CSScriptCodeActionProvider implements vscode.CodeActionProvider {
+export class CSScriptCodeActionProvider implements CodeActionProvider {
 
-    public provideCodeActions(document: vscode.TextDocument, range: vscode.Range, context: vscode.CodeActionContext, token: vscode.CancellationToken): vscode.ProviderResult<(Command | CodeAction)[]> {
+    public provideCodeActions(document: TextDocument, range: Range, context: CodeActionContext, token: CancellationToken): ProviderResult<(Command | CodeAction)[]> {
 
         let result: CodeAction[] = [];
 
@@ -409,10 +409,10 @@ export class CSScriptCodeActionProvider implements vscode.CodeActionProvider {
                                             if (insertion_pos) {
 
                                                 insert_action = new CodeAction(`Add "${new_using}"`);
-                                                insert_action.kind = vscode.CodeActionKind.RefactorRewrite;
+                                                insert_action.kind = CodeActionKind.RefactorRewrite;
                                                 insert_action.edit = new WorkspaceEdit();
 
-                                                insert_action.edit.insert(vscode.Uri.file(document.fileName), insertion_pos, new_using + eol);
+                                                insert_action.edit.insert(Uri.file(document.fileName), insertion_pos, new_using + eol);
                                             }
                                         }
                                         else
@@ -436,9 +436,9 @@ export class CSScriptCodeActionProvider implements vscode.CodeActionProvider {
 
                                         if (!already_fully_specified && !already_present) {
                                             replace_action = new CodeAction(`Change "${word}" to "${line}.${word}"`);
-                                            replace_action.kind = vscode.CodeActionKind.RefactorRewrite;
+                                            replace_action.kind = CodeActionKind.RefactorRewrite;
                                             replace_action.edit = new WorkspaceEdit();
-                                            replace_action.edit.replace(vscode.Uri.file(document.fileName), word_range, replacement_word);
+                                            replace_action.edit.replace(Uri.file(document.fileName), word_range, replacement_word);
                                         }
 
                                         if (insert_action && replace_action) {
@@ -450,7 +450,7 @@ export class CSScriptCodeActionProvider implements vscode.CodeActionProvider {
 
                                 if (!already_handled) {
                                     new_usings.forEach(x => result.push(x));
-                                    let enable_grouping = VSCodeSettings.get("cs-script.group_suggested_code_actions", true);
+                                    let enable_grouping = vsc_config.get("cs-script.group_suggested_code_actions", true);
                                     if (enable_grouping)
                                         result.push(new CodeAction(`--------------------------`));
                                     new_replacements.forEach(x => result.push(x));
@@ -469,15 +469,15 @@ export class CSScriptCodeActionProvider implements vscode.CodeActionProvider {
     }
 }
 
-export class CSScriptSignatureHelpProvider implements vscode.SignatureHelpProvider {
+export class CSScriptSignatureHelpProvider implements SignatureHelpProvider {
 
     public provideSignatureHelp(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<SignatureHelp> {
 
         // let res = new SignatureHelp();
-        // let sig = new vscode.SignatureInformation('*TestMethod* (int param_a, int param_a)');
+        // let sig = new SignatureInformation('*TestMethod* (int param_a, int param_a)');
         // sig.documentation = "General description";
-        // sig.parameters.push(new vscode.ParameterInformation('param_a', "param_a description"));
-        // sig.parameters.push(new vscode.ParameterInformation('param_b', "param_b description"));
+        // sig.parameters.push(new ParameterInformation('param_a', "param_a description"));
+        // sig.parameters.push(new ParameterInformation('param_b', "param_b description"));
         // res.signatures.push(sig);
         // res.activeSignature = 0;
         // res.activeParameter = 1;
@@ -532,7 +532,7 @@ export class CSScriptSignatureHelpProvider implements vscode.SignatureHelpProvid
     }
 }
 
-export class CSScriptReferenceProvider implements vscode.ReferenceProvider {
+export class CSScriptReferenceProvider implements ReferenceProvider {
 
     public provideReferences(document: TextDocument, position: Position, context: ReferenceContext, token: CancellationToken): ProviderResult<Location[]> {
 
@@ -556,7 +556,7 @@ export class CSScriptReferenceProvider implements vscode.ReferenceProvider {
 
                             lines.forEach(line => {
                                 let info = ErrorInfo.parse(line);
-                                result.push(new Location(vscode.Uri.file(info.file), info.range));
+                                result.push(new Location(Uri.file(info.file), info.range));
                             });
                         }
                         resolve(result);
@@ -569,7 +569,7 @@ export class CSScriptReferenceProvider implements vscode.ReferenceProvider {
     }
 
 }
-export class CSScriptRenameProvider implements vscode.RenameProvider {
+export class CSScriptRenameProvider implements RenameProvider {
 
     public provideRenameEdits(document: TextDocument, position: Position, newName: string, token: CancellationToken): ProviderResult<WorkspaceEdit> {
 
@@ -600,7 +600,7 @@ export class CSScriptRenameProvider implements vscode.RenameProvider {
                                     // console.log(line);
 
                                     let info = ErrorInfo.parse(line);
-                                    let range = new vscode.Range(info.range.start, new Position(info.range.start.line, info.range.start.character + word_width));
+                                    let range = new Range(info.range.start, new Position(info.range.start.line, info.range.start.character + word_width));
 
 
                                     let edits = changes[info.file];
@@ -614,7 +614,7 @@ export class CSScriptRenameProvider implements vscode.RenameProvider {
 
                                 for (let file in changes) {
                                     let edits = changes[file];
-                                    let uri = vscode.Uri.file(utils.clear_temp_file_suffixes(file));
+                                    let uri = Uri.file(utils.clear_temp_file_suffixes(file));
                                     result.set(uri, edits);
                                 }
                             }
@@ -633,7 +633,7 @@ export class CSScriptRenameProvider implements vscode.RenameProvider {
 
 }
 
-export class CSScriptDefinitionProvider implements vscode.DefinitionProvider {
+export class CSScriptDefinitionProvider implements DefinitionProvider {
 
     public provideDefinition(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<Definition> {
 
@@ -662,7 +662,7 @@ export class CSScriptDefinitionProvider implements vscode.DefinitionProvider {
 
                             if (file.length > 0) {
                                 syntaxer_navigate_selectedLine = line;
-                                result = new Location(vscode.Uri.file(file), new Range(new Position(line, 0), new Position(line, 0)));
+                                result = new Location(Uri.file(file), new Range(new Position(line, 0), new Position(line, 0)));
 
                                 // It's the same file so no doc change event will be fired on navigation.
                                 // Thus so no line with the cursor will be selected in the event handler.
