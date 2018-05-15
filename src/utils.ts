@@ -933,27 +933,29 @@ export function ensure_default_config(cscs_exe: string, on_done?: (file: string)
 
         Utils.Run(command, (code, output) => {
 
+
             // C:\Program Files (x86)\Mono\lib\mono\4.5\Facades</searchDirs>
-
-            let updated_config = output
-                .replace("</defaultArguments>", " -l -ac:1</defaultArguments>")
-                .replace("</searchDirs>", "%MONO%/4.5/Facades</searchDirs>")
-                .replace("</defaultRefAssemblies>", "System.dll;System.ValueTuple.dll</defaultRefAssemblies>")
-                .replace("<useAlternativeCompiler></useAlternativeCompiler>", "<useAlternativeCompiler>CSSRoslynProvider.dll</useAlternativeCompiler>");
-
+            let updated_config = "<!-- Config file for the cases when CS-Script is hosted under Mono. -->" + os.EOL +
+                output
+                    .replace("</defaultArguments>", " -l -ac:1</defaultArguments>")
+                    .replace("</searchDirs>", "%MONO%/4.5/Facades</searchDirs>")
+                    .replace("</defaultRefAssemblies>", "System.dll;System.ValueTuple.dll</defaultRefAssemblies>")
+                    .replace("<useAlternativeCompiler></useAlternativeCompiler>", "<useAlternativeCompiler>CSSRoslynProvider.dll</useAlternativeCompiler>");
             fs.writeFileSync(config_file, updated_config, { encoding: 'utf8' });
 
             if (os.platform() == 'win32') {
                 let config_file_win = path.join(path.dirname(cscs_exe), 'css_config.xml');
-                let updated_config = output
-                    .replace("</defaultArguments>", " -l -ac:1</defaultArguments>")
-                    .replace("</searchDirs>", "%cscs_exe_dir%/roslyn</searchDirs>")
-                    // after .NET4.7 referencing System.dll;System.ValueTuple.dll is no longer required
-                    // .replace("</defaultRefAssemblies>", "System.dll;System.ValueTuple.dll</defaultRefAssemblies>") 
-                    .replace("<useAlternativeCompiler></useAlternativeCompiler>", "<useAlternativeCompiler>CSSRoslynProvider.dll</useAlternativeCompiler>");
+                let updated_config = "<!-- Config file for the cases when CS-Script is hosted under .NET and css_config.mono.xml is not present. -->" + os.EOL +
+                    output
+                        .replace("</defaultArguments>", " -l -ac:1</defaultArguments>")
+                        .replace("</searchDirs>", "%cscs_exe_dir%/roslyn</searchDirs>")
+                        // after .NET4.7 referencing System.dll;System.ValueTuple.dll is no longer required
+                        // .replace("</defaultRefAssemblies>", "System.dll;System.ValueTuple.dll</defaultRefAssemblies>") 
+                        .replace("<useAlternativeCompiler></useAlternativeCompiler>", "<useAlternativeCompiler>CSSRoslynProvider.dll</useAlternativeCompiler>");
 
                 fs.writeFileSync(config_file_win, updated_config, { encoding: 'utf8' });
             }
+
 
             if (on_done)
                 on_done(config_file);

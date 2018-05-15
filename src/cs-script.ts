@@ -435,8 +435,20 @@ export async function find_references() {
 // -----------------------------------
 export function css_config() {
   utils.ensure_default_config(cscs_exe,
-    config_file =>
-      commands.executeCommand("vscode.open", Uri.file(config_file)));
+    async config_file => {
+
+      const opts: vscode.TextDocumentShowOptions = {
+        preserveFocus: true,
+        preview: true,
+        viewColumn: vscode.ViewColumn.Two
+      };
+
+      let mono_config = config_file;
+      let net_config = config_file.replace("css_config.mono.xml", "css_config.xml");
+      await commands.executeCommand("vscode.open", Uri.file(mono_config));
+      await commands.executeCommand("vscode.open", Uri.file(net_config), opts);
+    }
+  );
 }
 // -----------------------------------
 export function about() {

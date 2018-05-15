@@ -80,7 +80,7 @@
         "cs-script.dotnet_run_host_on_win": {
           "type": "boolean",
           "default": "false",
-          "description": "Allows running scripts ('CS-Script: run' command) on Windows under .NET instead of Mono. Other command are not affected. Lets achieve a faster script loading on Windows."
+          "description": "Allows running scripts ('CS-Script: run' command) on Windows under .NET instead of Mono. The 'Debug' command is not affected. This setting allows achieving faster script loading on Windows. If it is set to 'true' then an alternative config file `css_config.xml` is used instead of the default (`css_config.mono.xml`) for running the script"
         },
         "cs-script.debug_as_external_console": {
           "type": "boolean",
