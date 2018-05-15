@@ -697,8 +697,9 @@ export function build_exe() {
   });
 }
 
+var debugging = false;
 // -----------------------------------
-export function debug() {
+export async function debug() {
 
   let workspace_loaded = workspace.workspaceFolders != undefined;
   let suppress_for_workspaces = vsc_config.get("cs-script.suppress_script_debug_for_workspaces");
@@ -711,7 +712,13 @@ export function debug() {
         // workspace is loaded so use its launch confg
         const launchFile = workspace.getConfiguration("launch");
         const configs = launchFile.get<any[]>("configurations");
-        vscode.debug.startDebugging(workspace.workspaceFolders[0], configs[0]);
+        vscode.debug.onDidTerminateDebugSession(session => {
+          debugging = false;
+        });
+        if (!debugging) {
+          debugging = true;
+          await vscode.debug.startDebugging(workspace.workspaceFolders[0], configs[0]);
+        }
       }
     }
     return;

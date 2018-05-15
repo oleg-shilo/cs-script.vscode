@@ -2,7 +2,7 @@
   "name": "cs-script",
   "displayName": "CS-Script",
   "description": "Execution, debugging and editing C# code that targets .NET and Mono (no .NET Core required)",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "license": "MIT",
   "publisher": "oleg-shilo",
   "icon": "images/css_logo.png",
@@ -79,22 +79,22 @@
         },
         "cs-script.dotnet_run_host_on_win": {
           "type": "boolean",
-          "default": "false",
+          "default": false,
           "description": "Allows running scripts ('CS-Script: run' command) on Windows under .NET instead of Mono. The 'Debug' command is not affected. This setting allows achieving faster script loading on Windows. If it is set to 'true' then an alternative config file `css_config.xml` is used instead of the default (`css_config.mono.xml`) for running the script"
         },
         "cs-script.debug_as_external_console": {
           "type": "boolean",
-          "default": "false",
+          "default": false,
           "description": "Runs the script in external console during debugging."
         },
         "cs-script.fallback_to_launch_json": {
           "type": "boolean",
-          "default": "false",
+          "default": false,
           "description": "Fallback to workspace launch.json based debugging (first found configuration) when CS-Script debugging is triggered while workspace is loaded. This setting has no effect when `suppress_script_debug_for_workspaces` is enabled."
         },
         "cs-script.suppress_script_debug_for_workspaces": {
           "type": "boolean",
-          "default": "false",
+          "default": false,
           "description": "Allows staring CS-Script specific debugging while workspace is loaded and launch.json based debugging is available. By defaukt CS-Script debugging is only enabled for C# files (but not folders) loaded in VSCode. If this property is enabled you can use both CS-Script and workspace debugging. Enabling this setting efectivelly disables `fallback_to_launch_json`"
         },
         "cs-script.extra_args_for_debug": {
@@ -341,7 +341,8 @@
     "keybindings": [
       {
         "key": "alt+f5",
-        "command": "cs-script.debug"
+        "command": "cs-script.debug",
+        "when": "!inDebugMode"
       },
       {
         "key": "ctrl+f5",

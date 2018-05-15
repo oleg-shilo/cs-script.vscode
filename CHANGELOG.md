@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.5.3
+
+- Added "!inDebugMode" condition for "cs-script.debug" command.
+- Issue #10: CSSConfig: searchDirs parameter not working. 
+- Edit engine setting command now opens both .NET and Mono settings' files  
+
 ## 1.5.2
 
 - Add option to suppress execute/debug in workspace mode (`cs-script.suppress_script_debug_for_workspaces`).
