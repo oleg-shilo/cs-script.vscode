@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.5.4
+
+- Added handling/processing unsaved changes in the source files without creating a `<file>.$temp$.cs` file in the script directory. 
+
+
 ## 1.5.3
 
 - Added "!inDebugMode" condition for "cs-script.debug" command.

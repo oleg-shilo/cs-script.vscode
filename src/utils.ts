@@ -4,6 +4,7 @@
 
 import * as vscode from "vscode";
 import * as os from "os";
+import * as crypto from "crypto";
 // import * as fx_extra from "fs-extra";
 // import * as net from "net";
 import * as path from "path";
@@ -37,6 +38,9 @@ export let omnisharp_dir: string;
 export let isWin: boolean = (os.platform() == 'win32');
 export let settings: Settings;
 export let diagnosticCollection: vscode.DiagnosticCollection;
+
+let sources_temp_dir = path.join(os.tmpdir(), "Roslyn.Intellisense", "sources");
+create_dir(sources_temp_dir);
 
 declare global {
     interface String {
@@ -610,13 +614,13 @@ export function select_line(line: number): void {
 
 export function save_as_temp(content: string, script_file: string): string {
 
-    let dir = path.dirname(script_file);
+    let id = crypto.randomBytes(16).toString("hex");
+
     let ext = path.extname(script_file);
-    let name = path.basename(script_file, ext);
+    let link_info = "//css_syntaxer source:" + script_file;
+    let temp_file = path.join(sources_temp_dir, id + ext);
 
-    let temp_file = path.join(dir, name + '.$temp$' + ext);
-
-    fs.writeFileSync(temp_file, content, { encoding: 'utf8' });
+    fs.writeFileSync(temp_file, link_info + "\n" + content, { encoding: 'utf8' });
 
     return temp_file;
 }
