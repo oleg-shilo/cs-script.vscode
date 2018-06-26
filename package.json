@@ -2,7 +2,7 @@
   "name": "cs-script",
   "displayName": "CS-Script",
   "description": "Execution, debugging and editing C# code that targets .NET and Mono (no .NET Core required)",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "license": "MIT",
   "publisher": "oleg-shilo",
   "icon": "images/css_logo.png",
@@ -66,6 +66,11 @@
           "type": "boolean",
           "default": true,
           "description": "Allow navigation on a single click (without any keyboard mdifiers) on the output panel text that is a file path with the location (e.g. \"C:/temp/script.cs(10,20): Error: invalid symbol\")."
+        },
+        "cs-script.enable_code_formatting": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enables code formatting based on Roslyn default formatting style provided by this extension. This can be useful if an alternative formatting technique is preferred."
         },
         "cs-script.select_line_on_navigate_from_output": {
           "type": "boolean",

@@ -191,7 +191,7 @@ export function lock(): boolean {
 
     if (!_environment_ready) {
         if (_environment_compatible)
-            vscode.window.showErrorMessage(`Cannot detect required Mono version (${min_required_mono}). Install it from http://www.mono-project.com/download/`);
+            vscode.window.showErrorMessage(`Cannot detect required Mono version (${min_required_mono}). Install it from http://www.mono-project.com/download/ or ensure it is in system PATH.`);
         return false;
     }
 
@@ -426,12 +426,37 @@ export function compare_versions(a: string, b: string): Number {
 }
 
 function check_environment(): void {
+
+    let command = 'mono --version';
+
+    let output: string;
+
     try {
 
-        // let mono_found = true;
+        output = execSync(command).toString();
 
-        let command = 'mono --version';
-        let output: string = execSync(command).toString();
+    } catch (error) {
+        let platform = os.platform();
+        console.log(platform);
+
+        if (os.platform() == 'win32') {
+            let mono_dir = path.join(process.env.ProgramFiles, "Mono", "bin");
+            if (fs.existsSync(path.join(mono_dir, "mono.exe"))) {
+                if (!process.env.path.contains(mono_dir))
+                    process.env.path = process.env.path + ";" + mono_dir;
+            }
+        }
+        else {
+            console.log(error);
+            vscode.window.showErrorMessage('CS-Script: ' + String(error));
+            return;
+        }
+    }
+
+    try {
+
+        if (!output)
+            output = execSync(command).toString();
 
         // Mono JIT compiler version 5.0.1 (Visual Studio built mono)
         let firstLine = output.trim().lines()[0];
@@ -540,8 +565,10 @@ export function deploy_roslyn(): void {
 
     copy_file_to_sync("syntaxer.exe", path.join(ext_dir, 'bin'), dest_dir);
 
-    let command = 'mono "' + path.join(dest_dir, 'syntaxer.exe') + '" -dr';
-    execSync(command);
+    if (_environment_ready) {
+        let command = 'mono "' + path.join(dest_dir, 'syntaxer.exe') + '" -dr';
+        execSync(command);
+    }
 }
 
 export function prepare_new_script(): string {

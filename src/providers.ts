@@ -265,8 +265,9 @@ export class CSScriptDocFormattingProvider implements DocumentFormattingEditProv
 
         let result: TextEdit[] = [];
         let is_workspace = isWorkspace();
+        let enabled = vsc_config.get("cs-script.enable_code_formatting", true);
 
-        if (!is_workspace)
+        if (!is_workspace && enabled)
             return new Promise((resolve, reject) => {
 
                 let editor = window.activeTextEditor;

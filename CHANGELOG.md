@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.5.5
+
+- Added option to `cs-script.enable_code_formatting` enable/disable document formatting provider.
+- Added handling the case of MONO being installed but not added to PATH. Note, this only helps for running the scripts but not for debugging, which is handled entirely by VSCode. 
+
 ## 1.5.4
 
 - Added handling/processing unsaved changes in the source files without creating a `<file>.$temp$.cs` file in the script directory. 
