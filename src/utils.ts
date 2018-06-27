@@ -639,7 +639,7 @@ export function select_line(line: number): void {
     }
 }
 
-export function save_as_temp(content: string, script_file: string): string {
+export function save_as_temp(content: string, script_file: string, inject_source_info: boolean): string {
 
     let id = crypto.randomBytes(16).toString("hex");
 
@@ -647,7 +647,10 @@ export function save_as_temp(content: string, script_file: string): string {
     let link_info = "//css_syntaxer source:" + script_file;
     let temp_file = path.join(sources_temp_dir, id + ext);
 
-    fs.writeFileSync(temp_file, link_info + "\n" + content, { encoding: 'utf8' });
+    if (inject_source_info)
+        content = link_info + "\n" + content;
+
+    fs.writeFileSync(temp_file, content, { encoding: 'utf8' });
 
     return temp_file;
 }

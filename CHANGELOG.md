@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.5.6
+
+- Fixed problem with the injected `//css_syntaxer` directives not being cleared after CS-Script document formatting.
+
 ## 1.5.5
 
 - Added option to `cs-script.enable_code_formatting` enable/disable document formatting provider.

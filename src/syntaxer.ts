@@ -71,8 +71,8 @@ export class Syntaxer {
 		});
 	}
 
-	public static send_request(request: string, code: string, file: string, resolve, reject): void {
-		let temp_file = save_as_temp(code, file);
+	public static send_request(request: string, code: string, file: string, resolve, reject, inject_source_info: boolean = true): void {
+		let temp_file = save_as_temp(code, file, inject_source_info);
 
 		Syntaxer.send(request.replace("$temp_file$", temp_file),
 			data => {
@@ -151,7 +151,7 @@ export class Syntaxer {
 	public static doDocFormat(code: string, file: string, position: number, resolve, reject): void {
 
 		let request = `-client:${process.pid}\n-op:format\n-script:$temp_file$\n-pos:${position}`;
-		Syntaxer.send_request(request, code, file, resolve, reject);
+		Syntaxer.send_request(request, code, file, resolve, reject, false);
 	}
 
 	public static getDefinition(code: string, file: string, position: number, resolve, reject): void {
