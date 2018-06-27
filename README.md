@@ -6,7 +6,7 @@ This extension Intellisense support for VB.NET scripts is currently limited to W
 
 ---
 
-Note this extension depends on "ms-vscode.mono-debug" and "ms-vscode.csharp". Thus if these extensions are installed but function incorrectly please log error reports at their corresponding web sites.
+Note this extension depends on "ms-vscode.mono-debug" and "ms-vscode.csharp". Thus if these extensions are installed but function incorrectly please log error reports at their corresponding web sites. Read section "Minimal set of dependencies" for more details.
 
 ---
 
