@@ -86,6 +86,7 @@ Note, you may need to add Mono to the system path manually if it didn't happen f
   All CS-Script features:
 
   - Direct execution of "plain vanilla" C# files without defining any project infrastructure.
+  - You can also execute classless script without entry any point. See [auto-class](https://github.com/oleg-shilo/cs-script/wiki/CLI---User-Guide#command-auto-class) for details.
   - Converting/Building a script into an assembly or a self contained executable.
   - Inclusion of the dependency scripts via CS-Script directives:
     - Importing other C# scripts

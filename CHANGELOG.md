@@ -1,5 +1,18 @@
 # Change Log
 
+## 1.5.7
+
+- Added support for debugging classless scripts directly (without decorated source file).
+- Added support for freestyle classless scripts without any entry point defined:
+```C#
+    //css_ac freestyle
+    using System;
+    using System.IO;
+
+    foreach (var file in Directory.GetFiles(@".\"))
+        Console.WriteLine(file);
+```
+
 ## 1.5.6
 
 - Fixed problem with the injected `//css_syntaxer` directives not being cleared after CS-Script document formatting.

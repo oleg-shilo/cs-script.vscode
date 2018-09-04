@@ -22,7 +22,7 @@ export function start_syntaxer(): void {
 	if (utils.isWin) {
 		// SERVER = "E:\\<company_name>\\Projects\\Sublime\\cs-script\\syntaxer\\bin\\Debug\\syntaxer.exe";
 
-		// On Windows Syntaxer:RoslynIntellisense.AutoCompleter.FindReferences throws Roalyn..CodeAnalysis exception
+		// On Windows Syntaxer:RoslynIntellisense.AutoCompleter.FindReferences throws Roslyn..CodeAnalysis exception
 		// when run under mono. And yet everything is OK on Linux
 		child_process.execFile(SERVER, [`-port:${PORT}`, "-listen", `-client:${process.pid}`, "-timeout:60000", `-cscs_path:${CSCS}`]);
 	}
