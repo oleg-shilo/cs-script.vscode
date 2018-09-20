@@ -225,6 +225,14 @@ By default, when you just open a C#/VB.NET file the all development activities a
 
 ![image](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_projB.gif)
 
+## VB.NET support
+
+CS-Script supports VB.NET scripts as long as the underlying compiling services  (Roslyn) support the syntax. Thus you can execute any VB.NET script by simply loading it into the editor and then executing it the same way as C# scripts.
+
+![image](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_vb.gif)
+
+The only limitation to that is that certain Intellisesne features may not work on Linux. And you will need to place break points programmatically (image above) since VSCode does not support VB syntax natively.  
+
 ## Limitations
 
 _**C# 7**_
