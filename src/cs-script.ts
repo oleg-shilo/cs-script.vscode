@@ -122,7 +122,7 @@ export function load_project() {
                 // configuration.set('show_load_proj_info', false);
 
                 settings.show_load_proj_info = false;
-                settings.Save();
+                utils.Settings.Save(settings);
 
                 setTimeout(() => commands.executeCommand("vscode.openFolder", Uri.parse(csproj_dir)), 100);
               }

@@ -1,9 +1,10 @@
 # Change Log
 
-## 1.5.8
+## 1.5.8-9
 
 - Fixed problem with the "Unable to open" error at startup when `open_file_at_startup` is set to empty string.
 - Added work around for failure of Roslyn- based `ICodeCompiler` to run on OSX.  Implemented by setting `useAlternativeCompiler:none` and effectively downgrading C# syntax support to version 6.
+- Fixed problem with `Settings` not being saved in case of the instance being load from the JSON file.
 
 ## 1.5.7
 

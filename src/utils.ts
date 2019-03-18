@@ -326,6 +326,7 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     omnisharp_dir = path.join(vscode.extensions.getExtension('ms-vscode.csharp').extensionPath, '.omnisharp', 'omnisharp');
 
     ver_file = path.join(user_dir(), 'vscode.css_version.txt');
+
     settings = Settings.Load();
 
     check_environment();
@@ -785,19 +786,8 @@ export class Settings {
 
     private _file: string;
 
-    public Save(file?: string) {
-
-        let file_path = path.join(user_dir(), 'settings.json');
-
-        if (file != null) file_path = file;
-        else if (this._file != null) file_path = this._file;
-
-        fs.writeFile(file_path, JSON.stringify(this), { encoding: 'utf8' })
-    }
-
-    public static _Save(_this: Settings, file?: string): void {
-        // for some strange reason if `this.Save` is called from utils.ts it fails. But calling static `Settings._Save` and
-        // passing the isnatnce of `this` works.
+    public static Save(_this: Settings, file?: string): void {
+        // needs to be a static as for Settings.Load can possibly return json object without any methods
         let file_path = path.join(user_dir(), 'settings.json');
 
         if (file != null) file_path = file;
@@ -991,7 +981,7 @@ export function disable_roslyn_on_osx() {
             if (patched) {
                 window.showErrorMessage("CS-Script: Due to the problems with Mono implementation of 'ICodeCompiler' on OSX the supported script syntax is reduced to C#6.");
                 settings.need_check_roslyn_on_OSX = false;
-                Settings._Save(settings);
+                Settings.Save(settings);
                 fs.writeFileSync(config_file, config_data, { encoding: 'utf8' })
             }
         }
