@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.5.8
+
+- Fixed problem with the "Unable to open" error at startup when `open_file_at_startup` is set to empty string.
+
 ## 1.5.7
 
 - Added support for debugging classless scripts directly (without decorated source file).

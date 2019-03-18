@@ -1036,7 +1036,8 @@ export function ActivateDiagnostics(context: ExtensionContext) {
     workspace.onDidCloseTextDocument(onDidCloseTextDocument);
 
     let file = ext_context.globalState.get("cs-script.open_file_at_startup", "");
-    if (file != null) {
+
+    if (file != null && file != "") {
       ext_context.globalState.update(startup_file_key, "");
       commands.executeCommand("vscode.open", Uri.file(file));
     }
@@ -1045,7 +1046,8 @@ export function ActivateDiagnostics(context: ExtensionContext) {
   }
   catch (error) {
     // console.log(error);
-    window.showErrorMessage(String(error));
+    window.showErrorMessage("CS-Script: " + String(error));
+
   }
 }
 // -----------------------------------

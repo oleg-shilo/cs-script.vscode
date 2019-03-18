@@ -101,7 +101,7 @@ Note, you may need to add Mono to the system path manually if it didn't happen f
 
 Below are the road map highlights only. Some more detailed information are available in the last section of this document.
 
-- Add support fro C# 7 just out of box. (**_Done in v1.2.0_**)
+- Add support for C# 7 just out of box. (**_Done in v1.2.0_**)
 - Add toolbar buttons for most frequent CS-Script commands. (**_Done in v1.2.0_**)
 - Adding a [custom view](https://code.visualstudio.com/updates/v1_13#_custom-views) (script project tree) containing all script dependencies (e.g. imported scripts, DLLs) (**_Done in v1.3.0_**)
 - Integrate CS-Script specific autocompletion with default C# autocompletion (OmniSharp). (**_Done in v1.3.0_**)
