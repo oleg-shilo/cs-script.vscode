@@ -5,7 +5,6 @@
 - Fixed problem with the "Unable to open" error at startup when `open_file_at_startup` is set to empty string.
 - Added work around for failure of Roslyn- based `ICodeCompiler` to run on OSX.  Implemented by setting `useAlternativeCompiler:none` and effectively downgrading C# syntax support to version 6.
 
-
 ## 1.5.7
 
 - Added support for debugging classless scripts directly (without decorated source file).
