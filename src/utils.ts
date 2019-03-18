@@ -330,6 +330,7 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
 
     check_environment();
     deploy_engine();
+    disable_roslyn_on_osx();
 
     return diagnosticCollection;
 }
@@ -780,6 +781,7 @@ export class Settings {
 
     public show_load_proj_info: boolean = true;
     public show_readme: boolean = true;
+    public need_check_roslyn_on_OSX: boolean = true;
 
     private _file: string;
 
@@ -793,7 +795,18 @@ export class Settings {
         fs.writeFile(file_path, JSON.stringify(this), { encoding: 'utf8' })
     }
 
-    public static Load(file?: string) {
+    public static _Save(_this: Settings, file?: string): void {
+        // for some strange reason if `this.Save` is called from utils.ts it fails. But calling static `Settings._Save` and
+        // passing the isnatnce of `this` works.
+        let file_path = path.join(user_dir(), 'settings.json');
+
+        if (file != null) file_path = file;
+        else if (_this._file != null) file_path = _this._file;
+
+        fs.writeFileSync(file_path, JSON.stringify(_this), { encoding: 'utf8' })
+    }
+
+    public static Load(file?: string): Settings {
 
         let file_path = path.join(user_dir(), 'settings.json');
         if (file != null) file_path = file;
@@ -954,6 +967,37 @@ export function preload_roslyn() {
     } catch (error) {
     }
 }
+
+export function disable_roslyn_on_osx() {
+
+    if (os.platform() == 'darwin' && settings.need_check_roslyn_on_OSX) {
+
+        let config_file = path.join(user_dir(), 'css_config.mono.xml');
+
+        if (fs.existsSync(config_file)) {
+
+            let config_data = fs.readFileSync(config_file, 'utf8');
+            let patched = false;
+
+            if (config_data.includes("<useAlternativeCompiler></useAlternativeCompiler>")) {
+                config_data = config_data.replace("<useAlternativeCompiler></useAlternativeCompiler>", "<useAlternativeCompiler>none</useAlternativeCompiler>");
+                patched = true;
+            }
+            if (config_data.includes("<useAlternativeCompiler>CSSRoslynProvider.dll</useAlternativeCompiler>")) {
+                config_data = config_data.replace("<useAlternativeCompiler>CSSRoslynProvider.dll</useAlternativeCompiler>", "<useAlternativeCompiler>none</useAlternativeCompiler>");
+                patched = true;
+            }
+
+            if (patched) {
+                window.showErrorMessage("CS-Script: Due to the problems with Mono implementation of 'ICodeCompiler' on OSX the supported script syntax is reduced to C#6.");
+                settings.need_check_roslyn_on_OSX = false;
+                Settings._Save(settings);
+                fs.writeFileSync(config_file, config_data, { encoding: 'utf8' })
+            }
+        }
+    }
+}
+
 export function ensure_default_config(cscs_exe: string, on_done?: (file: string) => void) {
 
     let config_file = path.join(path.dirname(cscs_exe), 'css_config.mono.xml');
@@ -967,6 +1011,11 @@ export function ensure_default_config(cscs_exe: string, on_done?: (file: string)
 
         Utils.Run(command, (code, output) => {
 
+            let roslyn_compiler_name = "CSSRoslynProvider.dll";
+            if (os.platform() == 'darwin') {
+                roslyn_compiler_name = "none";
+                window.showErrorMessage("CS-Script: Due to the problems with Mono implementation of 'ICodeCompiler' on OSX the supported script syntax is reduced to C#6.");
+            }
 
             // C:\Program Files (x86)\Mono\lib\mono\4.5\Facades</searchDirs>
             let updated_config = "<!-- Config file for the cases when CS-Script is hosted under Mono. -->" + os.EOL +
@@ -974,7 +1023,8 @@ export function ensure_default_config(cscs_exe: string, on_done?: (file: string)
                     .replace("</defaultArguments>", " -l -ac:1</defaultArguments>")
                     .replace("</searchDirs>", "%MONO%/4.5/Facades</searchDirs>")
                     .replace("</defaultRefAssemblies>", "System.dll;System.ValueTuple.dll</defaultRefAssemblies>")
-                    .replace("<useAlternativeCompiler></useAlternativeCompiler>", "<useAlternativeCompiler>CSSRoslynProvider.dll</useAlternativeCompiler>");
+                    .replace("<useAlternativeCompiler></useAlternativeCompiler>", "<useAlternativeCompiler>" + roslyn_compiler_name + "</useAlternativeCompiler>");
+
             fs.writeFileSync(config_file, updated_config, { encoding: 'utf8' });
 
             if (os.platform() == 'win32') {
