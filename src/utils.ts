@@ -284,15 +284,28 @@ export function user_dir(): string {
     // Mac $HOME/Library/Application Support/Code/User/settings.json
     // Linux $HOME/.config/Code/User/settings.json
 
+    // extension location:
+    //   portable:  <VSCode-dir>\data\extensions\oleg-shilo.cs-script-1.5.9\out
+    //   installed: c:\Users\<user>\.vscode\extensions\oleg-shilo.cs-script-1.5.9\out
+    //   debug:     <repo>\Projects\cs-script.vscode\out"
+
+    let extensionRoot = path.dirname(path.dirname(path.dirname(__dirname)));
+    let isPortable = path.basename(extensionRoot).toLowerCase() == "data" || path.basename(extensionRoot).toLowerCase() == "code-portable-data";
+
     if (!_user_dir) {
-        if (os.platform() == 'win32') {
-            _user_dir = path.join(process.env.APPDATA, 'Code', 'User', 'cs-script.user');
-        }
-        else if (os.platform() == 'darwin') {
-            _user_dir = path.join(process.env.HOME, 'Library', 'Application Support', 'Code', 'User', 'cs-script.user');
-        }
-        else {
-            _user_dir = path.join(process.env.HOME, '.config', 'Code', 'User', 'cs-script.user');
+
+        if (isPortable) {
+            _user_dir = path.join(extensionRoot, 'user-data', 'cs-script.user');
+        } else {
+            if (os.platform() == 'win32') { // win
+                _user_dir = path.join(process.env.APPDATA, 'Code', 'User', 'cs-script.user');
+            }
+            else if (os.platform() == 'darwin') { // mac
+                _user_dir = path.join(process.env.HOME, 'Library', 'Application Support', 'Code', 'User', 'cs-script.user');
+            }
+            else { // linux
+                _user_dir = path.join(process.env.HOME, '.config', 'Code', 'User', 'cs-script.user');
+            }
         }
     }
 

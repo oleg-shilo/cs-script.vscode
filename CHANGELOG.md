@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.5.10
+
+- Issue #15: CS-Script for VS Code Portable.
+
 ## 1.5.8-9
 
 - Fixed problem with the "Unable to open" error at startup when `open_file_at_startup` is set to empty string.
@@ -10,6 +14,7 @@
 
 - Added support for debugging classless scripts directly (without decorated source file).
 - Added support for freestyle classless scripts without any entry point defined:
+
 ```C#
     //css_ac freestyle
     using System;
@@ -31,7 +36,6 @@
 ## 1.5.4
 
 - Added handling/processing unsaved changes in the source files without creating a `<file>.$temp$.cs` file in the script directory. 
-
 
 ## 1.5.3
 
@@ -71,7 +75,7 @@
 
 ## 1.3.5
 
-- Added explicit extension dependency on `mono-debug`. Seems the disclaimer "to add Mono" in the extension description does not convince users users to do so.   
+- Added explicit extension dependency on `mono-debug`. Seems the disclaimer "to add Mono" in the extension description does not convince users users to do so.
 
 ## 1.3.4
 
