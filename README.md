@@ -10,12 +10,13 @@ Note this extension depends on "ms-vscode.mono-debug" and "ms-vscode.csharp". Th
 
 ---
 
-## Overview
+### Further Help/Documentation
+The scope of this page is limited to integration of CS-Script with VSCode and the documentation for CS-Script itself can be found at the locations below: 
 
-_**Note: this page only covers how to integrate CS-Script with VSCode but the Help/Documentation for CS-Script itself can be found at the locations below:**_ 
 * [CS-Script generic topics](https://github.com/oleg-shilo/cs-script/wiki)
 * [CS-Script for .NET Core specific topics](https://github.com/oleg-shilo/cs-script.core/wiki)
 
+## Overview
 _The extension implements its own Roslyn-based Intellisense functionality fully integrated with VSCode  infrastructure. Though you can always opt to the VSCode built-in Intellisense engine OmniSharp. See **Using CS-Script IntelliSense** section for details._
 
 Currently VSCode support for C# is heavily oriented on development for .NET Core (e.g. ASP.NET Core). This imposes serious limitations on developers who is developing for desktop and server using C#. This project is aiming for filling this gap.
