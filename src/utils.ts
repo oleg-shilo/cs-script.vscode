@@ -317,7 +317,7 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     console.log("Loading CS-Script extension from " + __dirname);
 
     // check extension dependencies
-    if (vscode.extensions.getExtension('ms-vscode.csharp') == null) {
+    if (vscode.extensions.getExtension('ms-dotnettools.csharp') == null) {
         let message = 'CS-Script: The required extension "C# for Visual Studio Code" is not found. Ensure it is installed.';
         vscode.window.showErrorMessage(message);
         throw message;
@@ -336,7 +336,7 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     context.subscriptions.push(diagnosticCollection);
     // ext_context = context;
     ext_version = vscode.extensions.getExtension('oleg-shilo.cs-script').packageJSON.version
-    omnisharp_dir = path.join(vscode.extensions.getExtension('ms-vscode.csharp').extensionPath, '.omnisharp', 'omnisharp');
+    omnisharp_dir = path.join(vscode.extensions.getExtension('ms-dotnettools.csharp').extensionPath, '.omnisharp', 'omnisharp');
 
     ver_file = path.join(user_dir(), 'vscode.css_version.txt');
 

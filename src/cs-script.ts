@@ -888,7 +888,7 @@ export function run() {
         outputChannel.show(true);
 
         let startTime = new Date();
-        process = exec(command);
+        let process = exec(command);
         process.stdout.on("data", data => {
             // ignore mono test output that comes from older releases(s)  (known Mono issue)
             if (!data.startsWith("failed to get 100ns ticks"))
