@@ -12,11 +12,11 @@ import { Uri, commands, DiagnosticSeverity, TextEditorSelectionChangeKind, Locat
 import { ErrorInfo, Utils, unlock, is_busy, with_lock, actual_output, settings, vsc_config, user_dir, create_dir, select_line, ActiveEditorTracker } from "./utils";
 import { Syntaxer } from "./syntaxer";
 
-export let syntax_readme: string = path.join(user_dir(), "cs-script.syntax.txt");
+export let syntax_readme: string = path.join(user_dir(), 'dotnet', "cs-script.syntax.txt");
 let ext_context: ExtensionContext;
-let cscs_exe: string = path.join(user_dir(), "cscs.exe");
-let readme: string = path.join(user_dir(), "cs-script.help.txt");
-let csproj_template = __dirname + "/../bin/script.csproj";
+let cscs_exe: string = path.join(user_dir(), 'mono', "cscs.exe");
+let readme: string = path.join(user_dir(), 'dotnet', "cs-script.help.txt");
+let csproj_template = __dirname + "/../bin/mono/script.csproj";
 let outputChannel = window.createOutputChannel("CS-Script");
 
 // it is extremely important to keep project file name in sync with the activation event trigger in manifest file )"workspaceContains:script.csproj")
@@ -25,6 +25,13 @@ let startup_file_key = "cs-script.open_file_at_startup";
 export let csproj_dir = path.join(os.tmpdir(), "CSSCRIPT", "VSCode", "cs-script - OmniSharp");
 
 function extra_args(): string { return vsc_config.get("cs-script.extra_args_for_debug", "-co:/debug:pdbonly"); }
+
+// -----------------------------------
+let core_engine = path.join(user_dir(), "dotnet", "cscs.dll");
+
+function is_dotnet_debug(): Boolean { return vsc_config.get("cs-script.engine_debug.dotnet", true); }
+function is_dotnet_run(): Boolean { return vsc_config.get("cs-script.engine_run.dotnet", true); }
+function is_dotnet_proj(): Boolean { return vsc_config.get("cs-script.engine_project.dotnet", true); }
 // -----------------------------------
 export function load_project() {
     with_lock(() => {
@@ -151,10 +158,19 @@ export function parse_proj_dir(proj_dir: string): string | null {
     return null;
 }
 
+
 function generate_proj_file(proj_dir: string, scriptFile: string): void {
     try {
+
+        // not done yet
+
         let proj_file = path.join(proj_dir, script_proj_name);
-        let command = build_command(`"${cscs_exe}" -proj:dbg "${scriptFile}"`);
+        let command = "";
+
+        if (is_dotnet_proj())
+            command = `dotnet "${core_engine}" -proj:csproj "${scriptFile}"`;
+        else
+            command = build_command(`"${cscs_exe}" -proj:dbg "${scriptFile}"`);
 
         let output = Utils.RunSynch(command);
 
@@ -162,42 +178,125 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
             .trim()
             .lines()
             .filter(actual_output);
-        let refs = "";
-        let includes = "";
 
-        let System_ValueTuple_dll = null;
-        if (utils.isWin) {
-            System_ValueTuple_dll = path.join(user_dir(), "roslyn", "System.ValueTuple.dll").pathNormalize();
+        if (is_dotnet_proj()) {
+            // proj_dir:"C:\Users\user\AppData\Roaming\Code\User\cs-script.user\"
+            // lines[0]:"project:C:\cs-script\sample.csproj"
+            // 
+            let src_proj_file = lines[0].replace("project:", "");
+            let proj_name = path.basename(src_proj_file);
+            let src_proj_dir = path.dirname(src_proj_file);
+
+            create_dir(proj_dir);
+
+            utils.copy_file_to_sync(proj_name, src_proj_dir, proj_dir);
+
+            //             let launch_content = `
+            // {
+            //     "version": "0.2.0",
+            //     "configurations": [
+            //          {
+            //              "name": ".NET Core Launch (console)",
+            //              "type": "coreclr",
+            //              "request": "launch",
+            //              "preLaunchTask": "build",
+            //              "program": "\${workspaceFolder}/bin/Debug/netcoreapp3.1/script.dll",
+            //              "args": [],
+            //              "cwd": "\${workspaceFolder}",
+            //              "console": "internalConsole",
+            //              "stopAtEntry": false
+            //          }
+            //      ]
+            //  }`;
+
+            //             let tasks_content = `{
+            //                 "version": "2.0.0",
+            //                 "tasks": [
+            //                     {
+            //                         "label": "build",
+            //                         "command": "dotnet",
+            //                         "type": "process",
+            //                         "args": [
+            //                             "build",
+            //                             "\${workspaceFolder}/script.csproj",
+            //                             "/property:GenerateFullPaths=true",
+            //                             "/consoleloggerparameters:NoSummary"
+            //                         ],
+            //                         "problemMatcher": "$msCompile"
+            //                     },
+            //                     {
+            //                         "label": "publish",
+            //                         "command": "dotnet",
+            //                         "type": "process",
+            //                         "args": [
+            //                             "publish",
+            //                             "\${workspaceFolder}/script.csproj",
+            //                             "/property:GenerateFullPaths=true",
+            //                             "/consoleloggerparameters:NoSummary"
+            //                         ],
+            //                         "problemMatcher": "$msCompile"
+            //                     },
+            //                     {
+            //                         "label": "watch",
+            //                         "command": "dotnet",
+            //                         "type": "process",
+            //                         "args": [
+            //                             "watch",
+            //                             "run",
+            //                             "\${workspaceFolder}/script.csproj",
+            //                             "/property:GenerateFullPaths=true",
+            //                             "/consoleloggerparameters:NoSummary"
+            //                         ],
+            //                         "problemMatcher": "$msCompile"
+            //                     }
+            //                 ]
+            //             }`;
+
+            // let launch_dir = path.join(proj_dir, ".vscode");
+            // utils.create_dir(launch_dir);
+
+            // fs.writeFileSync(path.join(launch_dir, "launch.json"), launch_content.pathNormalize(), { encoding: "utf8" });
+            // fs.writeFileSync(path.join(launch_dir, "tasks.json"), tasks_content.pathNormalize(), { encoding: "utf8" });
+
+            commands.executeCommand("cs-script.refresh_tree");
         }
         else {
-            refs += '    <Reference Include="System.Runtime.dll" />' + os.EOL;
-            System_ValueTuple_dll = path.join(utils.omnisharp_dir, "System.ValueTuple.dll").pathNormalize();
-        }
+            let refs = "";
+            let includes = "";
 
-        refs +=
-            '    <Reference Include="' + System_ValueTuple_dll + '" />' + os.EOL;
-
-        lines.forEach((line, i) => {
-            if (line.startsWith("ref:")) {
-                if (!line.trim().endsWith("System.ValueTuple.dll")) // System.ValueTuple.dll is already added from the Omnisharp package
-                    refs += '    <Reference Include="' + line.substr(4).pathNormalize() + '" />' + os.EOL;
+            let System_ValueTuple_dll = null;
+            if (utils.isWin) {
+                System_ValueTuple_dll = path.join(user_dir(), "mono", "roslyn", "System.ValueTuple.dll").pathNormalize();
             }
-            else if (line.startsWith("file:"))
-                includes += '    <Compile Include="' + line.substr(5).pathNormalize() + '"/>' + os.EOL;
+            else {
+                refs += '    <Reference Include="System.Runtime.dll" />' + os.EOL;
+                System_ValueTuple_dll = path.join(utils.omnisharp_dir, "System.ValueTuple.dll").pathNormalize();
+            }
 
-            // else if (line.startsWith('searchDir:'))
-            //     includes += '    <Probing Dir="' + line.substr(10).pathNormalize() + '"/>' + os.EOL;
-        });
+            refs +=
+                '    <Reference Include="' + System_ValueTuple_dll + '" />' + os.EOL;
 
-        create_dir(proj_dir);
+            lines.forEach((line, i) => {
+                if (line.startsWith("ref:")) {
+                    if (!line.trim().endsWith("System.ValueTuple.dll")) // System.ValueTuple.dll is already added from the Omnisharp package
+                        refs += '    <Reference Include="' + line.substr(4).pathNormalize() + '" />' + os.EOL;
+                }
+                else if (line.startsWith("file:"))
+                    includes += '    <Compile Include="' + line.substr(5).pathNormalize() + '"/>' + os.EOL;
 
-        let content = fs.readFileSync(csproj_template, "utf8")
-            .replace('<Reference Include="$ASM$"/>', refs.trim())
-            .replace('<Compile Include="$FILE$"/>', includes.trim());
+                // else if (line.startsWith('searchDir:'))
+                //     includes += '    <Probing Dir="' + line.substr(10).pathNormalize() + '"/>' + os.EOL;
+            });
 
-        fs.writeFileSync(proj_file, content, { encoding: "utf8" });
+            create_dir(proj_dir);
 
-        let launch_content = `
+            let content = fs.readFileSync(csproj_template, "utf8")
+                .replace('<Reference Include="$ASM$"/>', refs.trim())
+                .replace('<Compile Include="$FILE$"/>', includes.trim());
+
+            fs.writeFileSync(proj_file, content, { encoding: "utf8" });
+
+            let launch_content = `
 {
     "version": "0.2.0",
     "configurations": [
@@ -213,12 +312,13 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
     ]
 }`;
 
-        let launch_dir = path.join(proj_dir, ".vscode");
-        utils.create_dir(launch_dir);
+            let launch_dir = path.join(proj_dir, ".vscode");
+            utils.create_dir(launch_dir);
 
-        fs.writeFileSync(path.join(launch_dir, "launch.json"), launch_content.pathNormalize(), { encoding: "utf8" });
+            fs.writeFileSync(path.join(launch_dir, "launch.json"), launch_content.pathNormalize(), { encoding: "utf8" });
 
-        commands.executeCommand("cs-script.refresh_tree");
+            commands.executeCommand("cs-script.refresh_tree");
+        }
     }
     catch (error) {
         window.showErrorMessage(`Cannot generate project from the script. Check the //css_ref and //css_in directives.`);
@@ -253,7 +353,12 @@ export function print_project_for_document() {
 export function print_project_for(file: string): boolean {
     if (Utils.IsScript(file)) {
         with_lock(() => {
-            let command = build_command(`"${cscs_exe}" -l -proj:dbg "${file}"`);
+            let command = "";
+
+            if (is_dotnet_proj())
+                command = `dotnet "${core_engine}" -l -proj:dbg "${file}"`;
+            else
+                command = build_command(`"${cscs_exe}" -l -proj:dbg "${file}"`);
 
             Utils.Run(command, (code, output) => {
                 let lines: string[] = output.lines().filter(actual_output);
@@ -290,7 +395,14 @@ export function get_project_tree_items() {
         if (!is_busy())
             with_lock(() => {
                 // no need to include debug.cs into the view so drop the ':dbg' switch
-                let output: string = Utils.RunSynch(build_command(`"${cscs_exe}" -l -proj "${file}"`));
+
+                let command = "";
+                if (is_dotnet_run())
+                    command = `dotnet "${core_engine}"  -l -proj "${file}"`;
+                else
+                    command = build_command(`"${cscs_exe}" -l -proj "${file}"`);
+
+                let output: string = Utils.RunSynch(command);
                 lines = output.lines().filter(actual_output);
                 unlock();
             });
@@ -311,7 +423,11 @@ export function check() {
         outputChannel.clear();
         outputChannel.appendLine("Checking...");
 
-        let command = build_command(`"${cscs_exe}" -check "${file}"`);
+        let command = "";
+        if (is_dotnet_run())
+            command = `dotnet "${core_engine}" -check "${file}"`;
+        else
+            command = build_command(`"${cscs_exe}" -check "${file}"`);
 
         // Utils.Run(command, (code, output) => {
 
@@ -434,21 +550,30 @@ export async function find_references() {
 }
 // -----------------------------------
 export function css_config() {
-    utils.ensure_default_config(cscs_exe,
-        async config_file => {
 
-            const opts: vscode.TextDocumentShowOptions = {
-                preserveFocus: true,
-                preview: true,
-                viewColumn: vscode.ViewColumn.Two
-            };
+    if (is_dotnet_run()) {
+        utils.ensure_default_core_config(core_engine,
+            config_file => {
+                commands.executeCommand("vscode.open", Uri.file(config_file));
+            });
+    }
+    else {
+        utils.ensure_default_config(cscs_exe,
+            async config_file => {
 
-            let mono_config = config_file;
-            let net_config = config_file.replace("css_config.mono.xml", "css_config.xml");
-            await commands.executeCommand("vscode.open", Uri.file(mono_config));
-            await commands.executeCommand("vscode.open", Uri.file(net_config), opts);
-        }
-    );
+                const opts: vscode.TextDocumentShowOptions = {
+                    preserveFocus: true,
+                    preview: true,
+                    viewColumn: vscode.ViewColumn.Two
+                };
+
+                let mono_config = config_file;
+                let net_config = config_file.replace("css_config.mono.xml", "css_config.xml");
+                await commands.executeCommand("vscode.open", Uri.file(mono_config));
+                await commands.executeCommand("vscode.open", Uri.file(net_config), opts);
+            }
+        );
+    }
 }
 // -----------------------------------
 export function about() {
@@ -458,7 +583,11 @@ export function about() {
         outputChannel.clear();
         outputChannel.appendLine("Analyzing...");
 
-        let command = build_command(`"${cscs_exe}" -ver`);
+        let command = "";
+        if (is_dotnet_run())
+            command = `dotnet "${core_engine}" -ver`;
+        else
+            command = build_command(`"${cscs_exe}" -ver`);
 
         Utils.Run(command, (code, output) => {
             outputChannel.clear();
@@ -467,7 +596,7 @@ export function about() {
             outputChannel.appendLine(output.trim());
             outputChannel.appendLine("-------------------------------------------------------");
             outputChannel.appendLine("Syntaxer");
-            outputChannel.append("   " + syntaxer.SERVER);
+            outputChannel.appendLine("   " + syntaxer.Server());
             outputChannel.appendLine("Extension");
             outputChannel.appendLine("   " + __dirname);
 
@@ -493,7 +622,11 @@ export function run_in_terminal() {
         terminal.sendText(`cd "${dir}"`);
         if (os.platform() == "win32")
             terminal.sendText("cls");
-        terminal.sendText(build_command(`"${cscs_exe}" "${file}"`));
+
+        if (is_dotnet_run())
+            terminal.sendText(`dotnet "${core_engine}" "${file}"`);
+        else
+            terminal.sendText(build_command(`"${cscs_exe}" "${file}"`));
 
         unlock();
     });
@@ -574,7 +707,11 @@ export function engine_help() {
         // let editor = vscode.window.activeTextEditor;
         // let file = editor.document.fileName;
 
-        let command = build_command(`"${cscs_exe}" -help`);
+        let command = "";
+        if (is_dotnet_run())
+            command = `dotnet "${core_engine}" -help`;
+        else
+            command = build_command(`"${cscs_exe}" -help`);
 
         Utils.Run(command, (code, output) => {
             fs.writeFileSync(readme, output, { encoding: "utf8" });
@@ -586,7 +723,13 @@ export function engine_help() {
 }
 // -----------------------------------
 export function generate_syntax_help(force: boolean = false): string {
-    let command = build_command(`"${cscs_exe}" -syntax`);
+
+    let command = "";
+    if (is_dotnet_run())
+        command = `dotnet "${core_engine}" -syntax`;
+    else
+        command = build_command(`"${cscs_exe}" -syntax`);
+
     let output = Utils.RunSynch(command);
     fs.writeFileSync(syntax_readme, output, { encoding: "utf8" });
     return output;
@@ -625,6 +768,14 @@ export function new_script() {
 // -----------------------------------
 export function new_script_vb() {
     with_lock(() => {
+
+        if (is_dotnet_run()) {
+
+            vscode.window.showErrorMessage(
+                "Executing VB.NET scripts is only supported for C# script hosted on Mono and CS-Script extension is configured to be run (hosted) on .NET Core.");
+            return;
+        }
+
         let new_file_path = path.join(user_dir(), "new_script.vb");
 
         let backup_file = null;
@@ -656,6 +807,14 @@ export function new_script_vb() {
 // -----------------------------------
 export function build_exe() {
     with_lock(() => {
+
+        if (is_dotnet_run()) {
+
+            vscode.window.showErrorMessage(
+                "Building self-contained executables is only supported for C# script hosted on Mono and CS-Script extension is configured to be run (hosted) on .NET Core.");
+            return;
+        }
+
         let editor = window.activeTextEditor;
         let file = editor.document.fileName;
 
@@ -735,12 +894,9 @@ export async function debug() {
         }
 
         // "externalConsole": "true", // shows external console. Full equivalent of Ctrl+F5 in VS.
-        let debug_as_external_console = vsc_config.get(
-            "cs-script.debug_as_external_console",
-            false
-        );
+        let debug_as_external_console = vsc_config.get("cs-script.debug_as_external_console", false);
 
-        let launchConfig = {
+        let launchConfigMono = {
             name: "Launch",
             type: "mono",
             request: "launch",
@@ -756,8 +912,25 @@ export async function debug() {
             }
         };
 
+        ////////////////////////////////
+        let launchConfigCore = {
+            name: ".NET Core Launch (console)",
+            type: "coreclr",
+            request: "launch",
+            program: "dotnet",
+            args: [core_engine, "-d", extra_args().replace("-co:/debug:pdbonly", ""), "-l", config, "-ac:2", editor.document.fileName],
+            cwd: path.dirname(editor.document.fileName),
+            console: "internalConsole",
+            stopAtEntry: false
+        }
+        ////////////////////////////////
+
+        var launchConfig: object = launchConfigMono;
+        if (is_dotnet_debug())
+            launchConfig = launchConfigCore;
+
         // vscode.startDebug has been deprecated
-        vscode.debug.startDebugging(undefined, launchConfig).then(
+        vscode.debug.startDebugging(undefined, <vscode.DebugConfiguration>launchConfig).then(
             () => {
                 commands.executeCommand("workbench.debug.action.focusRepl");
             },
@@ -879,7 +1052,11 @@ export function run() {
         let file = editor.document.fileName;
         await save_script_project(false);
 
-        let command = build_command(`"${cscs_exe}" "${file}"`);
+        let command = "";
+        if (is_dotnet_run())
+            command = `dotnet "${core_engine}" "${file}"`;
+        else
+            command = build_command(`"${cscs_exe}" "${file}"`);
 
         if (showExecutionMessage) {
             outputChannel.appendLine("[Running] " + command);
@@ -888,18 +1065,18 @@ export function run() {
         outputChannel.show(true);
 
         let startTime = new Date();
-        process = exec(command);
-        process.stdout.on("data", data => {
+        let p = exec(command);
+        p.stdout.on("data", data => {
             // ignore mono test output that comes from older releases(s)  (known Mono issue)
             if (!data.startsWith("failed to get 100ns ticks"))
                 outputChannel.append(data);
         });
 
-        process.stderr.on("data", data => {
+        p.stderr.on("data", data => {
             outputChannel.append(data);
         });
 
-        process.on("close", code => {
+        p.on("close", code => {
             let endTime = new Date();
             let elapsedTime = (endTime.getTime() - startTime.getTime()) / 1000;
             outputChannel.appendLine("");

@@ -22,7 +22,8 @@ export function activate(context: vscode.ExtensionContext) {
         cs_script.ActivateDiagnostics(context);
         // syntaxer.DeploySyntaxer();
 
-        const treeViewProvider = new ProjectTreeProvider(cs_script.get_project_tree_items);
+        // done -  is a .NET Core migration indicator 
+        const treeViewProvider = new ProjectTreeProvider(cs_script.get_project_tree_items); // done
         vscode.window.registerTreeDataProvider('cs-script', treeViewProvider);
 
         context.subscriptions.push(vscode.languages.registerHoverProvider('csharp', new CSScriptHoverProvider()));
@@ -44,22 +45,22 @@ export function activate(context: vscode.ExtensionContext) {
         // --
         context.subscriptions.push(vscode.languages.registerDocumentLinkProvider('code-runner-output', new CSScriptLinkProvider()));
         // --
-        context.subscriptions.push(vscode.commands.registerCommand('cs-script.refresh_tree', () => treeViewProvider.refresh()));
-        context.subscriptions.push(vscode.commands.registerCommand('cs-script.show_tree_data', () => cs_script.print_project()));
+        context.subscriptions.push(vscode.commands.registerCommand('cs-script.refresh_tree', () => treeViewProvider.refresh())); // done
+        context.subscriptions.push(vscode.commands.registerCommand('cs-script.show_tree_data', () => cs_script.print_project())); // done
         // --
-        context.subscriptions.push(vscode.commands.registerCommand('cs-script.debug', cs_script.debug));
-        context.subscriptions.push(vscode.commands.registerCommand('cs-script.run', cs_script.run));
-        context.subscriptions.push(vscode.commands.registerCommand('cs-script.run_in_terminal', cs_script.run_in_terminal));
-        context.subscriptions.push(vscode.commands.registerCommand('cs-script.print_project', cs_script.print_project_for_document));
+        context.subscriptions.push(vscode.commands.registerCommand('cs-script.debug', cs_script.debug)); // done
+        context.subscriptions.push(vscode.commands.registerCommand('cs-script.run', cs_script.run)); // done
+        context.subscriptions.push(vscode.commands.registerCommand('cs-script.run_in_terminal', cs_script.run_in_terminal)); // done
+        context.subscriptions.push(vscode.commands.registerCommand('cs-script.print_project', cs_script.print_project_for_document)); // done
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.load_project', cs_script.load_project));
-        context.subscriptions.push(vscode.commands.registerCommand('cs-script.check', cs_script.check));
+        context.subscriptions.push(vscode.commands.registerCommand('cs-script.check', cs_script.check)); // done
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.find_references', cs_script.find_references));
-        context.subscriptions.push(vscode.commands.registerCommand('cs-script.css_config', cs_script.css_config));
-        context.subscriptions.push(vscode.commands.registerCommand('cs-script.about', cs_script.about));
-        context.subscriptions.push(vscode.commands.registerCommand('cs-script.new_script', cs_script.new_script));
-        context.subscriptions.push(vscode.commands.registerCommand('cs-script.new_script_vb', cs_script.new_script_vb));
-        context.subscriptions.push(vscode.commands.registerCommand('cs-script.engine_help', cs_script.engine_help));
-        context.subscriptions.push(vscode.commands.registerCommand('cs-script.build_exe', cs_script.build_exe));
+        context.subscriptions.push(vscode.commands.registerCommand('cs-script.css_config', cs_script.css_config)); // done
+        context.subscriptions.push(vscode.commands.registerCommand('cs-script.about', cs_script.about)); // done
+        context.subscriptions.push(vscode.commands.registerCommand('cs-script.new_script', cs_script.new_script)); // done
+        context.subscriptions.push(vscode.commands.registerCommand('cs-script.new_script_vb', cs_script.new_script_vb)); // done
+        context.subscriptions.push(vscode.commands.registerCommand('cs-script.engine_help', cs_script.engine_help)); // done
+        context.subscriptions.push(vscode.commands.registerCommand('cs-script.build_exe', cs_script.build_exe)); // done
 
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.on_completion_accepted', callback => callback()));
 

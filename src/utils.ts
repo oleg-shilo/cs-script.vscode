@@ -13,7 +13,6 @@ import * as fsx from "fs-extra";
 import * as child_process from "child_process"
 import { StatusBarAlignment, StatusBarItem, TextEditor, window, Disposable, commands, MarkdownString, ParameterInformation, SignatureInformation } from "vscode";
 import { start_syntaxer, Syntaxer } from "./syntaxer";
-import * as syntaxer from "./syntaxer";
 // import { Syntax } from "./cs-script";
 
 let ext_dir = path.join(__dirname, "..");
@@ -41,6 +40,9 @@ export let diagnosticCollection: vscode.DiagnosticCollection;
 
 let sources_temp_dir = path.join(os.tmpdir(), "Roslyn.Intellisense", "sources");
 create_dir(sources_temp_dir);
+
+
+
 
 declare global {
     interface String {
@@ -185,6 +187,11 @@ export function is_ready(): boolean {
 
 export function is_busy(): boolean {
     return _busy;
+
+}
+
+export function run_async(callback: (...args: any[]) => void): void {
+    setTimeout(callback, 100);
 }
 
 export function lock(): boolean {
@@ -234,8 +241,9 @@ export function delete_dir(dir: string): void {
             else
                 delete_dir(item_path);
         }
-        fs.rmdir(dir);
+        fs.rmdir(dir, () => { });
     } catch (error) {
+        console.log(error);
     }
 }
 
@@ -317,17 +325,18 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     console.log("Loading CS-Script extension from " + __dirname);
 
     // check extension dependencies
-    if (vscode.extensions.getExtension('ms-vscode.csharp') == null) {
-        let message = 'CS-Script: The required extension "C# for Visual Studio Code" is not found. Ensure it is installed.';
+    if (vscode.extensions.getExtension('ms-vscode.csharp') == null &&
+        vscode.extensions.getExtension('ms-dotnettools.csharp') == null) {
+        let message = 'The required extension "C# for Visual Studio Code" is not found. Ensure it is installed.';
         vscode.window.showErrorMessage(message);
         throw message;
     }
 
-    if (vscode.extensions.getExtension('ms-vscode.mono-debug') == null) {
-        let message = 'CS-Script: The required extension "Mono-Debug" is not found. Ensure it is installed.';
-        vscode.window.showErrorMessage(message);
-        throw message;
-    }
+    // if (vscode.extensions.getExtension('ms-vscode.mono-debug') == null) {
+    //     let message = 'The required extension "Mono-Debug" is not found. Ensure it is installed.';
+    //     vscode.window.showErrorMessage(message);
+    //     throw message;
+    // }
 
     _environment_compatible = true;
 
@@ -336,7 +345,7 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     context.subscriptions.push(diagnosticCollection);
     // ext_context = context;
     ext_version = vscode.extensions.getExtension('oleg-shilo.cs-script').packageJSON.version
-    omnisharp_dir = path.join(vscode.extensions.getExtension('ms-vscode.csharp').extensionPath, '.omnisharp', 'omnisharp');
+    omnisharp_dir = path.join(vscode.extensions.getExtension('ms-dotnettools.csharp').extensionPath, '.omnisharp', 'omnisharp');
 
     ver_file = path.join(user_dir(), 'vscode.css_version.txt');
 
@@ -380,10 +389,6 @@ function check_syntaxer_ready(ms: number): void {
 export function deploy_engine(): void {
     try {
 
-        syntaxer.init(
-            path.join(user_dir(), "cscs.exe"),
-            path.join(user_dir(), "roslyn", "syntaxer.exe"));
-
         // all copy_file* calls are  async operations
         let need_to_deploy = true;
 
@@ -399,18 +404,16 @@ export function deploy_engine(): void {
             vscode.window.showInformationMessage('Preparing new version of CS-Script for deployment.');
             statusBarItem.text = '$(versions) Deploying CS-Script...';
             statusBarItem.show();
-            setTimeout(deploy_files, 100);
+            run_async(deploy_files);
         }
         else {
-            ensure_default_config(path.join(user_dir(), 'cscs.exe'));
+            ensure_default_config(path.join(user_dir(), 'mono', 'cscs.exe'));
             _ready = true;
-            setTimeout(preload_roslyn, 100);
-            setTimeout(() => {
+            run_async(preload_roslyn);
+            run_async(() => {
                 start_syntaxer();
                 check_syntaxer_ready(5);
-            }, 100);
-
-
+            });
         }
     } catch (error) {
         console.log(error);
@@ -488,24 +491,60 @@ function check_environment(): void {
 function deploy_files(): void {
     try {
 
-        copy_file_to_sync("cscs.exe", path.join(ext_dir, 'bin'), user_dir());
-        copy_file_to_sync("CSSRoslynProvider.dll", path.join(ext_dir, 'bin'), user_dir());
+        // dotnet
+        let dotnet_dir_root = path.join(user_dir(), "dotnet");
+        let src_dir_root = path.join(ext_dir, 'bin', 'dotnet');
+
+        let dotnet_dir = dotnet_dir_root;
+        let src_dir = src_dir_root;
+        fsx.readdirSync(src_dir)
+            .forEach(file => copy_file_to_sync(file, src_dir, dotnet_dir));
+
+        dotnet_dir = path.join(dotnet_dir_root, "syntaxer");
+        src_dir = path.join(src_dir_root, "syntaxer");
+        fsx.readdirSync(src_dir)
+            .forEach(file => copy_file_to_sync(file, src_dir, dotnet_dir));
+
+        dotnet_dir = path.join(dotnet_dir_root, ".vscode");
+        src_dir = path.join(src_dir_root, '.vscode');
+        fsx.readdirSync(src_dir)
+            .forEach(file => copy_file_to_sync(file, src_dir, dotnet_dir));
+
+        // mono
+        let mono_dir = path.join(user_dir(), "mono");
+        copy_file_to_sync("cscs.exe", path.join(ext_dir, 'bin', 'mono'), mono_dir);
+        copy_file_to_sync("CSSRoslynProvider.dll", path.join(ext_dir, 'bin', 'mono'), mono_dir);
 
         if (os.platform() == 'win32') {
-            copy_file_to_sync2("nuget.win.exe", "nuget.exe", path.join(ext_dir, 'bin'), user_dir());
+            copy_file_to_sync2("nuget.win.exe", "nuget.exe", path.join(ext_dir, 'bin', 'mono'), mono_dir);
         }
         else {
             // on non-Win os nuget will be probed in well known locations (e.g. Mono folder)
-            del_file(path.join(ext_dir, 'bin', "nuget.win.exe"));
+            del_file(path.join(ext_dir, 'bin', 'mono', "nuget.win.exe"));
         }
 
         deploy_roslyn();
 
-        ensure_default_config(path.join(user_dir(), 'cscs.exe'));
+        ensure_default_config(path.join(user_dir(), 'mono', 'cscs.exe'));
 
         start_syntaxer(); // will also deploy embedded Roslyn binaries
         load_roslyn();
         check_syntaxer_ready(500);
+
+        fsx.readdirSync(user_dir(), item => {
+            try {
+
+                let dir = path.join(user_dir(), item);
+                let is_dir = fs.lstatSync(dir).isDirectory();
+
+                // remove old renamed 'foslyn.old.{date}' folder
+                if (is_dir && item.startsWith('roslyn.old.')) {
+                    delete_dir(dir);
+                }
+
+            } catch (error) {
+            }
+        });
 
         fs.writeFileSync(ver_file, ext_version, { encoding: 'utf8' });
 
@@ -533,12 +572,10 @@ export function load_roslyn(): void {
 }
 
 export function deploy_roslyn(): void {
-
-
     // Copy all roslyn related files
     // Dest folder must be versioned as Roslyn server may stay in memory between the sessions so the
     // extension update would not be interfered with.
-    let dest_dir = path.join(user_dir(), 'roslyn');
+    let dest_dir = path.join(user_dir(), 'mono', 'roslyn');
 
     if (fs.existsSync(dest_dir)) {
 
@@ -547,13 +584,15 @@ export function deploy_roslyn(): void {
         if (os.platform() == 'win32') {
             // on Windows need to stp local deployment of Roslyn compiler VBCSCompiler.exe
             // on Linux it is always a global deployment of Roslyn so no need to sop it.
-            let command = '"' + path.join(user_dir(), 'cscs.exe') + '" -stop';
+            let command = '"' + path.join(user_dir(), 'mono', 'cscs.exe') + '" -stop';
             execSync(command);
         }
 
-        fs.renameSync(dest_dir, dest_dir + ".old." + new Date().getTime());
+        let old_roslyn_dir = dest_dir + ".old." + new Date().getTime();
+        fs.renameSync(dest_dir, old_roslyn_dir);
 
         // delete old roslyn asyncronously
+        delete_dir(old_roslyn_dir);
 
         // older version (v1.0.4.0) had syntaxer installed in '..\script.user\syntaxer' folder
         try { delete_dir(path.join(user_dir(), '..', 'script.user')); } catch  { }
@@ -566,7 +605,7 @@ export function deploy_roslyn(): void {
                     let is_dir = fs.lstatSync(dir).isDirectory();
 
                     // remove old renamed 'foslyn.old.{date}' folder
-                    if (is_dir && item.startsWith('roslyn.old.')) {
+                    if (is_dir && item.startsWith('roslyn')) {
                         delete_dir(dir);
                     }
 
@@ -578,8 +617,9 @@ export function deploy_roslyn(): void {
 
     create_dir(dest_dir);
 
-    copy_file_to_sync("syntaxer.exe", path.join(ext_dir, 'bin'), dest_dir);
+    copy_file_to_sync("syntaxer.exe", path.join(ext_dir, 'bin', 'mono'), dest_dir);
 
+    // the following will extract roslyn from syntaxer and place it in the destination folder
     if (_environment_ready) {
         let command = 'mono "' + path.join(dest_dir, 'syntaxer.exe') + '" -dr';
         execSync(command);
@@ -963,7 +1003,7 @@ export class Utils {
 export function preload_roslyn() {
     try {
 
-        let exe = path.join(user_dir(), 'cscs.exe');
+        let exe = path.join(user_dir(), 'mono', 'cscs.exe');
         let command = 'mono "' + exe + '" -preload';
         Utils.Run(command);
 
@@ -975,7 +1015,7 @@ export function disable_roslyn_on_osx() {
 
     if (os.platform() == 'darwin' && settings.need_check_roslyn_on_OSX) {
 
-        let config_file = path.join(user_dir(), 'css_config.mono.xml');
+        let config_file = path.join(user_dir(), 'mono', 'css_config.mono.xml');
 
         if (fs.existsSync(config_file)) {
 
@@ -999,6 +1039,23 @@ export function disable_roslyn_on_osx() {
             }
         }
     }
+}
+
+export function ensure_default_core_config(cscs_exe: string, on_done?: (file: string) => void) {
+
+    let config_file = path.join(path.dirname(cscs_exe), 'css_config.xml');
+
+    if (!fs.existsSync(config_file)) {
+
+        let command = `dotnet "${cscs_exe}" -config:default`;
+        Utils.Run(command, (code, output) => {
+            fs.writeFileSync(config_file, output, { encoding: 'utf8' });
+            if (on_done)
+                on_done(config_file);
+        });
+    }
+    else if (on_done)
+        on_done(config_file);
 }
 
 export function ensure_default_config(cscs_exe: string, on_done?: (file: string) => void) {
