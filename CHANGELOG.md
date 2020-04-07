@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.5.12 (21 Mar, 2020)
+
+- Issue #20: Extension Stopped Working after "C# for Visual Studio" (dependency) extension update
+
 ## 1.5.11 (17 Feb, 2020)
 
 - Issue #19: How to Run CSScript in VSCode using latest Extension.
