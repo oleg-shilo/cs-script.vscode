@@ -1,12 +1,20 @@
 # CS-Script - VSCode Extension (CS-Script.VSCode)
 
-Execution, debugging and editing C# scripts (powered by CS-Script engine) that target .NET and Mono (no .NET Core required).
+Execution, debugging and editing C# scripts (powered by CS-Script engine) that target .NET Core.
 A single C# file is all that is required to run the script. </br>
-This extension Intellisense support for VB.NET scripts is currently limited to Windows only.</br>
+
+This extension Intellisense support for VB.NET scripts is currently limited to Windows only and only if Mono hosting is enabled.</br>
+
+This extension depends on another VSCode extension "ms-dotnettools.csharp". Thus if these extensions are installed but function incorrectly please log error reports at their corresponding web sites.
 
 ---
 
-Note this extension depends on "ms-vscode.mono-debug" and "ms-dotnettools.csharp". Thus if these extensions are installed but function incorrectly please log error reports at their corresponding web sites. Read section "Minimal set of dependencies" for more details.
+Note, if you want to use this extension on Mono then you need to enable it by setting the following config values to `false`:
+  - cs-script.engine_run.dotnet 
+  - cs-script.engine_debug.dotnet
+  - cs-script.engine_project.dotnet  
+
+You will also need to install Mono and "ms-vscode.mono-debug" extension.
 
 ---
 
@@ -18,8 +26,6 @@ The scope of this page is limited to integration of CS-Script with VSCode and th
 
 ## Overview
 _The extension implements its own Roslyn-based Intellisense functionality fully integrated with VSCode  infrastructure. Though you can always opt to the VSCode built-in Intellisense engine OmniSharp. See **Using CS-Script IntelliSense** section for details._
-
-Currently VSCode support for C# is heavily oriented on development for .NET Core (e.g. ASP.NET Core). This imposes serious limitations on developers who is developing for desktop and server using C#. This project is aiming for filling this gap.
 
 The extension is powered by the [CS-Script engine](https://github.com/oleg-shilo/cs-script/blob/master/README.md) - popular Open Source script engine that delivers Python scripting experience but for C# syntax. CS-Script uses ECMA-compliant C# as a programming language and it can be hosted by applications or run standalone. CS-Script is already a core of the plugins for some other popular editors/IDEs:
 
@@ -41,18 +47,18 @@ The extension provides a thin layer of own functionality. Its primary responsibi
 
 #### Executing script outside of VSCode
 
-The extension comes with the complete CS-Script package. You can find the location of the script engine `cscs.exe` by executing `CS-Script: About` command.
-It may be a good idea to add the location of the `cscs.exe` into the system PATH environment variable.
+The extension comes with the complete CS-Script package. You can find the location of the script engine `cscs.dll` by executing `CS-Script: About` command.
+It may be a good idea to add the location of the script engine launcher `cscs.exe` into the system PATH environment variable. If you install CS-Script from Choco (windows) or via Linux package then the script engine launcher is added to PATH automatically.
+
 This is how you can execute the script from the command shell:
 
-_Windows:_
 ``` txt
-cscs.exe my_script.cs
+dotnet cscs.dll my_script.cs
 ```
 
-_Linux:_
+_If CS-Ssript installed_
 ``` txt
-mono cscs.exe my_script.cs
+cscs my_script.cs
 ```
 
 You can also install CS-Script system wide. For Windows it is recommended to use [Chocolaty](https://chocolatey.org/) (Windows equivalent of Linux apt-get).
@@ -232,6 +238,8 @@ By default, when you just open a C#/VB.NET file the all development activities a
 
 ## VB.NET support
 
+VB.NET support is currently enabled for Windows+Mono hosting only. See the start section of this document about how to enable Mono hosting.
+
 CS-Script supports VB.NET scripts as long as the underlying compiling services  (Roslyn) support the syntax. Thus you can execute any VB.NET script by simply loading it into the editor and then executing it the same way as C# scripts.
 
 ![image](https://github.com/oleg-shilo/cs-script.vscode/raw/master/images/vscode_vb.gif)
@@ -242,7 +250,7 @@ The only limitation to that is that certain Intellisesne features may not work o
 
 _**C# 7**_
 
-The extension comes with C# 7 support (via Roslyn) enabled by default. However Roslyn has an unfortunate limitation - it is extremely heavy and slow on startup. Thus it can take ~3-5 seconds to do the first compilation of a script or an _Intellisense_ request. Any further successive operations do not exhibit any delays.
+The extension comes with C# 7 support (via Roslyn, which is a part of .NET Core) enabled by default. However Roslyn has an unfortunate limitation - it is extremely heavy and slow on startup. Thus it can take ~3-5 seconds to do the first compilation of a script or an _Intellisense_ request. Any further successive operations do not exhibit any delays.
 
 A good indication of the extension being ready for Intellisense operations is the script project tree being populated and the status bar having "CS-Script ready" message at status bar. Note, the message stays only for 5 seconds:
 
