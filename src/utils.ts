@@ -21,13 +21,13 @@ let execSync = require('child_process').execSync;
 
 let mkdirp = require('mkdirp');
 // let ext_context: vscode.ExtensionContext;
-let min_required_mono = '5.0.1';
+// let min_required_mono = '5.0.1';
 let ver_file: string;
 // let cscs_exe: string;
 let _user_dir: string;
 export let statusBarItem: StatusBarItem;
 
-let _environment_compatible = false;
+// let _environment_compatible = false;
 let _environment_ready = false;
 let _ready = false;
 let _busy = false;
@@ -197,8 +197,6 @@ export function run_async(callback: (...args: any[]) => void): void {
 export function lock(): boolean {
 
     if (!_environment_ready) {
-        if (_environment_compatible)
-            vscode.window.showErrorMessage(`Cannot detect required Mono version (${min_required_mono}). Install it from http://www.mono-project.com/download/ or ensure it is in system PATH.`);
         return false;
     }
 
@@ -338,7 +336,7 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     //     throw message;
     // }
 
-    _environment_compatible = true;
+    // _environment_compatible = true;
 
     diagnosticCollection = vscode.languages.createDiagnosticCollection('c#');
     statusBarItem = vscode.window.createStatusBarItem(StatusBarAlignment.Left);
@@ -445,47 +443,49 @@ export function compare_versions(a: string, b: string): Number {
 
 function check_environment(): void {
 
-    let command = 'mono --version';
+    _environment_ready = true;
+    return;
+    // let command = 'mono --version';
 
-    let output: string;
+    // let output: string;
 
-    try {
+    // try {
 
-        output = execSync(command).toString();
+    //     output = execSync(command).toString();
 
-    } catch (error) {
-        let platform = os.platform();
-        console.log(platform);
+    // } catch (error) {
+    //     let platform = os.platform();
+    //     console.log(platform);
 
-        if (os.platform() == 'win32') {
-            let mono_dir = path.join(process.env.ProgramFiles, "Mono", "bin");
-            if (fs.existsSync(path.join(mono_dir, "mono.exe"))) {
-                if (!process.env.path.contains(mono_dir))
-                    process.env.path = process.env.path + ";" + mono_dir;
-            }
-        }
-        else {
-            console.log(error);
-            vscode.window.showErrorMessage('CS-Script: ' + String(error));
-            return;
-        }
-    }
+    //     if (os.platform() == 'win32') {
+    //         let mono_dir = path.join(process.env.ProgramFiles, "Mono", "bin");
+    //         if (fs.existsSync(path.join(mono_dir, "mono.exe"))) {
+    //             if (!process.env.path.contains(mono_dir))
+    //                 process.env.path = process.env.path + ";" + mono_dir;
+    //         }
+    //     }
+    //     else {
+    //         console.log(error);
+    //         vscode.window.showErrorMessage('CS-Script: ' + String(error));
+    //         return;
+    //     }
+    // }
 
-    try {
+    // try {
 
-        if (!output)
-            output = execSync(command).toString();
+    //     if (!output)
+    //         output = execSync(command).toString();
 
-        // Mono JIT compiler version 5.0.1 (Visual Studio built mono)
-        let firstLine = output.trim().lines()[0];
-        let detected_version = firstLine.split(' ')[4];
+    //     // Mono JIT compiler version 5.0.1 (Visual Studio built mono)
+    //     let firstLine = output.trim().lines()[0];
+    //     let detected_version = firstLine.split(' ')[4];
 
-        let same_or_newer = compare_versions(detected_version, min_required_mono) >= 0;
-        _environment_ready = same_or_newer;
-    } catch (error) {
-        console.log(error);
-        vscode.window.showErrorMessage('CS-Script: ' + String(error));
-    }
+    //     let same_or_newer = compare_versions(detected_version, min_required_mono) >= 0;
+    //     _environment_ready = same_or_newer;
+    // } catch (error) {
+    //     console.log(error);
+    //     vscode.window.showErrorMessage('CS-Script: ' + String(error));
+    // }
 }
 
 function deploy_files(): void {

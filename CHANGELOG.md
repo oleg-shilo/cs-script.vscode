@@ -1,15 +1,17 @@
 # Change Log
 
-## 1.6.0 (8 Apr, 2020)
+## 1.6.0-1 (8 Apr, 2020)
 
 #### _This release delivers hosting script execution under .NET Core. Meaning that raw VSCode deployment with the extension extension "ms-dotnettools.csharp" is enough to edit, run and debug C# script. Mono and Mono extension are no longer required. Mono support is still available via settings but it will be eventually phased out._ 
 
-
-- Migrated on .NET Core
-- Hosting on Mono is still supported. If required it needs to be enabled via settings specific for the type of the activity:
-  - cs-script.engine_run.dotnet 
-  - cs-script.engine_debug.dotnet
-  - cs-script.engine_project.dotnet 
+- _v.1.6.1_
+  - Removed unnecessary check for presence of Mono
+- _v.1.6.0_
+  - Migrated on .NET Core
+  - Hosting on Mono is still supported. If required it needs to be enabled via settings specific for the type of the activity:
+    - cs-script.engine_run.dotnet 
+    - cs-script.engine_debug.dotnet
+    - cs-script.engine_project.dotnet 
 
 ## 1.5.12 (21 Mar, 2020)
 
