@@ -983,7 +983,12 @@ export async function save_script_project(dependencies_only: boolean): Promise<v
         editor.document.save();
     }
 
-    let command = build_command(`"${cscs_exe}" -proj:dbg "${file}"`);
+    let command = "";
+    if (is_dotnet_run())
+        command = `dotnet "${core_engine}" -proj:dbg "${file}"`;
+    else
+        command = build_command(`"${cscs_exe}" -proj:dbg "${file}"`);
+
     let response = Utils.RunSynch(command);
 
     let dependencies = response.lines()

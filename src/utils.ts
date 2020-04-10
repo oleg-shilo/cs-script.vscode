@@ -13,7 +13,15 @@ import * as fsx from "fs-extra";
 import * as child_process from "child_process"
 import { StatusBarAlignment, StatusBarItem, TextEditor, window, Disposable, commands, MarkdownString, ParameterInformation, SignatureInformation } from "vscode";
 import { start_syntaxer, Syntaxer } from "./syntaxer";
+
 // import { Syntax } from "./cs-script";
+
+export class vsc_config {
+    public static get<T>(section_value: string, defaultValue?: T): T {
+        let tokens = section_value.split('.')
+        return vscode.workspace.getConfiguration(tokens[0]).get(tokens[1], defaultValue);
+    }
+}
 
 let ext_dir = path.join(__dirname, "..");
 let exec = require('child_process').exec;
@@ -41,7 +49,12 @@ export let diagnosticCollection: vscode.DiagnosticCollection;
 let sources_temp_dir = path.join(os.tmpdir(), "Roslyn.Intellisense", "sources");
 create_dir(sources_temp_dir);
 
-
+function need_mono(): Boolean {
+    return
+    !vsc_config.get("cs-script.engine_debug.dotnet", true) ||
+        !vsc_config.get("cs-script.engine_debug.dotnet", true) ||
+        !vsc_config.get("cs-script.engine_run.dotnet", true);
+}
 
 
 declare global {
@@ -263,6 +276,15 @@ export function copy_file_to_sync(fileName: string, srcDir: string, destDir: str
     }
 }
 
+export function copy_dir_to_sync(srcDir: string, destDir: string): void {
+
+    try {
+        fsx.copySync(srcDir, destDir);
+    } catch (error) {
+        console.log(error.toString());
+    }
+}
+
 export function copy_file_to_sync2(fileName: string, newFileName: string, srcDir: string, destDir: string): void {
 
     try {
@@ -405,13 +427,15 @@ export function deploy_engine(): void {
             run_async(deploy_files);
         }
         else {
-            ensure_default_config(path.join(user_dir(), 'mono', 'cscs.exe'));
-            _ready = true;
-            run_async(preload_roslyn);
-            run_async(() => {
-                start_syntaxer();
-                check_syntaxer_ready(5);
-            });
+            if (need_mono) {
+                ensure_default_config(path.join(user_dir(), 'mono', 'cscs.exe'));
+                _ready = true;
+                run_async(preload_roslyn);
+                run_async(() => {
+                    start_syntaxer();
+                    check_syntaxer_ready(5);
+                });
+            }
         }
     } catch (error) {
         console.log(error);
@@ -492,23 +516,10 @@ function deploy_files(): void {
     try {
 
         // dotnet
-        let dotnet_dir_root = path.join(user_dir(), "dotnet");
-        let src_dir_root = path.join(ext_dir, 'bin', 'dotnet');
+        let dotnet_dir = path.join(user_dir(), "dotnet");
+        let src_dir = path.join(ext_dir, 'bin', 'dotnet');
+        copy_dir_to_sync(src_dir, dotnet_dir);
 
-        let dotnet_dir = dotnet_dir_root;
-        let src_dir = src_dir_root;
-        fsx.readdirSync(src_dir)
-            .forEach(file => copy_file_to_sync(file, src_dir, dotnet_dir));
-
-        dotnet_dir = path.join(dotnet_dir_root, "syntaxer");
-        src_dir = path.join(src_dir_root, "syntaxer");
-        fsx.readdirSync(src_dir)
-            .forEach(file => copy_file_to_sync(file, src_dir, dotnet_dir));
-
-        dotnet_dir = path.join(dotnet_dir_root, ".vscode");
-        src_dir = path.join(src_dir_root, '.vscode');
-        fsx.readdirSync(src_dir)
-            .forEach(file => copy_file_to_sync(file, src_dir, dotnet_dir));
 
         // mono
         let mono_dir = path.join(user_dir(), "mono");
@@ -620,7 +631,8 @@ export function deploy_roslyn(): void {
     copy_file_to_sync("syntaxer.exe", path.join(ext_dir, 'bin', 'mono'), dest_dir);
 
     // the following will extract roslyn from syntaxer and place it in the destination folder
-    if (_environment_ready) {
+    if (_environment_ready && need_mono()) {
+
         let command = 'mono "' + path.join(dest_dir, 'syntaxer.exe') + '" -dr';
         execSync(command);
     }
@@ -823,12 +835,6 @@ export class ErrorInfo {
     }
 }
 
-export class vsc_config {
-    public static get<T>(section_value: string, defaultValue?: T): T {
-        let tokens = section_value.split('.')
-        return vscode.workspace.getConfiguration(tokens[0]).get(tokens[1], defaultValue);
-    }
-}
 
 // Writable extension settings
 export class Settings {
