@@ -573,7 +573,7 @@ function deploy_files(): void {
 }
 
 export function load_roslyn(): void {
-    let dest_dir = path.join(user_dir(), 'roslyn');
+    let dest_dir = path.join(user_dir(), 'mono', 'roslyn');
 
     if (fs.existsSync(dest_dir)) {
 

@@ -121,7 +121,7 @@ export function load_project() {
                         .showInformationMessage(info_msg, { modal: true }, ok, ok_dont_show_again)
                         .then(response => {
                             if (response == ok) {
-                                setTimeout(() => commands.executeCommand("vscode.openFolder", Uri.parse(csproj_dir)), 100);
+                                setTimeout(() => commands.executeCommand("vscode.openFolder", Uri.file(csproj_dir)), 100); // Uri.parse does not work with path but requires schema
                             }
                             else if (response == ok_dont_show_again) {
                                 // VSCode doesn't allow saving settings from the extension :(
@@ -131,12 +131,12 @@ export function load_project() {
                                 settings.show_load_proj_info = false;
                                 utils.Settings.Save(settings);
 
-                                setTimeout(() => commands.executeCommand("vscode.openFolder", Uri.parse(csproj_dir)), 100);
+                                setTimeout(() => commands.executeCommand("vscode.openFolder", Uri.file(csproj_dir)), 100);
                             }
                         });
                 }
                 else {
-                    setTimeout(() => commands.executeCommand("vscode.openFolder", Uri.parse(csproj_dir)), 100);
+                    setTimeout(() => commands.executeCommand("vscode.openFolder", Uri.file(csproj_dir)), 100);
                 }
             }
         }
@@ -184,12 +184,16 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
             // lines[0]:"project:C:\cs-script\sample.csproj"
             // 
             let src_proj_file = lines[0].replace("project:", "");
-            let proj_name = path.basename(src_proj_file);
+            let proj_name = "script" + path.extname(src_proj_file);
+            // let proj_name = path.basename(src_proj_file);
             let src_proj_dir = path.dirname(src_proj_file);
+
+            let src_vscode_dir = path.join(user_dir(), 'dotnet', '.vscode');
 
             create_dir(proj_dir);
 
-            utils.copy_file_to_sync(proj_name, src_proj_dir, proj_dir);
+            utils.copy_file_to_sync2(path.basename(src_proj_file), proj_name, src_proj_dir, proj_dir);
+            utils.copy_dir_to_sync(src_vscode_dir, proj_dir);
 
             //             let launch_content = `
             // {
