@@ -1,4 +1,12 @@
 # CS-Script - VSCode Extension (CS-Script.VSCode)
+<p>
+<a href="https://marketplace.visualstudio.com/items?itemName=oleg-shilo.cs-script" target="_blank" rel="noreferrer noopener">
+    <img src="https://img.shields.io/vscode-marketplace/v/oleg-shilo.cs-script.svg?label=vs%20marketplace" alt="vs marketplace"></a> 
+<a href="https://marketplace.visualstudio.com/items?itemName=oleg-shilo.cs-script" target="_blank" rel="noreferrer noopener">
+    <img src="https://img.shields.io/vscode-marketplace/d/oleg-shilo.cs-script.svg" alt="downloads"></a>
+<a href="https://marketplace.visualstudio.com/items?itemName=oleg-shilo.cs-script" target="_blank" rel="noreferrer noopener">
+    <img src="https://img.shields.io/vscode-marketplace/r/oleg-shilo.cs-script.svg" alt="rating"></a> 
+</p>
 
 Execution, debugging and editing C# scripts (powered by CS-Script engine) that target .NET Core.
 A single C# file is all that is required to run the script. </br>
