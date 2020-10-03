@@ -8,6 +8,9 @@
     <img src="https://img.shields.io/vscode-marketplace/r/oleg-shilo.cs-script.svg" alt="rating"></a> 
 </p>
 
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.cs-script.net/cs-script/Donation.html)
+
+
 Execution, debugging and editing C# scripts (powered by CS-Script engine) that target .NET Core.
 A single C# file is all that is required to run the script. </br>
 
