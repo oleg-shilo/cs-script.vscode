@@ -19,12 +19,12 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectItem>
 		});
 
 		vscode.workspace.onDidSaveTextDocument(doc => {
-			this._onDidChangeTreeData.fire();
+			this._onDidChangeTreeData.fire(undefined);
 		});
 	}
 
 	public refresh(): void {
-		this._onDidChangeTreeData.fire();
+		this._onDidChangeTreeData.fire(undefined);
 	}
 
 	getTreeItem(element: ProjectItem): vscode.TreeItem {
@@ -53,7 +53,7 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectItem>
 
 	private getScriptItems(): ProjectItem[] {
 
-		let refsNode = new ProjectItem('References', vscode.TreeItemCollapsibleState.Collapsed, null, [], 'assembly_group');
+		let refsNode = new ProjectItem('References', vscode.TreeItemCollapsibleState.Collapsed, undefined, [], 'assembly_group');
 
 		let nodes: ProjectItem[] = [];
 		nodes.push(refsNode);
@@ -89,7 +89,7 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectItem>
 						nodes.push(node);
 					}
 					else if (item.startsWith('ref:'))
-						refsNode.children.push(item.substr(4));
+						refsNode.children?.push(item.substr(4));
 
 				});
 		}
@@ -112,7 +112,7 @@ export class ProjectItem extends vscode.TreeItem {
 		if (context) {
 			this.contextValue = context;
 
-			var icon: string;
+			var icon: string = "";
 
 			if (context == 'imported') {
 				icon = 'cs';
@@ -124,7 +124,7 @@ export class ProjectItem extends vscode.TreeItem {
 				icon = 'asm';
 			}
 
-			if (icon != undefined) {
+			if (icon != "") {
 				this.iconPath = {
 					light: path.join(__filename, '..', '..', 'images', 'icons', icon + '.light.svg'),
 					dark: path.join(__filename, '..', '..', 'images', 'icons', icon + '.svg')

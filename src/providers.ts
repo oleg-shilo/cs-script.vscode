@@ -13,7 +13,7 @@ import { save_script_project } from './cs-script';
 function isWorkspace(): boolean { return workspace.rootPath != undefined; }
 
 function isCssDirective(document: TextDocument, position: Position): boolean {
-    return getCssDirective(document, position) != undefined;
+    return getCssDirective(document, position) != null;
 }
 
 function getCssDirective(document: TextDocument, position: Position): string {
@@ -34,10 +34,10 @@ function getCssDirective(document: TextDocument, position: Position): string {
                 return directive;
         }
     }
-    return null;
+    return null!;
 }
 
-function trimWordDelimeters(word: string): string {
+function trimWordDelimiters(word: string): string {
     if (word.startsWith('//'))
         return word.substring(2);
     else
@@ -93,39 +93,37 @@ export class CSScriptHoverProvider implements HoverProvider {
             return new Promise((resolve, reject) =>
 
                 Syntaxer.getTooltip(document.getText(), document.fileName, document.offsetAt(position),
-                    data => {
+                    (data: string) => {
                         if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
                             // data = data.replace(/\${r}\${n}/g, "\n")
                             //            .replace(/\${n}/g, "\n");
                             result = new Hover(data);
                         }
                         resolve(result);
-                    },
-                    error => {
                     })
             );
         }
 
-        return null;
+        return null!;
     }
 }
 
-export function process_snipet_cursor_placeholders(startLine: number, endLine: number): void {
+export function process_snippet_cursor_placeholders(startLine: number, endLine: number): void {
 
     let editor = window.activeTextEditor;
 
     for (let index = startLine; index < endLine; index++) {
 
-        let line_text = editor.document.lineAt(index).text;
+        let line_text = editor!.document.lineAt(index).text;
 
         let cursor_pos = line_text.indexOf("$0");
         if (cursor_pos != -1) {
 
-            editor
+            editor!
                 .edit(editBuilder =>
                     editBuilder.replace(new Range(index, cursor_pos, index, cursor_pos + 2), ''))
                 .then(() =>
-                    editor.selection = new Selection(index, cursor_pos, index, cursor_pos))
+                    editor!.selection = new Selection(index, cursor_pos, index, cursor_pos))
 
             break;
         }
@@ -146,7 +144,7 @@ export class CSScriptCompletionItemProvider implements CompletionItemProvider {
 
             return new Promise((resolve, reject) =>
                 Syntaxer.getCompletions(document.getText(), document.fileName, document.offsetAt(position),
-                    data => {
+                    (data: string) => {
                         if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
 
                             let line_indent = utils.get_line_indent(document.lineAt(position.line).text);
@@ -157,10 +155,10 @@ export class CSScriptCompletionItemProvider implements CompletionItemProvider {
                                 // It does interfere with |-split so it needs to be escaped in one or another way.
                                 // 
                                 // VSCode supposed to respect snippet's placeholders (e.g. "$0") suitable for placing the cursor after 
-                                // accepting the suggestion. However this feature is undocummented and as of 19-Apr-2018 it just does not work.
+                                // accepting the suggestion. However this feature is undocumented and as of 19-Apr-2018 it just does not work.
                                 // The undocumented placeholders (to move cursor) supposed to work - https://github.com/Microsoft/vscode/issues/3210
                                 // 
-                                // Thus implemente post-event cursor placement with 'cs-script.on_completion_accepted' extension command.
+                                // Thus implementing post-event cursor placement with 'cs-script.on_completion_accepted' extension command.
 
                                 // escaping |-delimiter, setting up the cursor placeholder, splitting completion display text fom the completion data
                                 let parts = line.replace("$|$", "$0").split("\t");
@@ -171,9 +169,9 @@ export class CSScriptCompletionItemProvider implements CompletionItemProvider {
                                 let completionText = utils.css_unescape_linebreaks(info[1], eol)
 
                                 // remove word delimiters (e.g. '//') otherwise they will get duplicated on insertion
-                                completionText = trimWordDelimeters(completionText);
+                                completionText = trimWordDelimiters(completionText);
 
-                                // trimm start of the line by the size of line_indent, which will be injected by VSCode on insertion anyway
+                                // trim start of the line by the size of line_indent, which will be injected by VSCode on insertion anyway
                                 let pattern = new RegExp("\\n\\s{" + line_indent + "}", 'g');
                                 completionText = completionText.replace(pattern, "\n");
 
@@ -209,7 +207,7 @@ export class CSScriptCompletionItemProvider implements CompletionItemProvider {
                                                 title: "",
                                                 command: "cs-script.on_completion_accepted",
                                                 arguments: [() => {
-                                                    process_snipet_cursor_placeholders(position.line, position.line + completionText.lines().length);
+                                                    process_snippet_cursor_placeholders(position.line, position.line + completionText.lines().length);
                                                 }]
                                             };
 
@@ -224,9 +222,9 @@ export class CSScriptCompletionItemProvider implements CompletionItemProvider {
                                 items.push({
                                     label: parts[0],
                                     kind: memberKind,
-                                    documentation: doc,
+                                    documentation: doc!,
                                     insertText: completionText,
-                                    command: command,
+                                    command: command!,
                                     // additionalTextEdits: postInsertEdits,
                                     sortText: '01'
                                 });
@@ -234,13 +232,11 @@ export class CSScriptCompletionItemProvider implements CompletionItemProvider {
                             });
                         }
                         resolve(items);
-                    },
-                    error => {
                     })
             );
         }
 
-        return null;
+        return null!;
     }
 }
 
@@ -271,12 +267,12 @@ export class CSScriptDocFormattingProvider implements DocumentFormattingEditProv
             return new Promise((resolve, reject) => {
 
                 let editor = window.activeTextEditor;
-                let position = editor.selection.start;
+                let position = editor!.selection.start;
 
 
                 Syntaxer.doDocFormat(document.getText(), document.fileName, document.offsetAt(position),
 
-                    data => {
+                    (data: string) => {
                         if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
                             // <position>\n<formatted text>   (note '\n' is a hardcodded separator)
                             let info = data.lines(2);
@@ -287,7 +283,7 @@ export class CSScriptDocFormattingProvider implements DocumentFormattingEditProv
                             result.push(new TextEdit(wholeDoc, newText));
 
                             // Syntaxer also returns a new mapped offset but it seems like VSCode is doing a really good job by setting the new 
-                            // offset of the formatted test withut any syntaxer assistance. Thus the offset management is disabled.
+                            // offset of the formatted test without any syntaxer assistance. Thus the offset management is disabled.
                             // setTimeout(()=>
                             // {
                             //     let newPosition = document.positionAt(Number(info[0]));
@@ -298,8 +294,6 @@ export class CSScriptDocFormattingProvider implements DocumentFormattingEditProv
                         }
 
                         resolve(result);
-                    },
-                    error => {
                     });
             });
         else
@@ -321,9 +315,9 @@ export class CSScriptLinkProvider implements DocumentLinkProvider {
 
                 const text = document.getText();
 
-                let match: RegExpMatchArray;
+                let match: RegExpExecArray;
 
-                while ((match = this._linkPattern.exec(text))) {
+                while ((match = this._linkPattern.exec(text)!)) {
                     let matchText = match[0];
 
                     let info = ErrorInfo.parse(matchText);
@@ -365,7 +359,7 @@ export class CSScriptCodeActionProvider implements CodeActionProvider {
 
                 if (word != "")
                     Syntaxer.suggestUsings(document.getText(), document.fileName, word,
-                        data => {
+                        (data: string) => {
                             if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
 
                                 let eol = document.eol == EndOfLine.CRLF ? "\r\n" : "\n";
@@ -392,7 +386,7 @@ export class CSScriptCodeActionProvider implements CodeActionProvider {
                                 let lines: string[] = data.lines();
 
                                 // abort if any missing 'using' is already handled; If this var is not checked the user 
-                                // will be presented with alternative handling/'using' optionso  
+                                // will be presented with alternative handling/'using' options  
                                 let already_handled = false;
 
                                 lines.forEach(line => {
@@ -401,7 +395,7 @@ export class CSScriptCodeActionProvider implements CodeActionProvider {
                                         let replace_action: CodeAction;
 
                                         let new_using = `using ${line};`
-                                        let already_present = usings.any(x => x.text == new_using);
+                                        let already_present = usings.any<TextLine>(x => x.text == new_using);
 
                                         if (!already_present) {
 
@@ -423,10 +417,10 @@ export class CSScriptCodeActionProvider implements CodeActionProvider {
                                         let already_fully_specified = false;
 
                                         // checking if the word is already (a part of) the whole replacement_word
-                                        let start_of_expression: number = word_range.end.character - replacement_word.length;
+                                        let start_of_expression: number = word_range?.end.character! - replacement_word.length;
                                         if (start_of_expression >= 0) {
 
-                                            let whole_word_range = new Range(new Position(word_range.start.line, start_of_expression), word_range.end);
+                                            let whole_word_range = new Range(new Position(word_range!.start.line, start_of_expression), word_range!.end);
                                             let whole_word = document.getText(whole_word_range);
 
                                             if (whole_word == replacement_word) {
@@ -439,10 +433,10 @@ export class CSScriptCodeActionProvider implements CodeActionProvider {
                                             replace_action = new CodeAction(`Change "${word}" to "${line}.${word}"`);
                                             replace_action.kind = CodeActionKind.RefactorRewrite;
                                             replace_action.edit = new WorkspaceEdit();
-                                            replace_action.edit.replace(Uri.file(document.fileName), word_range, replacement_word);
+                                            replace_action.edit.replace(Uri.file(document.fileName), word_range!, replacement_word);
                                         }
 
-                                        if (insert_action && replace_action) {
+                                        if (insert_action! != undefined && replace_action! != undefined) {
                                             new_usings.push(insert_action);
                                             new_replacements.push(replace_action);
                                         }
@@ -460,8 +454,6 @@ export class CSScriptCodeActionProvider implements CodeActionProvider {
 
 
                             resolve(result);
-                        },
-                        error => {
                         })
             }
             );
@@ -495,7 +487,7 @@ export class CSScriptSignatureHelpProvider implements SignatureHelpProvider {
             return new Promise((resolve, reject) =>
 
                 Syntaxer.getSignatureHelp(document.getText(), document.fileName, document.offsetAt(position),
-                    data => {
+                    (data: string) => {
                         if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
 
                             let lines: string[] = data.lines();
@@ -510,7 +502,7 @@ export class CSScriptSignatureHelpProvider implements SignatureHelpProvider {
                             for (let i = 1; i < lines.length; i++) {
 
                                 let sig_info = utils.css_unescape_linebreaks(lines[i], eol);
-                                let sig = utils.toSignaureInfo(sig_info);
+                                let sig = utils.toSignatureInfo(sig_info);
                                 result.signatures.push(sig);
                             }
                             // script.user    
@@ -523,9 +515,6 @@ export class CSScriptSignatureHelpProvider implements SignatureHelpProvider {
                             }
                         }
                         resolve(result);
-
-                    },
-                    error => {
                     })
             );
         }
@@ -550,7 +539,7 @@ export class CSScriptReferenceProvider implements ReferenceProvider {
 
                 Syntaxer.getRefrences(document.getText(), document.fileName, document.offsetAt(position),
 
-                    data => {
+                    (data: string) => {
                         if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
 
                             let lines: string[] = data.lines();
@@ -561,8 +550,6 @@ export class CSScriptReferenceProvider implements ReferenceProvider {
                             });
                         }
                         resolve(result);
-                    },
-                    error => {
                     }));
 
         }
@@ -579,14 +566,14 @@ export class CSScriptRenameProvider implements RenameProvider {
         if (!is_workspace) {
 
             let word = document.getWordRangeAtPosition(position);
-            let word_width = word.end.character - word.start.character;
+            let word_width = word!.end.character - word!.start.character;
 
             return new Promise((resolve, reject) =>
 
 
-                Syntaxer.getRenameingInfo(document.getText(), document.fileName, document.offsetAt(position),
+                Syntaxer.getRenamingInfo(document.getText(), document.fileName, document.offsetAt(position),
 
-                    data => {
+                    (data: string) => {
                         let result = new WorkspaceEdit();
 
                         try {
@@ -624,8 +611,6 @@ export class CSScriptRenameProvider implements RenameProvider {
                         resolve(result);
 
                         setTimeout(() => save_script_project(false), 700);
-                    },
-                    error => {
                     }));
 
         }
@@ -639,7 +624,7 @@ export class CSScriptDefinitionProvider implements DefinitionProvider {
     public provideDefinition(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<Definition> {
 
         syntaxer_navigate_selectedLine = -1;
-        let result: Location = undefined;
+        let result: Location;
 
         let is_workspace = isWorkspace();
         let is_css_directive = isCssDirective(document, position);
@@ -650,7 +635,7 @@ export class CSScriptDefinitionProvider implements DefinitionProvider {
 
                 Syntaxer.getDefinition(document.getText(), document.fileName, document.offsetAt(position),
 
-                    data => {
+                    (data: string) => {
                         if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
 
                             let lines: string[] = data.lines();
@@ -674,8 +659,6 @@ export class CSScriptDefinitionProvider implements DefinitionProvider {
                             }
                         }
                         resolve(result);
-                    },
-                    error => {
                     }));
         }
         // utils.statusBarItem.hide();

@@ -66,7 +66,7 @@ export function load_project() {
 
                     if (editor == null) {
                         let scriptFile = parse_proj_dir(csproj_dir);
-                        commands.executeCommand("vscode.open", Uri.file(scriptFile));
+                        commands.executeCommand("vscode.open", Uri.file(scriptFile!));
                     }
                     else {
                         if (editor.document.isDirty) {
@@ -343,9 +343,9 @@ export function print_project() {
 // -----------------------------------
 export function print_project_for_document() {
     let editor = window.activeTextEditor;
-    let file = editor.document.fileName;
+    let file = editor?.document.fileName;
 
-    editor.document.save();
+    editor?.document.save();
     outputChannel.show(true);
     outputChannel.clear();
     outputChannel.appendLine("Analyzing...");
@@ -354,7 +354,7 @@ export function print_project_for_document() {
         outputChannel.clear();
 }
 // -----------------------------------
-export function print_project_for(file: string): boolean {
+export function print_project_for(file: string | undefined): boolean {
     if (Utils.IsScript(file)) {
         with_lock(() => {
             let command = "";
@@ -382,9 +382,9 @@ export function print_project_for(file: string): boolean {
 }
 // -----------------------------------
 export function get_project_tree_items() {
-    let lines: string[];
+    let lines: string[] = [];
     let editor = window.activeTextEditor;
-    let file: string;
+    let file: string = "";
 
     if (Utils.IsSamePath(workspace.rootPath, csproj_dir)) { // cs-script workspace
         let proj_file = path.join(csproj_dir, "script.csproj");
@@ -395,7 +395,7 @@ export function get_project_tree_items() {
         editor.document.save();
     }
 
-    if (file) {
+    if (file != "") {
         if (!is_busy())
             with_lock(() => {
                 // no need to include debug.cs into the view so drop the ':dbg' switch
@@ -419,8 +419,8 @@ export function get_project_tree_items() {
 // -----------------------------------
 export function check() {
     with_lock(() => {
-        let editor = window.activeTextEditor;
-        let file = editor.document.fileName;
+        let editor = window.activeTextEditor!;
+        let file = editor?.document.fileName;
 
         editor.document.save();
         outputChannel.show(true);
@@ -486,8 +486,8 @@ export function check() {
 // -----------------------------------
 export async function find_references() {
     let editor = window.activeTextEditor;
-    let document = editor.document;
-    let position = editor.selection.active;
+    let document = editor!.document;
+    let position = editor!.selection.active;
 
     with_lock(async () => {
         outputChannel.show(true);
@@ -600,7 +600,7 @@ export function about() {
             outputChannel.appendLine(output.trim());
             outputChannel.appendLine("-------------------------------------------------------");
             outputChannel.appendLine("Syntaxer");
-            outputChannel.appendLine("   " + syntaxer.Server());
+            outputChannel.appendLine("   " + syntaxer.server());
             outputChannel.appendLine("Extension");
             outputChannel.appendLine("   " + __dirname);
 
@@ -610,10 +610,11 @@ export function about() {
 }
 // -----------------------------------
 
-let terminal: Terminal = null;
+let terminal: Terminal;
+
 export function run_in_terminal() {
     with_lock(() => {
-        let editor = window.activeTextEditor;
+        let editor = window.activeTextEditor!;
         let file = editor.document.fileName;
         editor.document.save();
 
@@ -819,7 +820,7 @@ export function build_exe() {
             return;
         }
 
-        let editor = window.activeTextEditor;
+        let editor = window.activeTextEditor!;
         let file = editor.document.fileName;
 
         outputChannel.show(true);
@@ -855,7 +856,7 @@ export async function debug() {
 
         if (fallback_to_launch_json) {
             if (workspace.workspaceFolders != undefined) {
-                // workspace is loaded so use its launch confg
+                // workspace is loaded so use its launch config
                 const launchFile = workspace.getConfiguration("launch");
                 const configs = launchFile.get<any[]>("configurations");
                 vscode.debug.onDidTerminateDebugSession(session => {
@@ -863,14 +864,14 @@ export async function debug() {
                 });
                 if (!debugging) {
                     debugging = true;
-                    await vscode.debug.startDebugging(workspace.workspaceFolders[0], configs[0]);
+                    await vscode.debug.startDebugging(workspace.workspaceFolders[0], configs![0]);
                 }
             }
         }
         return;
     }
 
-    let editor = window.activeTextEditor;
+    let editor = window.activeTextEditor!;
     editor.document.save();
     if (!fs.existsSync(editor.document.fileName)) {
         window.showInformationMessage('Cannot find file "' + editor.document.fileName + '"');
@@ -980,7 +981,7 @@ async function getOpenEditors(): Promise<TextEditor[]> {
 }
 
 export async function save_script_project(dependencies_only: boolean): Promise<void> {
-    let editor = window.activeTextEditor;
+    let editor = window.activeTextEditor!;
     let file = editor.document.fileName;
 
     if (!dependencies_only) {
@@ -996,14 +997,14 @@ export async function save_script_project(dependencies_only: boolean): Promise<v
     let response = Utils.RunSynch(command);
 
     let dependencies = response.lines()
-        .where(l => l.startsWith("file:"))
+        .where<string>(l => l.startsWith("file:"))
         .select(l => l.substring(5));
 
     // do not include current file in dirty_docs as it is either saved 10 lines above
     // or doesn't need to be saved because of `dependencies_only`
     // Note 'where' filter is case sensetive
     let dirty_docs = unsaved_documents
-        .where(x => x != file)
+        .where<string>(x => x != file)
         .select(x => x.toLocaleLowerCase());
     let relevant_files = dependencies.select(x => x.toLocaleLowerCase());
 
@@ -1020,14 +1021,14 @@ export async function save_script_project(dependencies_only: boolean): Promise<v
 
         // Save all opened dependency scripts. Though...
         // Unfortunately `vscode.window.openTextEditors` does not exist yet: "API Access to "Open Editors" #15178"
-        // Only visibleTextEditors does. but it is useless for this tast.
+        // Only visibleTextEditors does. but it is useless for this test.
         // vscode.window.openTextEditors.forEach(ed => {
 
         openTextEditors.forEach(ed => {
             let isActiveDoc = ed == editor;
             let tabFileName = ed.document.fileName.toLocaleLowerCase();
 
-            if (!isActiveDoc && dependencies.any(x => x.toLocaleLowerCase() == tabFileName)) {
+            if (!isActiveDoc && dependencies.any<string>(x => x.toLocaleLowerCase() == tabFileName)) {
                 ed.document.save();
             }
         });
@@ -1051,7 +1052,7 @@ export function run() {
         // - check if process is already running
         // - read cscs location from config
 
-        let editor = window.activeTextEditor;
+        let editor = window.activeTextEditor!;
 
         let exec = require("child_process").exec;
         let showExecutionMessage = true;
@@ -1075,17 +1076,17 @@ export function run() {
 
         let startTime = new Date();
         let p = exec(command);
-        p.stdout.on("data", data => {
+        p.stdout.on("data", (data: string) => {
             // ignore mono test output that comes from older releases(s)  (known Mono issue)
             if (!data.startsWith("failed to get 100ns ticks"))
                 outputChannel.append(data);
         });
 
-        p.stderr.on("data", data => {
+        p.stderr.on("data", (data: string) => {
             outputChannel.append(data);
         });
 
-        p.on("close", code => {
+        p.on("close", (code: any) => {
             let endTime = new Date();
             let elapsedTime = (endTime.getTime() - startTime.getTime()) / 1000;
             outputChannel.appendLine("");
@@ -1101,7 +1102,7 @@ export function run() {
 
 // intercepting Modifier_MouseClick https://github.com/Microsoft/vscode/issues/3130
 let current_doc = "";
-function onActiveEditorChange(editor: TextEditor) {
+function onActiveEditorChange(editor: TextEditor | undefined) {
     if (editor != null) {
         // if (editor != null && editor.document.languageId == "code-runner-output") {
 
@@ -1127,11 +1128,10 @@ function onActiveEditorSelectionChange(
     // And if it is not pressed then lat it be just a simple click. However, VSCode does not let to test
     // Ctrl button state (vscode/#3130)  :o(
     //
-    // Always navigating on a sinle click on a text line in the ouput window works fine but interfere with the selection operations.
+    // Always navigating on a single click on a text line in the output window works fine but interfere with the selection operations.
     // Thus let's do navigation if no current selection is made.
 
-    if (
-        event.kind == TextEditorSelectionChangeKind.Mouse &&
+    if (event.kind == TextEditorSelectionChangeKind.Mouse &&
         event.textEditor.document.fileName.startsWith("extension-output-") &&
         event.textEditor.selection.isEmpty
     ) {
@@ -1153,7 +1153,7 @@ function onActiveEditorSelectionChange(
                             commands
                                 .executeCommand("vscode.open", Uri.file(info.file))
                                 .then(value => {
-                                    let editor = window.activeTextEditor;
+                                    let editor = window.activeTextEditor!;
                                     const position = editor.selection.active;
 
                                     if (select_whole_line) {
@@ -1173,7 +1173,7 @@ function onActiveEditorSelectionChange(
     }
 }
 // -----------------------------------
-var unsaved_documents = [];
+var unsaved_documents: string[] = [];
 
 function add_to_unsaved(file: string): void {
     if (fs.existsSync(file)) {
@@ -1197,7 +1197,7 @@ function onDidSaveTextDocument(document: TextDocument) {
         let proj_file = path.join(csproj_dir, "script.csproj");
 
         let scripts = Utils.getScriptFiles(proj_file);
-        if (scripts.any(x => x.pathNormalize() == document.fileName.pathNormalize()))
+        if (scripts.any<string>(x => x.pathNormalize() == document.fileName.pathNormalize()))
             generate_proj_file(csproj_dir, scripts.first());
     }
 

@@ -1,0 +1,2 @@
+vsce publish
+pause

@@ -83,12 +83,12 @@ file:C:\\Users\\usr\\AppData\\Local\\Temp\\CSSCRIPT\\Cache\\dbg.cs
 ref:System
 ref:C:\\Program Files (x86)\\Mono\\lib\\mono/4.5/Facades\\System.ValueTuple.dll
 ref:C:\\Program Files (x86)\\Mono\\lib\\mono/4.5/Facades\\System.Linq.dll
-searcDir:c:\\Users\\usr\\Desktop
-searcDir:C:\\ProgramData\\chocolatey\\lib\\cs-script\\tools\\cs-script\\lib
-searcDir:C:\\ProgramData\\CS-Script\\inc
-searcDir:C:\\Program Files (x86)\\Mono\lib\\mono/4.5/Facades
-searcDir:C:\\Users\\usr\\AppData\\Roaming\\Code\\User\\cs-script.user\\lib
-searcDir:C:\\Program Files (x86)\\Mono\\lib\\mono\\4.5\\Facades`;
+searchDir:c:\\Users\\usr\\Desktop
+searchDir:C:\\ProgramData\\chocolatey\\lib\\cs-script\\tools\\cs-script\\lib
+searchDir:C:\\ProgramData\\CS-Script\\inc
+searchDir:C:\\Program Files (x86)\\Mono\lib\\mono/4.5/Facades
+searchDir:C:\\Users\\usr\\AppData\\Roaming\\Code\\User\\cs-script.user\\lib
+searchDir:C:\\Program Files (x86)\\Mono\\lib\\mono\\4.5\\Facades`;
 
         let lines = output.lines();
 
