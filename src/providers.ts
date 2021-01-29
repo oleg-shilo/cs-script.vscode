@@ -274,7 +274,7 @@ export class CSScriptDocFormattingProvider implements DocumentFormattingEditProv
 
                     (data: string) => {
                         if (!data.startsWith("<null>") && !data.startsWith("<error>")) {
-                            // <position>\n<formatted text>   (note '\n' is a hardcodded separator)
+                            // <position>\n<formatted text>   (note '\n' is a hard codded separator)
                             let info = data.lines(2);
 
                             let newText = data.substring(info[0].length + 1);
@@ -584,11 +584,8 @@ export class CSScriptRenameProvider implements RenameProvider {
 
                                 lines.forEach(line => {
 
-                                    // console.log(line);
-
                                     let info = ErrorInfo.parse(line);
                                     let range = new Range(info.range.start, new Position(info.range.start.line, info.range.start.character + word_width));
-
 
                                     let edits = changes[info.file];
                                     if (!edits) {

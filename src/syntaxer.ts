@@ -46,7 +46,6 @@ export function start_syntaxer(): void {
 export class Syntaxer {
 
     public static init(): void {
-        // DeploySyntaxer();
     }
 
     public static sentStopRequest(): void {
