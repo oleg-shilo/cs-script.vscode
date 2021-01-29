@@ -14,7 +14,7 @@ import { Syntaxer } from "./syntaxer";
 
 export let syntax_readme: string = path.join(user_dir(), 'dotnet', "cs-script.syntax.txt");
 let ext_context: ExtensionContext;
-let cscs_exe: string = path.join(user_dir(), 'mono', "cscs.exe");
+let cscs_exe: string = path.join(user_dir(), 'dotnet', "cscs.dll");
 let readme: string = path.join(user_dir(), 'dotnet', "cs-script.help.txt");
 let csproj_template = __dirname + "/../bin/mono/script.csproj";
 let outputChannel = window.createOutputChannel("CS-Script");
@@ -628,10 +628,7 @@ export function run_in_terminal() {
         if (os.platform() == "win32")
             terminal.sendText("cls");
 
-        if (is_dotnet_run())
-            terminal.sendText(`dotnet "${core_engine}" "${file}"`);
-        else
-            terminal.sendText(build_command(`"${cscs_exe}" "${file}"`));
+        terminal.sendText(`dotnet "${core_engine}" "${file}"`);
 
         unlock();
     });
@@ -813,13 +810,6 @@ export function new_script_vb() {
 export function build_exe() {
     with_lock(() => {
 
-        if (is_dotnet_run()) {
-
-            vscode.window.showErrorMessage(
-                "Building self-contained executables is only supported for C# script hosted on Mono and CS-Script extension is configured to be run (hosted) on .NET Core.");
-            return;
-        }
-
         let editor = window.activeTextEditor!;
         let file = editor.document.fileName;
 
@@ -828,17 +818,11 @@ export function build_exe() {
         outputChannel.appendLine('Building executable from the script "' + file + '"');
         outputChannel.appendLine("---------------------");
 
-        let ext = path.extname(file);
-        let exe_file = file.replace(ext, ".exe");
-
-        let command = build_command(`"${cscs_exe}" -e "${file}"`);
+        let command = `dotnet "${cscs_exe}" -e "${file}"`;
 
         Utils.Run(command, (code, output) => {
             outputChannel.appendLine(output);
-            if (fs.existsSync(exe_file))
-                outputChannel.appendLine("The script is converted into executable " + exe_file);
             outputChannel.appendLine("\n[Done]");
-
             unlock();
         });
     });

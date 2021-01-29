@@ -20,30 +20,29 @@ export function activate(context: vscode.ExtensionContext) {
         // console.log('"cs-script" extension is now active...');
 
         cs_script.ActivateDiagnostics(context);
-        // syntaxer.DeploySyntaxer();
 
         // done -  is a .NET Core migration indicator 
         const treeViewProvider = new ProjectTreeProvider(cs_script.get_project_tree_items); // done
-        vscode.window.registerTreeDataProvider('cs-script', treeViewProvider);
+        vscode.window.registerTreeDataProvider('cs-script', treeViewProvider); // done
 
-        context.subscriptions.push(vscode.languages.registerHoverProvider('csharp', new CSScriptHoverProvider()));
+        context.subscriptions.push(vscode.languages.registerHoverProvider('csharp', new CSScriptHoverProvider())); // done
         context.subscriptions.push(vscode.languages.registerHoverProvider('vb', new CSScriptHoverProvider()));
         // --
-        context.subscriptions.push(vscode.languages.registerCompletionItemProvider('csharp', new CSScriptCompletionItemProvider(), '.', '_', '=', " "));
+        context.subscriptions.push(vscode.languages.registerCompletionItemProvider('csharp', new CSScriptCompletionItemProvider(), '.', '_', '=', " ")); // done
         context.subscriptions.push(vscode.languages.registerCompletionItemProvider('vb', new CSScriptCompletionItemProvider(), '.', '_', '='));
         // --
-        context.subscriptions.push(vscode.languages.registerDefinitionProvider('csharp', new CSScriptDefinitionProvider()));
+        context.subscriptions.push(vscode.languages.registerDefinitionProvider('csharp', new CSScriptDefinitionProvider())); // done
         context.subscriptions.push(vscode.languages.registerDefinitionProvider('vb', new CSScriptDefinitionProvider()));
         // --
-        context.subscriptions.push(vscode.languages.registerReferenceProvider('csharp', new CSScriptReferenceProvider()));
+        context.subscriptions.push(vscode.languages.registerReferenceProvider('csharp', new CSScriptReferenceProvider())); // done
         context.subscriptions.push(vscode.languages.registerReferenceProvider('vb', new CSScriptReferenceProvider()));
         // --
-        context.subscriptions.push(vscode.languages.registerCodeActionsProvider('csharp', new CSScriptCodeActionProvider()));
-        context.subscriptions.push(vscode.languages.registerSignatureHelpProvider('csharp', new CSScriptSignatureHelpProvider(), '(', ','));
-        context.subscriptions.push(vscode.languages.registerRenameProvider('csharp', new CSScriptRenameProvider()));
-        context.subscriptions.push(vscode.languages.registerDocumentFormattingEditProvider('csharp', new CSScriptDocFormattingProvider()));
+        context.subscriptions.push(vscode.languages.registerCodeActionsProvider('csharp', new CSScriptCodeActionProvider()));  // done                             // e.g. "add usings"
+        context.subscriptions.push(vscode.languages.registerSignatureHelpProvider('csharp', new CSScriptSignatureHelpProvider(), '(', ','));  // done              // hint the signature while typing
+        context.subscriptions.push(vscode.languages.registerRenameProvider('csharp', new CSScriptRenameProvider())); // done
+        context.subscriptions.push(vscode.languages.registerDocumentFormattingEditProvider('csharp', new CSScriptDocFormattingProvider())); // done
         // --
-        context.subscriptions.push(vscode.languages.registerDocumentLinkProvider('code-runner-output', new CSScriptLinkProvider()));
+        context.subscriptions.push(vscode.languages.registerDocumentLinkProvider('code-runner-output', new CSScriptLinkProvider())); // done
         // --
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.refresh_tree', () => treeViewProvider.refresh())); // done
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.show_tree_data', () => cs_script.print_project())); // done
@@ -52,14 +51,14 @@ export function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.run', cs_script.run)); // done
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.run_in_terminal', cs_script.run_in_terminal)); // done
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.print_project', cs_script.print_project_for_document)); // done
-        context.subscriptions.push(vscode.commands.registerCommand('cs-script.load_project', cs_script.load_project));
+        context.subscriptions.push(vscode.commands.registerCommand('cs-script.load_project', cs_script.load_project)); // done
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.check', cs_script.check)); // done
-        context.subscriptions.push(vscode.commands.registerCommand('cs-script.find_references', cs_script.find_references));
+        context.subscriptions.push(vscode.commands.registerCommand('cs-script.find_references', cs_script.find_references)); // done
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.css_config', cs_script.css_config)); // done
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.about', cs_script.about)); // done
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.new_script', cs_script.new_script)); // done
-        context.subscriptions.push(vscode.commands.registerCommand('cs-script.new_script_vb', cs_script.new_script_vb)); // done
-        context.subscriptions.push(vscode.commands.registerCommand('cs-script.engine_help', cs_script.engine_help)); // done
+        context.subscriptions.push(vscode.commands.registerCommand('cs-script.new_script_vb', cs_script.new_script_vb));
+        context.subscriptions.push(vscode.commands.registerCommand('cs-script.engine_help', cs_script.engine_help)); //done
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.build_exe', cs_script.build_exe)); // done
 
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.on_completion_accepted', callback => callback()));

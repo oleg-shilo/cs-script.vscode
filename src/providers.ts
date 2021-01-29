@@ -309,7 +309,6 @@ export class CSScriptLinkProvider implements DocumentLinkProvider {
         let result: DocumentLink[] = [];
 
         let enabled = vsc_config.get("cs-script.decorate_file_links_in_output", true);
-
         if (enabled)
             return new Promise((resolve, reject) => {
 

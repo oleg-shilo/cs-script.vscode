@@ -2,13 +2,13 @@
 
 ## 1.6.0-4 (11 Apr, 2020)
 
-#### _This release delivers hosting script execution under .NET Core. Meaning that raw VSCode deployment with the extension extension "ms-dotnettools.csharp" is enough to edit, run and debug C# script. Mono and Mono extension are no longer required. Mono support is still available via settings but it will be eventually phased out._ 
+### _This release delivers hosting script execution under .NET Core. Meaning that raw VSCode deployment with the extension extension "ms-dotnettools.csharp" is enough to edit, run and debug C# script. Mono and Mono extension are no longer required. Mono support is still available via settings but it will be eventually phased out._
 
 - Migrated on .NET Core
 - Hosting on Mono is still supported. If required it needs to be enabled via settings specific for the type of the activity:
-- cs-script.engine_run.dotnet 
+- cs-script.engine_run.dotnet
 - cs-script.engine_debug.dotnet
-- cs-script.engine_project.dotnet 
+- cs-script.engine_project.dotnet
 - Fixed #21: Removed unnecessary check for presence of Mono
 - Fixed #22: folder `runtimes` (of the syntaxer) is added to the package
 - Fixed `Load Project` use-case
@@ -53,17 +53,17 @@
 ## 1.5.5 (Jun 26, 2018)
 
 - Added option to `cs-script.enable_code_formatting` enable/disable document formatting provider.
-- Added handling the case of MONO being installed but not added to PATH. Note, this only helps for running the scripts but not for debugging, which is handled entirely by VSCode. 
+- Added handling the case of MONO being installed but not added to PATH. Note, this only helps for running the scripts but not for debugging, which is handled entirely by VSCode.
 
 ## 1.5.4 (Jun 9, 2018)
 
-- Added handling/processing unsaved changes in the source files without creating a `<file>.$temp$.cs` file in the script directory. 
+- Added handling/processing unsaved changes in the source files without creating a `<file>.$temp$.cs` file in the script directory.
 
 ## 1.5.3 (May 15, 2018)
 
 - Added "!inDebugMode" condition for "cs-script.debug" command.
-- Issue #10: CSSConfig: searchDirs parameter not working. 
-- Edit engine setting command now opens both .NET and Mono settings' files  
+- Issue #10: CSSConfig: searchDirs parameter not working.
+- Edit engine setting command now opens both .NET and Mono settings' files
 
 ## 1.5.2 (May 11, 2018)
 
@@ -157,4 +157,3 @@
 - Support for C# script debugging (with _Mono Debug_ extension)
 - Integration with VSCode IntelliSense (with _OmniSharp_ extension)
 - Printing C# script dependencies ('print project' command)
-

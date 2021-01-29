@@ -15,7 +15,7 @@ import * as utils from "./utils";
 
 
 export function server(): string {
-    return path.join(utils.user_dir(), "dotnet", "syntaxer", "syntaxer.core.dll")
+    return path.join(utils.user_dir(), "dotnet", "syntaxer", "syntaxer.dll")
 }
 
 function cscs(): string {
@@ -32,9 +32,15 @@ export function start_syntaxer(): void {
     let CSCS = cscs();
 
     // let CSCS = path.join(utils.user_dir(), "dotnet", "cscs.dll");
-    // let SERVER = path.join(utils.user_dir(), "dotnet", "syntaxer", "syntaxer.core.dll");
+    // let SERVER = path.join(utils.user_dir(), "dotnet", "syntaxer", "syntaxer.dll");
 
-    child_process.execFile(runtime, [SERVER, `-port:${PORT}`, "-listen", `-client:${process.pid}`, "-timeout:60000", `-cscs_path:${CSCS}`]);
+    let args = [SERVER, `-port:${PORT}`, "-listen", `-client:${process.pid}`, "-timeout:60000", `-cscs_path:${CSCS}`];
+    child_process.execFile(runtime, args,
+        (error, stdout, stderr) => {
+            console.log(stderr);
+            console.log(stdout);
+        }
+    );
 }
 
 export class Syntaxer {
