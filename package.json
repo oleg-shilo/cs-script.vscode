@@ -2,7 +2,7 @@
   "name": "cs-script",
   "displayName": "CS-Script",
   "description": "Execution, debugging and editing C# code that targets .NET and Mono (no .NET Core required)",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "license": "MIT",
   "publisher": "oleg-shilo",
   "icon": "images/css_logo.png",
@@ -121,6 +121,11 @@
           "type": "string",
           "default": "-co:/debug:pdbonly",
           "description": "Extra arguments to be passed to the script engine for debug command (e.g. compiler options fro Roslyn compiler)."
+        },
+        "cs-script.extra_args": {
+          "type": "string",
+          "default": "",
+          "description": "Extra arguments to be always passed to the script engine (e.g. `-cd` for treating script as a dll source file)."
         }
       }
     },

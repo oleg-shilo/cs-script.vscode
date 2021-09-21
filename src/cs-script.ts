@@ -346,27 +346,10 @@ export function check() {
         outputChannel.clear();
         outputChannel.appendLine("Checking...");
 
-        let command = `dotnet "${core_engine}" -check "${file}"`;
 
-        // Utils.Run(command, (code, output) => {
+        let extra_args = vsc_config.get("cs-script.extra_args");
 
-        //     let lines = output.split(/\r?\n/g).filter(actual_output);
-
-        //     outputChannel.clear();
-
-        //     let errors: ErrorInfo[] = [];
-        //     lines.forEach((line, i) => {
-        //         outputChannel.appendLine(line);
-        //         let error = ErrorInfo.parse(line);
-        //         if (error && (error.severity == DiagnosticSeverity.Error || error.severity == DiagnosticSeverity.Warning)) {
-        //             errors.push(error);
-        //         }
-        //     });
-
-        //     Utils.SentToDiagnostics(errors);
-
-        //     unlock();
-        // });
+        let command = `dotnet "${core_engine}" ${extra_args} -check "${file}"`;
 
         let cleared = false;
         Utils.Run2(
@@ -520,7 +503,8 @@ export function run_in_terminal() {
         if (os.platform() == "win32")
             terminal.sendText("cls");
 
-        terminal.sendText(`dotnet "${core_engine}" "${file}"`);
+        let extra_args = vsc_config.get("cs-script.extra_args");
+        terminal.sendText(`dotnet "${core_engine}" ${extra_args} "${file}"`);
 
         unlock();
     });
@@ -779,7 +763,7 @@ export async function debug() {
             type: "coreclr",
             request: "launch",
             program: "dotnet",
-            args: [core_engine, "-d", extra_args().replace("-co:/debug:pdbonly", ""), "-l", config, "-ac:2", editor.document.fileName],
+            args: [core_engine, "-d", extra_args().replace("-co:/debug:pdbonly", ""), vsc_config.get("cs-script.extra_args"), "", "-l", config, "-ac:2", editor.document.fileName],
             cwd: path.dirname(editor.document.fileName),
             console: "internalConsole",
             stopAtEntry: false
@@ -904,7 +888,8 @@ export function run() {
         let file = editor.document.fileName;
         await save_script_project(false);
 
-        let command = `dotnet "${core_engine}" "${file}"`;
+        let extra_args = vsc_config.get("cs-script.extra_args");
+        let command = `dotnet "${core_engine}" ${extra_args} "${file}"`;
 
         if (showExecutionMessage) {
             outputChannel.appendLine("[Running] " + command);

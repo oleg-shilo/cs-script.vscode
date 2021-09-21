@@ -69,7 +69,8 @@ export class Syntaxer {
         });
 
         client.on('error', function (error) {
-            if (fs.existsSync(server())) { // may not started yet (or crashed)
+            let server_exe = server();
+            if (fs.existsSync(server_exe)) { // may not started yet (or crashed)
                 start_syntaxer();
             }
         });

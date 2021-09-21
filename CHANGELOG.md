@@ -1,5 +1,18 @@
 # Change Log
 
+## 2.0.1 (20 Sep, 2021)
+
+- Updated CS-Script engine and Syntaxer
+- Addressed GitHub flagged vulnerability concerns
+- Extra arguments to be always passed to the script engine (e.g. `-cd` for treating script as a dll source file).
+  It allows addressing inconvenience of "Issue #26: Check syntax in scripts lacking Main method"
+
+## 2.0.0 (30 Jan, 2021)
+
+### _This release delivers hosting script execution under .NET5._
+
+- Migrated on CS-Script.Core v1.4.5 targeting .NET 5
+
 ## 1.6.0-4 (11 Apr, 2020)
 
 ### _This release delivers hosting script execution under .NET Core. Meaning that raw VSCode deployment with the extension extension "ms-dotnettools.csharp" is enough to edit, run and debug C# script. Mono and Mono extension are no longer required. Mono support is still available via settings but it will be eventually phased out._
