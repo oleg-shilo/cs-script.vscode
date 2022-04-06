@@ -5,7 +5,7 @@
 import * as fs from "fs";
 import * as os from "os";
 import * as utils from "./utils";
-import * as syntaxer from "./syntaxer";
+// import * as syntaxer from "./syntaxer";
 import * as vscode from "vscode";
 import * as path from "path";
 import { Uri, commands, DiagnosticSeverity, TextEditorSelectionChangeKind, Location, window, TextEditor, workspace, Terminal, TextEditorSelectionChangeEvent, Selection, TextDocument, TextDocumentChangeEvent, ExtensionContext } from "vscode";
@@ -26,9 +26,9 @@ export let csproj_dir = path.join(os.tmpdir(), "CSSCRIPT", "VSCode", "cs-script 
 function extra_args(): string { return vsc_config.get("cs-script.extra_args_for_debug", "-co:/debug:pdbonly"); }
 
 // -----------------------------------
-let core_engine = path.join(user_dir(), "dotnet", "cscs.dll");
 
 function is_dotnet_debug(): Boolean { return vsc_config.get("cs-script.engine_debug.dotnet", true); }
+
 // -----------------------------------
 export function load_project() {
     with_lock(() => {
@@ -159,7 +159,7 @@ export function parse_proj_dir(proj_dir: string): string | null {
 function generate_proj_file(proj_dir: string, scriptFile: string): void {
     try {
 
-        let command = `dotnet "${core_engine}" -proj:csproj "${scriptFile}"`;
+        let command = `dotnet "${settings.cscs}" -proj:csproj "${scriptFile}"`;
 
         let output = Utils.RunSynch(command);
 
@@ -285,7 +285,7 @@ export function print_project_for_document() {
 export function print_project_for(file: string | undefined): boolean {
     if (Utils.IsScript(file)) {
         with_lock(() => {
-            let command = `dotnet "${core_engine}" -l -proj:dbg "${file}"`;
+            let command = `dotnet "${settings.cscs}" -l -proj:dbg "${file}"`;
 
             Utils.Run(command, (code, output) => {
                 let lines: string[] = output.lines().filter(actual_output);
@@ -323,7 +323,7 @@ export function get_project_tree_items() {
             with_lock(() => {
                 // no need to include debug.cs into the view so drop the ':dbg' switch
 
-                let command = `dotnet "${core_engine}"  -l -proj "${file}"`;
+                let command = `dotnet "${settings.cscs}"  -l -proj "${file}"`;
 
                 let output: string = Utils.RunSynch(command);
                 lines = output.lines().filter(actual_output);
@@ -349,7 +349,7 @@ export function check() {
 
         let extra_args = vsc_config.get("cs-script.extra_args");
 
-        let command = `dotnet "${core_engine}" ${extra_args} -check "${file}"`;
+        let command = `dotnet "${settings.cscs}" ${extra_args} -check "${file}"`;
 
         let cleared = false;
         Utils.Run2(
@@ -453,7 +453,7 @@ export async function find_references() {
 // -----------------------------------
 export function css_config() {
 
-    utils.ensure_default_core_config(core_engine,
+    utils.ensure_default_core_config(settings.cscs,
         config_file => {
             commands.executeCommand("vscode.open", Uri.file(config_file));
         });
@@ -466,7 +466,7 @@ export function about() {
         outputChannel.clear();
         outputChannel.appendLine("Analyzing...");
 
-        let command = `dotnet "${core_engine}" -ver`;
+        let command = `dotnet "${settings.cscs}" -ver`;
 
         Utils.Run(command, (code, output) => {
             outputChannel.clear();
@@ -475,7 +475,7 @@ export function about() {
             outputChannel.appendLine(output.trim());
             outputChannel.appendLine("-------------------------------------------------------");
             outputChannel.appendLine("Syntaxer");
-            outputChannel.appendLine("   " + syntaxer.server());
+            outputChannel.appendLine("   " + settings.syntaxer);
             outputChannel.appendLine("Extension");
             outputChannel.appendLine("   " + __dirname);
 
@@ -504,7 +504,7 @@ export function run_in_terminal() {
             terminal.sendText("cls");
 
         let extra_args = vsc_config.get("cs-script.extra_args");
-        terminal.sendText(`dotnet "${core_engine}" ${extra_args} "${file}"`);
+        terminal.sendText(`dotnet "${settings.cscs}" ${extra_args} "${file}"`);
 
         unlock();
     });
@@ -585,7 +585,7 @@ export function engine_help() {
         // let editor = vscode.window.activeTextEditor;
         // let file = editor.document.fileName;
 
-        let command = `dotnet "${core_engine}" -help`;
+        let command = `dotnet "${settings.cscs}" -help`;
 
         Utils.Run(command, (code, output) => {
             fs.writeFileSync(readme, output, { encoding: "utf8" });
@@ -598,7 +598,7 @@ export function engine_help() {
 // -----------------------------------
 export function generate_syntax_help(force: boolean = false): string {
 
-    let command = `dotnet "${core_engine}" -syntax`;
+    let command = `dotnet "${settings.cscs}" -syntax`;
 
     let output = Utils.RunSynch(command);
     fs.writeFileSync(syntax_readme, output, { encoding: "utf8" });
@@ -618,20 +618,26 @@ export function new_script() {
             fs.renameSync(new_file_path, backup_file);
         }
 
-        let backup_comment = "";
-        if (backup_file)
-            backup_comment =
-                "// The previous content of this file has been saved into \n" +
-                "// " + backup_file + " \n";
+        let command = `dotnet "${settings.cscs}" -new:toplevel \"${new_file_path}\"`;
 
-        let content = utils.prepare_new_script()
-            .replace("$backup_comment$", backup_comment);
+        Utils.RunSynch(command);
 
-        fs.writeFileSync(new_file_path, content);
+        if (fs.existsSync(new_file_path)) {
+            let content = fs.readFileSync(new_file_path, { encoding: 'utf8' });
 
-        if (fs.existsSync(new_file_path))
-            commands.executeCommand("vscode.open", Uri.file(new_file_path));
+            let backup_comment = "";
+            if (backup_file)
+                backup_comment =
+                    "// The previous content of this file has been saved into \n" +
+                    "// " + backup_file + " \n\n";
 
+            content = backup_comment + content;
+
+            fs.writeFileSync(new_file_path, content);
+
+            if (fs.existsSync(new_file_path))
+                commands.executeCommand("vscode.open", Uri.file(new_file_path));
+        }
         unlock();
     });
 }
@@ -763,7 +769,7 @@ export async function debug() {
             type: "coreclr",
             request: "launch",
             program: "dotnet",
-            args: [core_engine, "-d", extra_args().replace("-co:/debug:pdbonly", ""), vsc_config.get("cs-script.extra_args"), "", "-l", config, "-ac:2", editor.document.fileName],
+            args: [settings.cscs, "-d", extra_args().replace("-co:/debug:pdbonly", ""), vsc_config.get("cs-script.extra_args"), "", "-l", config, "-ac:2", editor.document.fileName],
             cwd: path.dirname(editor.document.fileName),
             console: "internalConsole",
             stopAtEntry: false
@@ -828,7 +834,7 @@ export async function save_script_project(dependencies_only: boolean): Promise<v
         editor.document.save();
     }
 
-    let command = `dotnet "${core_engine}" -proj:dbg "${file}"`;
+    let command = `dotnet "${settings.cscs}" -proj:dbg "${file}"`;
 
     let response = Utils.RunSynch(command);
 
@@ -889,7 +895,7 @@ export function run() {
         await save_script_project(false);
 
         let extra_args = vsc_config.get("cs-script.extra_args");
-        let command = `dotnet "${core_engine}" ${extra_args} "${file}"`;
+        let command = `dotnet "${settings.cscs}" ${extra_args} "${file}"`;
 
         if (showExecutionMessage) {
             outputChannel.appendLine("[Running] " + command);

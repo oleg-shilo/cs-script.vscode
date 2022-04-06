@@ -1,12 +1,12 @@
 {
   "runtimeTarget": {
-    "name": ".NETCoreApp,Version=v5.0",
+    "name": ".NETCoreApp,Version=v6.0",
     "signature": ""
   },
   "compilationOptions": {},
   "targets": {
-    ".NETCoreApp,Version=v5.0": {
-      "syntaxer/3.0.1.0": {
+    ".NETCoreApp,Version=v6.0": {
+      "syntaxer/3.1.1.0": {
         "dependencies": {
           "Microsoft.CodeAnalysis.CSharp": "3.9.0-3.final",
           "Microsoft.CodeAnalysis.CSharp.Workspaces": "3.9.0-3.final",
@@ -1239,7 +1239,7 @@
     }
   },
   "libraries": {
-    "syntaxer/3.0.1.0": {
+    "syntaxer/3.1.1.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

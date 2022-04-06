@@ -1,5 +1,15 @@
 # Change Log
 
+## 2.1.0 (6 Apr, 2022)
+
+- Updated CS-Script engine and Syntaxer to target .NET 6
+- Removed all obsolete (e.g. Mono) settings
+- Added the following settings to allow re-targeting the extension to the external (not embedded) engine (`cscs.dll`) and syntax service/provider (`syntaxer.dll`)
+  - `cs-script.engine.cscs_path`
+  - `cs-script.engine.syntaxer_path`
+  - `cs-script.engine.syntaxer_port`
+- Created wiki to help setting up the environment for the CS-Script CLI integration with the major IDEs like VS Code: https://github.com/oleg-shilo/cs-script/wiki/CLI-Environment-Specification
+
 ## 2.0.1 (20 Sep, 2021)
 
 - Updated CS-Script engine and Syntaxer

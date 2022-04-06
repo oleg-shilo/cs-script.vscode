@@ -1,38 +1,19 @@
 
 import * as fs from 'fs';
 import * as net from "net";
-import * as path from "path";
 import * as process from "process";
 import * as child_process from "child_process";
-import { save_as_temp, clear_temp_file_suffixes } from "./utils";
-import * as utils from "./utils";
-
-// export function init(cscs: string, server: string): void {
-//     CSCS = cscs;
-//     SERVER = server;
-// }
+import { save_as_temp, clear_temp_file_suffixes, settings } from "./utils";
 
 
-
-export function server(): string {
-    return path.join(utils.user_dir(), "dotnet", "syntaxer", "syntaxer.dll")
-}
-
-function cscs(): string {
-    return path.join(utils.user_dir(), "dotnet", "cscs.dll")
-}
-
-let PORT = 18003;
 
 export function start_syntaxer(): void {
 
     let runtime = "dotnet";
 
-    let SERVER = server();
-    let CSCS = cscs();
-
-    // let CSCS = path.join(utils.user_dir(), "dotnet", "cscs.dll");
-    // let SERVER = path.join(utils.user_dir(), "dotnet", "syntaxer", "syntaxer.dll");
+    let SERVER = settings.syntaxer;
+    let CSCS = settings.cscs;
+    let PORT = settings.syntaxerPort;
 
     let args = [SERVER, `-port:${PORT}`, "-listen", `-client:${process.pid}`, "-timeout:60000", `-cscs_path:${CSCS}`];
     child_process.execFile(runtime, args,
@@ -51,7 +32,7 @@ export class Syntaxer {
     public static sentStopRequest(): void {
 
         let client = new net.Socket();
-        client.connect(PORT, '127.0.0.1', function () {
+        client.connect(settings.syntaxerPort, '127.0.0.1', function () {
             client.write('-exit');
         });
     }
@@ -64,12 +45,12 @@ export class Syntaxer {
         // 18003 - VSCode.CS-Script
 
         let client = new net.Socket();
-        client.connect(PORT, '127.0.0.1', function () {
+        client.connect(settings.syntaxerPort, '127.0.0.1', function () {
             client.write(request);
         });
 
         client.on('error', function (error) {
-            let server_exe = server();
+            let server_exe = settings.syntaxer;
             if (fs.existsSync(server_exe)) { // may not started yet (or crashed)
                 start_syntaxer();
             }
@@ -147,7 +128,7 @@ export class Syntaxer {
 
         let client = new net.Socket();
 
-        client.connect(PORT, '127.0.0.1', () =>
+        client.connect(settings.syntaxerPort, '127.0.0.1', () =>
             client.write(request)
         );
 

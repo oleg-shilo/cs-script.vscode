@@ -5,16 +5,11 @@
 import * as vscode from "vscode";
 import * as os from "os";
 import * as crypto from "crypto";
-// import * as fx_extra from "fs-extra";
-// import * as net from "net";
 import * as path from "path";
 import * as fs from "fs";
 import * as fsx from "fs-extra";
-// import * as child_process from "child_process"
 import { StatusBarAlignment, StatusBarItem, TextEditor, window, Disposable, commands, MarkdownString, ParameterInformation, SignatureInformation } from "vscode";
 import { start_syntaxer, Syntaxer } from "./syntaxer";
-
-// import { Syntax } from "./cs-script";
 
 export class vsc_config {
     public static get<T>(section_value: string, defaultValue?: T): T {
@@ -22,7 +17,15 @@ export class vsc_config {
         return vscode
             .workspace
             .getConfiguration(tokens[0])
-            .get(tokens[1], defaultValue)!;
+            .get(tokens[1], defaultValue) as T;
+    }
+
+    public static set<T>(section_value: string, value?: T): void {
+        let tokens = section_value.split('.')
+        vscode
+            .workspace
+            .getConfiguration(tokens[0])
+            .update(tokens[1], value);
     }
 }
 
@@ -410,6 +413,7 @@ function check_syntaxer_ready(ms: number): void {
 export function deploy_engine(): void {
     try {
 
+        // do not deploy if it is external link to css_config.dll
         // all copy_file* calls are  async operations
         let need_to_deploy = true;
 
@@ -420,6 +424,9 @@ export function deploy_engine(): void {
             } catch (error) {
             }
         }
+
+        if (!settings.cscs.startsWith(user_dir()))
+            need_to_deploy = false;
 
         if (need_to_deploy) {
             vscode.window.showInformationMessage('Preparing new version of CS-Script for deployment.');
@@ -740,6 +747,29 @@ export class Settings {
 
         settings._file = file_path;
         return settings;
+    }
+
+    get cscs(): string {
+        let _cscs = vscode.workspace.getConfiguration("cs-script").get("engine.cscs_path", "<default>");
+
+        if (!_cscs || _cscs == "" || _cscs == "<default>")
+            _cscs = path.join(user_dir(), "dotnet", "cscs.dll");
+
+        return _cscs;
+    }
+
+    public get syntaxer(): string {
+
+        let _syntaxer = vscode.workspace.getConfiguration("cs-script").get("engine.syntaxer_path", "<default>");
+
+        if (!_syntaxer || _syntaxer == "" || _syntaxer == "<default>")
+            return path.join(user_dir(), "dotnet", "syntaxer", "syntaxer.dll");
+        else
+            return _syntaxer;
+    }
+
+    public get syntaxerPort() {
+        return vscode.workspace.getConfiguration("cs-script").get("engine.syntaxer_port", 18003);
     }
 
     // alternative approach

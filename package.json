@@ -2,7 +2,7 @@
   "name": "cs-script",
   "displayName": "CS-Script",
   "description": "Execution, debugging and editing C# code that targets .NET and Mono (no .NET Core required)",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "license": "MIT",
   "publisher": "oleg-shilo",
   "icon": "images/css_logo.png",
@@ -82,11 +82,6 @@
           "default": true,
           "description": "Decorate file locations (e.g. error info) in the output panel as document links (underlined)."
         },
-        "cs-script.dotnet_run_host_on_win": {
-          "type": "boolean",
-          "default": false,
-          "description": "Allows running scripts ('CS-Script: run' command) on Windows under .NET instead of Mono. The 'Debug' command is not affected. This setting allows achieving faster script loading on Windows. If it is set to 'true' then an alternative config file `css_config.xml` is used instead of the default (`css_config.mono.xml`) for running the script"
-        },
         "cs-script.debug_as_external_console": {
           "type": "boolean",
           "default": false,
@@ -102,25 +97,20 @@
           "default": false,
           "description": "Allows staring CS-Script specific debugging while workspace is loaded and launch.json based debugging is available. By default CS-Script debugging is only enabled for C# files (but not folders) loaded in VSCode. If this property is enabled you can use both CS-Script and workspace debugging. Enabling this setting effectively disables `fallback_to_launch_json`"
         },
-        "cs-script.engine_debug.dotnet": {
-          "type": "boolean",
-          "default": "true",
-          "description": "Select the runtime to be used for debugging. Possible values are `true` (for .NET Core) and `false` (for Mono)."
-        },
-        "cs-script.engine_run.dotnet": {
-          "type": "boolean",
-          "default": "true",
-          "description": "Select the runtime to be used for running the script. Possible values are `true` (for .NET Core) and `false` (for Mono)."
-        },
-        "cs-script.engine_project.dotnet": {
-          "type": "boolean",
-          "default": "true",
-          "description": "Select the runtime to be used for resolving script dependencies and creating a logical script project. Possible values are `true` (for .NET Core) and `false` (for Mono)."
-        },
-        "cs-script.extra_args_for_debug": {
+        "cs-script.engine.cscs_path": {
           "type": "string",
-          "default": "-co:/debug:pdbonly",
-          "description": "Extra arguments to be passed to the script engine for debug command (e.g. compiler options fro Roslyn compiler)."
+          "default": "<default>",
+          "description": "Location of the script engine. `<default>` maps the path to the engine embedded in the extension."
+        },
+        "cs-script.engine.syntaxer_path": {
+          "type": "string",
+          "default": "<default>",
+          "description": "Location of the CS-Syntaxer, which is a syntax provider for CS-Script. `<default>` maps the path to the provider embedded in the extension."
+        },
+        "cs-script.engine.syntaxer_port": {
+          "type": "number",
+          "default": 18003,
+          "description": "TCP port number of the CS-Syntaxer, which is a syntax provider for CS-Script."
         },
         "cs-script.extra_args": {
           "type": "string",
