@@ -14,18 +14,13 @@
 Execution, debugging and editing C# scripts (powered by CS-Script engine) that target .NET Core.
 A single C# file is all that is required to run the script. </br>
 
-This extension Intellisense support for VB.NET scripts is currently limited to Windows only and only if Mono hosting is enabled.</br>
-
 This extension depends on another VSCode extension "ms-dotnettools.csharp". Thus if these extensions are installed but function incorrectly please log error reports at their corresponding web sites.
 
 ---
 
-Note, if you want to use this extension on Mono then you need to enable it by setting the following config values to `false`:
-  - cs-script.engine_run.dotnet 
-  - cs-script.engine_debug.dotnet
-  - cs-script.engine_project.dotnet  
+Note, the only dependency that you need to install to use this extension is .NET. The rest is included in the extension itself.
 
-You will also need to install Mono and "ms-vscode.mono-debug" extension.
+Though there are some strong benefits in managing CS-Script separatelly from the extension. A siple guide for that can be found [here](https://github.com/oleg-shilo/cs-script/wiki/CLI-Environment-Specification).
 
 ---
 
