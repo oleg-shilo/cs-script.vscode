@@ -1,5 +1,10 @@
 # Change Log
 
+## 2.2.0 (29 Oct, 2022)
+
+- Added command `CS-Script: Rest busy status`. It's useful for cases when the script execution hangs for whatever reason.
+- Issue #33: Does not work with non-ascii characters in file or folder names.
+
 ## 2.1.0 (6 Apr, 2022)
 
 - Updated CS-Script engine and Syntaxer to target .NET 6

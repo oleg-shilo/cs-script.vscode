@@ -166,11 +166,12 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
         let lines: string[] = output
             .trim()
             .lines()
-            .filter(actual_output);
+            .filter(actual_output)
+            .filter(obj => obj.startsWith('project:'));
 
         // proj_dir:"C:\Users\user\AppData\Roaming\Code\User\cs-script.user\"
         // lines[0]:"project:C:\cs-script\sample.csproj"
-        // 
+
         let src_proj_file = lines[0].replace("project:", "");
         let proj_name = "script" + path.extname(src_proj_file);
         let src_proj_dir = path.dirname(src_proj_file);
@@ -878,6 +879,19 @@ export async function save_script_project(dependencies_only: boolean): Promise<v
 }
 
 // -----------------------------------
+export function reset_busy() {
+    unlock();
+}
+
+export function start_build_server() {
+    // `-speed` is great for starting the build server
+    // if build server is enabled then this command will start it; if it is already started, then it will simply exit right away.
+    // if it is not enabled then the command will be executed without starting the server and exit right away. 
+    let exec = require("child_process").exec;
+    let command = `dotnet "${settings.cscs}" -speed`;
+    exec(command);
+}
+
 export function run() {
     with_lock(async () => {
         // todo
@@ -1058,7 +1072,9 @@ export function ActivateDiagnostics(context: ExtensionContext) {
             commands.executeCommand("vscode.open", Uri.file(file));
         }
 
-        return utils.ActivateDiagnostics(context);
+        utils.ActivateDiagnostics(context);
+
+        start_build_server();
     }
     catch (error) {
         window.showErrorMessage("CS-Script: " + String(error));

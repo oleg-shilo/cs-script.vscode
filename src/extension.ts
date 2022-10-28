@@ -18,8 +18,8 @@ export function activate(context: vscode.ExtensionContext) {
         // Use the console to output diagnostic information (console.log) and errors (console.error)
         // This line of code will only be executed once when your extension is activated
         // console.log('"cs-script" extension is now active...');
-
         cs_script.ActivateDiagnostics(context);
+
 
         // done -  is a .NET Core migration indicator 
         const treeViewProvider = new ProjectTreeProvider(cs_script.get_project_tree_items); // done
@@ -49,6 +49,7 @@ export function activate(context: vscode.ExtensionContext) {
         // --
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.debug', cs_script.debug)); // done
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.run', cs_script.run)); // done
+        context.subscriptions.push(vscode.commands.registerCommand('cs-script.reset_busy', cs_script.reset_busy)); // done
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.run_in_terminal', cs_script.run_in_terminal)); // done
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.print_project', cs_script.print_project_for_document)); // done
         context.subscriptions.push(vscode.commands.registerCommand('cs-script.load_project', cs_script.load_project)); // done

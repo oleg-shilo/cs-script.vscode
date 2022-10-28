@@ -345,43 +345,6 @@ export function user_dir(): string {
     return _user_dir;
 }
 
-export function ActivateDiagnostics(context: vscode.ExtensionContext) {
-    console.log("Loading CS-Script extension from " + __dirname);
-
-    // check extension dependencies
-    if (vscode.extensions.getExtension('ms-vscode.csharp') == null &&
-        vscode.extensions.getExtension('ms-dotnettools.csharp') == null) {
-        let message = 'The required extension "C# for Visual Studio Code" is not found. Ensure it is installed.';
-        vscode.window.showErrorMessage(message);
-        throw message;
-    }
-
-    // if (vscode.extensions.getExtension('ms-vscode.mono-debug') == null) {
-    //     let message = 'The required extension "Mono-Debug" is not found. Ensure it is installed.';
-    //     vscode.window.showErrorMessage(message);
-    //     throw message;
-    // }
-
-    // _environment_compatible = true;
-
-    diagnosticCollection = vscode.languages.createDiagnosticCollection('c#');
-    statusBarItem = vscode.window.createStatusBarItem(StatusBarAlignment.Left);
-    context.subscriptions.push(diagnosticCollection);
-    // ext_context = context;
-    ext_version = vscode.extensions.getExtension('oleg-shilo.cs-script')?.packageJSON.version
-    omnisharp_dir = path.join(vscode.extensions.getExtension('ms-dotnettools.csharp')?.extensionPath!, '.omnisharp', 'omnisharp');
-
-    ver_file = path.join(user_dir(), 'vscode.css_version.txt');
-
-    settings = Settings.Load();
-
-    check_environment();
-    deploy_engine();
-    // disable_roslyn_on_osx();
-
-    return diagnosticCollection;
-}
-
 function check_syntaxer_ready(ms: number): void {
 
     let attempts_count = 0;
@@ -1004,6 +967,45 @@ export const BuiltInCommands = {
     Open: 'vscode.open' as BuiltInCommands,
     SetContext: 'setContext' as BuiltInCommands
 };
+
+
+
+export function ActivateDiagnostics(context: vscode.ExtensionContext) {
+    console.log("Loading CS-Script extension from " + __dirname);
+
+    // check extension dependencies
+    if (vscode.extensions.getExtension('ms-vscode.csharp') == null &&
+        vscode.extensions.getExtension('ms-dotnettools.csharp') == null) {
+        let message = 'The required extension "C# for Visual Studio Code" is not found. Ensure it is installed.';
+        vscode.window.showErrorMessage(message);
+        throw message;
+    }
+
+    // if (vscode.extensions.getExtension('ms-vscode.mono-debug') == null) {
+    //     let message = 'The required extension "Mono-Debug" is not found. Ensure it is installed.';
+    //     vscode.window.showErrorMessage(message);
+    //     throw message;
+    // }
+
+    // _environment_compatible = true;
+
+    diagnosticCollection = vscode.languages.createDiagnosticCollection('c#');
+    statusBarItem = vscode.window.createStatusBarItem(StatusBarAlignment.Left);
+    context.subscriptions.push(diagnosticCollection);
+    // ext_context = context;
+    ext_version = vscode.extensions.getExtension('oleg-shilo.cs-script')?.packageJSON.version
+    omnisharp_dir = path.join(vscode.extensions.getExtension('ms-dotnettools.csharp')?.extensionPath!, '.omnisharp', 'omnisharp');
+
+    ver_file = path.join(user_dir(), 'vscode.css_version.txt');
+
+    settings = Settings.Load();
+
+    check_environment();
+    deploy_engine();
+    // disable_roslyn_on_osx();
+
+    return diagnosticCollection;
+}
 
 export class ActiveEditorTracker extends Disposable {
 
