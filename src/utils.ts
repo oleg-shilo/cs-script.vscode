@@ -29,7 +29,7 @@ export class vsc_config {
     }
 }
 
-let ext_dir = path.join(__dirname, "..");
+export let ext_dir = path.join(__dirname, "..");
 let exec = require('child_process').exec;
 let execSync = require('child_process').execSync;
 

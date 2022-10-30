@@ -112,6 +112,11 @@
           "default": 18003,
           "description": "TCP port number of the CS-Syntaxer, which is a syntax provider for CS-Script."
         },
+        "cs-script.extra_args_for_debug": {
+          "type": "string",
+          "default": "",
+          "description": "Extra arguments to be always passed to the script engine for debugging session only (e.g. `-co:/debug:embedded` for debugger integration troubleshooting). Note, one of the debugger options is known to be invalid so it will always be removed from the setting value. It is `-co:/debug:pdbonly`."
+        },
         "cs-script.extra_args": {
           "type": "string",
           "default": "",

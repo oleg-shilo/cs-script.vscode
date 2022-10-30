@@ -9,7 +9,7 @@ import * as utils from "./utils";
 import * as vscode from "vscode";
 import * as path from "path";
 import { Uri, commands, DiagnosticSeverity, TextEditorSelectionChangeKind, Location, window, TextEditor, workspace, Terminal, TextEditorSelectionChangeEvent, Selection, TextDocument, TextDocumentChangeEvent, ExtensionContext } from "vscode";
-import { ErrorInfo, Utils, unlock, is_busy, with_lock, actual_output, settings, vsc_config, user_dir, create_dir, select_line, ActiveEditorTracker } from "./utils";
+import { ErrorInfo, Utils, unlock, is_busy, with_lock, actual_output, settings, vsc_config, user_dir, create_dir, ext_dir, select_line, ActiveEditorTracker } from "./utils";
 import { Syntaxer } from "./syntaxer";
 
 export let syntax_readme: string = path.join(user_dir(), 'dotnet', "cs-script.syntax.txt");
@@ -176,79 +176,12 @@ function generate_proj_file(proj_dir: string, scriptFile: string): void {
         let proj_name = "script" + path.extname(src_proj_file);
         let src_proj_dir = path.dirname(src_proj_file);
 
-        let src_vscode_dir = path.join(user_dir(), 'dotnet', '.vscode');
+        let src_vscode_dir = path.join(ext_dir, 'bin', 'dotnet', '.vscode');
 
         create_dir(proj_dir);
 
         utils.copy_file_to_sync2(path.basename(src_proj_file), proj_name, src_proj_dir, proj_dir);
-        utils.copy_dir_to_sync(src_vscode_dir, proj_dir);
-
-        //             let launch_content = `
-        // {
-        //     "version": "0.2.0",
-        //     "configurations": [
-        //          {
-        //              "name": ".NET Core Launch (console)",
-        //              "type": "coreclr",
-        //              "request": "launch",
-        //              "preLaunchTask": "build",
-        //              "program": "\${workspaceFolder}/bin/Debug/netcoreapp3.1/script.dll",
-        //              "args": [],
-        //              "cwd": "\${workspaceFolder}",
-        //              "console": "internalConsole",
-        //              "stopAtEntry": false
-        //          }
-        //      ]
-        //  }`;
-
-        //             let tasks_content = `{
-        //                 "version": "2.0.0",
-        //                 "tasks": [
-        //                     {
-        //                         "label": "build",
-        //                         "command": "dotnet",
-        //                         "type": "process",
-        //                         "args": [
-        //                             "build",
-        //                             "\${workspaceFolder}/script.csproj",
-        //                             "/property:GenerateFullPaths=true",
-        //                             "/consoleloggerparameters:NoSummary"
-        //                         ],
-        //                         "problemMatcher": "$msCompile"
-        //                     },
-        //                     {
-        //                         "label": "publish",
-        //                         "command": "dotnet",
-        //                         "type": "process",
-        //                         "args": [
-        //                             "publish",
-        //                             "\${workspaceFolder}/script.csproj",
-        //                             "/property:GenerateFullPaths=true",
-        //                             "/consoleloggerparameters:NoSummary"
-        //                         ],
-        //                         "problemMatcher": "$msCompile"
-        //                     },
-        //                     {
-        //                         "label": "watch",
-        //                         "command": "dotnet",
-        //                         "type": "process",
-        //                         "args": [
-        //                             "watch",
-        //                             "run",
-        //                             "\${workspaceFolder}/script.csproj",
-        //                             "/property:GenerateFullPaths=true",
-        //                             "/consoleloggerparameters:NoSummary"
-        //                         ],
-        //                         "problemMatcher": "$msCompile"
-        //                     }
-        //                 ]
-        //             }`;
-
-        // let launch_dir = path.join(proj_dir, ".vscode");
-        // utils.create_dir(launch_dir);
-
-        // fs.writeFileSync(path.join(launch_dir, "launch.json"), launch_content.pathNormalize(), { encoding: "utf8" });
-        // fs.writeFileSync(path.join(launch_dir, "tasks.json"), tasks_content.pathNormalize(), { encoding: "utf8" });
+        utils.copy_dir_to_sync(src_vscode_dir, path.join(proj_dir, '.vscode'));
 
         commands.executeCommand("cs-script.refresh_tree");
 
