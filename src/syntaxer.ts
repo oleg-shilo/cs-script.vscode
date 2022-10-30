@@ -44,24 +44,30 @@ export class Syntaxer {
         // 18002 - VSCode.CodeMap
         // 18003 - VSCode.CS-Script
 
-        let client = new net.Socket();
-        client.connect(settings.syntaxerPort, '127.0.0.1', function () {
-            client.write(request);
-        });
+        try {
 
-        client.on('error', function (error) {
-            let server_exe = settings.syntaxer;
-            if (fs.existsSync(server_exe)) { // may not started yet (or crashed)
-                start_syntaxer();
-            }
-        });
+            let client = new net.Socket();
+            client.connect(settings.syntaxerPort, '127.0.0.1', function () {
+                client.write(request);
+            });
 
-        client.on('data', function (data) {
-            let response = data.toString();
-            client.destroy();
-            if (onData)
-                onData(response);
-        });
+            client.on('error', function (error) {
+                let server_exe = settings.syntaxer;
+                if (fs.existsSync(server_exe)) { // may not started yet (or crashed)
+                    start_syntaxer();
+                }
+            });
+
+            client.on('data', function (data) {
+                let response = data.toString();
+                client.destroy();
+                if (onData)
+                    onData(response);
+            });
+
+        } catch (error) {
+
+        }
     }
 
     public static send_request(request: string, code: string, file: string, resolve: any, inject_source_info: boolean = true): void {

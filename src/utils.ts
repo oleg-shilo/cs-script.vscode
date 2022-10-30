@@ -87,6 +87,13 @@ String.prototype.pathNormalize = function () {
     // zos
     return path.normalize(this.toString()).split(/[\\\/]/g).join(path.posix.sep);
 }
+
+export function UpdateFromJSON(target, json) {
+    var obj = JSON.parse(json);
+    for (var prop in obj)
+        target[prop] = obj[prop];
+    return target;
+}
 // --------------------
 // LINQ - light equivalent
 Array.prototype.firstOrDefault = function <T>(predicate: any): T {
@@ -674,7 +681,6 @@ export class ErrorInfo {
     }
 }
 
-
 // Writable extension settings
 export class Settings {
 
@@ -702,15 +708,20 @@ export class Settings {
         let settings: Settings;
 
         try {
-            settings = JSON.parse(fs.readFileSync(file_path, 'utf8'));
+            settings = new Settings();
+
+            let json = fs.readFileSync(file_path, 'utf8');
+
+            UpdateFromJSON(settings, json);
         }
         catch (e) {
-            settings = new Settings();
+            // do nothing, just continue with the fresh settings object
         }
 
         settings._file = file_path;
         return settings;
     }
+
 
     get cscs(): string {
         let _cscs = vscode.workspace.getConfiguration("cs-script").get("engine.cscs_path", "<default>");
