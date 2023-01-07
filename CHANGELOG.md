@@ -1,8 +1,12 @@
 # Change Log
 
+## 2.2.1 (8 Jan, 2023)
+
+- Updated CS-Script (v4.6.2) engine and CS-Syntaxer (v3.1.1)
+
 ## 2.2.0 (31 Oct, 2022)
 
-- Added command `CS-Script: Rest busy status`. It's useful for cases when the script execution hangs for whatever reason.
+- Added command `CS-Script: Reset busy status`. It's useful for cases when the script execution hangs for whatever reason.
 - Issue #33: Does not work with non-ascii characters in file or folder names.
 - Fixed copying .vscode folder on `cs-script.load_project` command when external CS-SCript deployment is used.
 - Fixed problem with JS object not being properly cast to TS `Settings` type instance (utils.ts)
