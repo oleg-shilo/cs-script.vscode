@@ -1,5 +1,9 @@
 # Change Log
 
+## 2.2.2 (20 Jun, 2024)
+
+- Updated CS-Script (v4.8.16) engine and CS-Syntaxer (v3.1.4)
+
 ## 2.2.1 (8 Jan, 2023)
 
 - Updated CS-Script (v4.6.2) engine and CS-Syntaxer (v3.1.1)
