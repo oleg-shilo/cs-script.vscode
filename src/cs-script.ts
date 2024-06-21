@@ -26,10 +26,6 @@ export let csproj_dir = path.join(os.tmpdir(), "CSSCRIPT", "VSCode", "cs-script 
 function extra_args(): string { return vsc_config.get("cs-script.extra_args_for_debug", "-co:/debug:pdbonly"); }
 
 // -----------------------------------
-
-function is_dotnet_debug(): Boolean { return vsc_config.get("cs-script.engine_debug.dotnet", true); }
-
-// -----------------------------------
 export function load_project() {
     with_lock(() => {
         unlock(); //release lock immediately as otherwise it can interfere with loading workspace
@@ -669,50 +665,16 @@ export async function debug() {
 
     with_lock(() => {
 
-        let config = "";
-        if (os.platform() == "win32") {
-            // to allow assemblies to be resolved on Windows Mono build the same way as under .NET
-            let run_as_dotnet = vsc_config.get("cs-script.dotnet_run_host_on_win", false);
-            if (run_as_dotnet) {
-                config = `-config:css_config.xml`;
-            }
-        }
-
-        // "externalConsole": "true", // shows external console. Full equivalent of Ctrl+F5 in VS.
-        let debug_as_external_console = vsc_config.get("cs-script.debug_as_external_console", false);
-
-        let launchConfigMono = {
-            name: "Launch",
-            type: "mono",
-            request: "launch",
-            program: cscs_exe,
-            externalConsole: debug_as_external_console.toString(),
-            showOutput: "always",
-            // mono debugger requires non-inmemory asms and injection of the breakpoint ("-ac:2)
-            args: ["-d", "-inmem:0", extra_args(), config, "-ac:2", editor.document.fileName],
-            env: {
-                // "css_vscode_roslyn_dir": process.env.css_vscode_roslyn_dir
-                // "cscs_exe_dir": path.dirname(cscs_exe)
-                // "CSS_PROVIDER_TRACE": 'true'
-            }
-        };
-
-        ////////////////////////////////
-        let launchConfigCore = {
+        let launchConfig = {
             name: ".NET Core Launch (console)",
             type: "coreclr",
             request: "launch",
             program: "dotnet",
-            args: [settings.cscs, "-d", extra_args().replace("-co:/debug:pdbonly", ""), vsc_config.get("cs-script.extra_args"), "", "-l", config, "-ac:2", editor.document.fileName],
+            args: [settings.cscs, "-d", extra_args().replace("-co:/debug:pdbonly", ""), vsc_config.get("cs-script.extra_args"), "", "-l", "-ac:2", editor.document.fileName],
             cwd: path.dirname(editor.document.fileName),
             console: "internalConsole",
             stopAtEntry: false
         }
-        ////////////////////////////////
-
-        var launchConfig: object = launchConfigMono;
-        if (is_dotnet_debug())
-            launchConfig = launchConfigCore;
 
         // vscode.startDebug has been deprecated
         vscode.debug.startDebugging(undefined, <vscode.DebugConfiguration>launchConfig).then(

@@ -1,8 +1,8 @@
 {
   "name": "cs-script",
   "displayName": "CS-Script",
-  "description": "Execution, debugging and editing C# code that targets .NET and Mono (no .NET Core required)",
-  "version": "2.2.2",
+  "description": "Execution, debugging and editing C# code that targets .NET (.NET SDK is required)",
+  "version": "2.2.3-pre",
   "license": "MIT",
   "publisher": "oleg-shilo",
   "icon": "images/css_logo.png",
@@ -81,11 +81,6 @@
           "type": "boolean",
           "default": true,
           "description": "Decorate file locations (e.g. error info) in the output panel as document links (underlined)."
-        },
-        "cs-script.debug_as_external_console": {
-          "type": "boolean",
-          "default": false,
-          "description": "Runs the script in external console during debugging."
         },
         "cs-script.fallback_to_launch_json": {
           "type": "boolean",
