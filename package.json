@@ -2,7 +2,7 @@
   "name": "cs-script",
   "displayName": "CS-Script",
   "description": "Execution, debugging and editing C# code that targets .NET (.NET SDK is required)",
-  "version": "2.2.3-pre",
+  "version": "2.2.3",
   "license": "MIT",
   "publisher": "oleg-shilo",
   "icon": "images/css_logo.png",

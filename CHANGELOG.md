@@ -1,5 +1,9 @@
 # Change Log
 
+## 2.2.3 (20 Jul, 2024)
+
+- #39: Run in Terminal Button doesn't work
+
 ## 2.2.2 (20 Jun, 2024)
 
 - Updated CS-Script (v4.8.16) engine and CS-Syntaxer (v3.1.4)

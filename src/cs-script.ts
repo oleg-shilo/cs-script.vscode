@@ -8,7 +8,7 @@ import * as utils from "./utils";
 // import * as syntaxer from "./syntaxer";
 import * as vscode from "vscode";
 import * as path from "path";
-import { Uri, commands, DiagnosticSeverity, TextEditorSelectionChangeKind, Location, window, TextEditor, workspace, Terminal, TextEditorSelectionChangeEvent, Selection, TextDocument, TextDocumentChangeEvent, ExtensionContext } from "vscode";
+import { Uri, commands, DiagnosticSeverity, TextEditorSelectionChangeKind, Location, window, TextEditor, workspace, TextEditorSelectionChangeEvent, Selection, TextDocument, TextDocumentChangeEvent, ExtensionContext } from "vscode";
 import { ErrorInfo, Utils, unlock, is_busy, with_lock, actual_output, settings, vsc_config, user_dir, create_dir, ext_dir, select_line, ActiveEditorTracker } from "./utils";
 import { Syntaxer } from "./syntaxer";
 
@@ -415,7 +415,6 @@ export function about() {
 }
 // -----------------------------------
 
-let terminal: Terminal;
 
 export function run_in_terminal() {
     with_lock(() => {
@@ -423,8 +422,11 @@ export function run_in_terminal() {
         let file = editor.document.fileName;
         editor.document.save();
 
+        let css_terminalName = "Ext Terminal cs-script";
+        let terminal = vscode.window.terminals.find(term => term.name === css_terminalName);
+
         if (terminal == null)
-            terminal = window.createTerminal("Ext Terminal cs-script");
+            terminal = window.createTerminal(css_terminalName);
 
         let dir = path.dirname(file);
 
