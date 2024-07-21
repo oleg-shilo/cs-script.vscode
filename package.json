@@ -157,6 +157,10 @@
         "title": "CS-Script: Reset busy status"
       },
       {
+        "command": "cs-script.redeploy",
+        "title": "CS-Script: Re-deploy CS-Script binaries"
+      },
+      {
         "command": "cs-script.run_in_terminal",
         "title": "CS-Script: Run in terminal",
         "icon": {

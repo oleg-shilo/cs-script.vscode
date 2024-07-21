@@ -380,7 +380,7 @@ function check_syntaxer_ready(ms: number): void {
         , ms);
 }
 
-export function deploy_engine(): void {
+export function deploy_engine(force: boolean): void {
     try {
 
         // do not deploy if it is external link to css_config.dll
@@ -397,6 +397,9 @@ export function deploy_engine(): void {
 
         if (!settings.cscs.startsWith(user_dir()))
             need_to_deploy = false;
+
+        if (force)
+            need_to_deploy = true;
 
         if (need_to_deploy) {
             vscode.window.showInformationMessage('Preparing new version of CS-Script for deployment.');
@@ -445,7 +448,7 @@ function check_environment(): void {
     return;
 }
 
-function deploy_files(): void {
+export function deploy_files(): void {
     try {
 
         let dotnet_dir = path.join(user_dir(), "dotnet");
@@ -454,8 +457,8 @@ function deploy_files(): void {
 
         Syntaxer.sentStopRequest();
 
-        let deleted_old = delete_dir(syntaxer_dir);
-        deleted_old = deleted_old && delete_dir(dotnet_dir);
+        let deleted_syntaxer_old = delete_dir(syntaxer_dir);
+        let deleted_old = delete_dir(dotnet_dir);
 
         copy_dir_to_sync(src_dir, dotnet_dir);
 
@@ -467,14 +470,22 @@ function deploy_files(): void {
 
         fs.writeFileSync(ver_file, ext_version, { encoding: 'utf8' });
 
-        if (deleted_old)
+        if (deleted_old && deleted_syntaxer_old) {
             vscode.window.showInformationMessage('New version of CS-Script binaries has been deployed.');
-        else
-            vscode.window.showInformationMessage(
-                'New version of CS-Script binaries has been deployed.\n' +
-                'However "' + dotnet_dir + '" directory was not cleaned properly because it was locked.\n' +
-                'It is recommended that you close VSCode and remove the directory manually.');
+        } else {
 
+            let lockedDir = "<...>";
+            if (deleted_syntaxer_old)
+                lockedDir = syntaxer_dir;
+            if (deleted_old)
+                lockedDir = dotnet_dir;
+
+            if (deleted_syntaxer_old)
+                vscode.window.showInformationMessage(
+                    'New version of CS-Script binaries has been deployed.\n' +
+                    'However "' + lockedDir + '" directory was not cleaned properly because it was locked.\n' +
+                    'It is recommended that you close VSCode and remove the directory manually.');
+        }
         _ready = true;
 
         // commands.executeCommand('cs-script.refresh_tree');
@@ -1012,7 +1023,7 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     settings = Settings.Load();
 
     check_environment();
-    deploy_engine();
+    deploy_engine(false);
     // disable_roslyn_on_osx();
 
     return diagnosticCollection;

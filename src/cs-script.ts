@@ -780,6 +780,10 @@ export function reset_busy() {
     unlock();
 }
 
+export function redeploy() {
+    utils.deploy_engine(true);
+}
+
 export function start_build_server() {
     // `-speed` is great for starting the build server
     // if build server is enabled then this command will start it; if it is already started, then it will simply exit right away.
