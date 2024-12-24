@@ -781,7 +781,7 @@ export function reset_busy() {
 }
 
 export function redeploy() {
-    utils.deploy_engine(true);
+    utils.integrate();
 }
 
 export function start_build_server() {

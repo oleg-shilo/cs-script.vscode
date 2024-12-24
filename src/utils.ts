@@ -8,8 +8,10 @@ import * as crypto from "crypto";
 import * as path from "path";
 import * as fs from "fs";
 import * as fsx from "fs-extra";
-import { StatusBarAlignment, StatusBarItem, TextEditor, window, Disposable, commands, MarkdownString, ParameterInformation, SignatureInformation } from "vscode";
+import * as child_process from "child_process";
+import { StatusBarAlignment, StatusBarItem, TextEditor, window, Disposable, commands, MarkdownString, ParameterInformation, SignatureInformation, Uri } from "vscode";
 import { start_syntaxer, Syntaxer } from "./syntaxer";
+import { start_build_server } from "./cs-script";
 
 export class vsc_config {
     public static get<T>(section_value: string, defaultValue?: T): T {
@@ -440,11 +442,51 @@ export function compare_versions(a: string, b: string): Number {
         return 0;
 }
 
-function check_environment(): void {
+async function disable_legacy_integration() {
+    if (settings.cscs.startsWith(user_dir())) {
+        settings.cscs = "<default>";
+        settings.syntaxer = "<default>";
+    }
+}
 
-    _environment_ready = true;
-    // prev editions required some env initialization
-    // this code should be removed in the future releases
+export function integrate() {
+    integrate_with_environment()
+        .then(() => {
+            if (settings.CssIntegrated()) {
+                start_build_server();
+                ShowIntegrationInfo()
+            }
+            else {
+                let isWarningDisabled = vscode.workspace.getConfiguration("cs-script").get('disableIntegrationWarning', false);
+                if (!isWarningDisabled) {
+                    ShowIntegrationWarning();
+                }
+            }
+        });
+}
+
+export async function integrate_with_environment(): Promise<void> {
+
+    return new Promise((resolve) => {
+        child_process.execFile('syntaxer', ['-detect'],
+            (error, stdout, stderr) => {
+
+                if (error == null) {
+
+                    let lines: string[] = stdout.lines();
+
+                    var cscs = lines.firstOrDefault<string>(x => x.startsWith("css:"))?.substring("css:".length).trim();
+                    var syntaxer = lines.firstOrDefault<string>(x => x.startsWith("syntaxer:"))?.substring("syntaxer:".length).trim();
+
+                    settings.cscs = cscs;
+                    settings.syntaxer = syntaxer;
+
+                    _environment_ready = true;
+                }
+
+                resolve();
+            });
+    });
     return;
 }
 
@@ -698,8 +740,20 @@ export class Settings {
     public show_load_proj_info: boolean = true;
     public show_readme: boolean = true;
     public need_check_roslyn_on_OSX: boolean = true;
+    public cscs_path: string = "";
+    public syntaxer_path: string = "";
 
     private _file!: string;
+
+    public static saveVscSetting(name, value) {
+        try {
+            vscode.workspace
+                .getConfiguration()
+                .update(name, value, vscode.ConfigurationTarget.Global); // Save to global settings
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to update setting: ${error.message}`);
+        }
+    };
 
     public static Save(_this: Settings, file?: string): void {
         // needs to be a static as for Settings.Load can possibly return json object without any methods
@@ -733,24 +787,30 @@ export class Settings {
         return settings;
     }
 
+    public CssIntegrated(): boolean {
+        return this.cscs_path && this.cscs_path != "<default>" && this.cscs_path != "";
+    }
 
-    get cscs(): string {
-        let _cscs = vscode.workspace.getConfiguration("cs-script").get("engine.cscs_path", "<default>");
+    set cscs(path: string) {
+        this.cscs_path = path;
+        Settings.saveVscSetting("cs-script.engine.cscs_path", path);
+    }
 
-        if (!_cscs || _cscs == "" || _cscs == "<default>")
-            _cscs = path.join(user_dir(), "dotnet", "cscs.dll");
-
-        return _cscs;
+    public get cscs(): string {
+        if (this.cscs_path == "<default>" || this.cscs_path == "")
+            this.cscs_path = vscode.workspace.getConfiguration("cs-script").get("engine.cscs_path", "<default>");
+        return this.cscs_path;
     }
 
     public get syntaxer(): string {
+        if (this.syntaxer_path == "<default>" || this.syntaxer_path == "")
+            this.syntaxer_path = vscode.workspace.getConfiguration("cs-script").get("engine.syntaxer_path", "<default>");
+        return this.syntaxer_path;
+    }
 
-        let _syntaxer = vscode.workspace.getConfiguration("cs-script").get("engine.syntaxer_path", "<default>");
-
-        if (!_syntaxer || _syntaxer == "" || _syntaxer == "<default>")
-            return path.join(user_dir(), "dotnet", "syntaxer", "syntaxer.dll");
-        else
-            return _syntaxer;
+    set syntaxer(path: string) {
+        this.syntaxer_path = path;
+        Settings.saveVscSetting("cs-script.engine.syntaxer_path", path);
     }
 
     public get syntaxerPort() {
@@ -1022,11 +1082,84 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
 
     settings = Settings.Load();
 
-    check_environment();
-    deploy_engine(false);
-    // disable_roslyn_on_osx();
+    disable_legacy_integration();
 
+    if (!settings.CssIntegrated())
+        integrate();
+
+    // deploy_engine(false);
+    // disable_roslyn_on_osx();
     return diagnosticCollection;
+}
+
+function ShowIntegrationInfo() {
+
+    let file_name = 'integration-info.md';
+    let file = path.join(user_dir(), file_name);
+
+    let content =
+        '# CS-Script VSCode extension integration' + os.EOL +
+        '' + os.EOL +
+        'Detected CS-Script tools:' + os.EOL +
+        '' + os.EOL +
+        '- Script engine: `' + settings.cscs + '`' + os.EOL +
+        '- Syntaxer: `' + settings.syntaxer + '`' + os.EOL +
+        '' + os.EOL +
+        'The extension settings have been updated.' + os.EOL +
+        'You may need to restart VSCode for the changes to take effect' + os.EOL +
+        '' + os.EOL +
+        '---------------' + os.EOL +
+        '' + os.EOL +
+        'You can always update (or install) CS-Script tools:' + os.EOL +
+        '' + os.EOL +
+        '- Script engine: `dotnet tool update --global cs-script.cli`' + os.EOL +
+        '- Syntaxer: `dotnet tool update --global cs-syntaxer`' + os.EOL +
+        '' + os.EOL +
+        'The configure tools by executing the extension command "CS-Script: Integrate with CS-Script tools"' + os.EOL;
+
+    fs.writeFileSync(file, content, { encoding: 'utf8' });
+    commands.executeCommand("vscode.open", Uri.file(file));
+}
+
+function ShowIntegrationWarning() {
+    let file_name = 'integration-error.md';
+    let file = path.join(user_dir(), file_name);
+
+    let content =
+        '# CS-Script VSCode extension integration' + os.EOL +
+        '' + os.EOL +
+        'The extension requires CS-Script tools to function properly.' + os.EOL +
+        'This is the most reliable way of managing their updates independently from the extension releases (e.g. update with new .NET version).' + os.EOL +
+        '' + os.EOL +
+        '## Installation' + os.EOL +
+        '' + os.EOL +
+        '1. Install/Update tools' + os.EOL +
+        '    - Script engine: `dotnet tool install --global cs-script.cli`' + os.EOL +
+        '    - Syntaxer: `dotnet tool install --global cs-syntaxer`' + os.EOL +
+        '' + os.EOL +
+        '2. Configure tools' + os.EOL +
+        '    Execute extension command "CS-Script: Detect and integrate CS-Script"' + os.EOL +
+        '' + os.EOL +
+        'Note: you need to have .NET SDK installed for using CS-Script (see https://dotnet.microsoft.com/en-us/download)' + os.EOL;
+
+    fs.writeFileSync(file, content, { encoding: 'utf8' });
+    commands.executeCommand("vscode.open", Uri.file(file));
+
+    // -------
+
+    let disableWarning = "Do not show this warning again";
+    vscode.window
+        .showWarningMessage(
+            `Cannot find CS-Script tools on your system. These tools are required for the extension to function properly'.
+            The instruction on how to install the tools are provided in the opened document '`+ file_name + `'.`,
+            disableWarning)
+
+        .then(selection => {
+
+            if (selection === disableWarning) {
+                Settings.saveVscSetting('cs-script.disableIntegrationWarning', true);
+            }
+        });
 }
 
 export class ActiveEditorTracker extends Disposable {

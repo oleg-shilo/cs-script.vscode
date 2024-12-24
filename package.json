@@ -2,7 +2,7 @@
   "name": "cs-script",
   "displayName": "CS-Script",
   "description": "Execution, debugging and editing C# code that targets .NET (.NET SDK is required)",
-  "version": "2.2.3",
+  "version": "2.3.0",
   "license": "MIT",
   "publisher": "oleg-shilo",
   "icon": "images/css_logo.png",
@@ -71,6 +71,11 @@
           "type": "boolean",
           "default": true,
           "description": "Enables code formatting based on Roslyn default formatting style provided by this extension. This can be useful if an alternative formatting technique is preferred."
+        },
+        "cs-script.disableIntegrationWarning": {
+          "type": "boolean",
+          "default": false,
+          "description": "Disables CS-Script tools integration warning."
         },
         "cs-script.select_line_on_navigate_from_output": {
           "type": "boolean",
@@ -157,8 +162,8 @@
         "title": "CS-Script: Reset busy status"
       },
       {
-        "command": "cs-script.redeploy",
-        "title": "CS-Script: Re-deploy CS-Script binaries"
+        "command": "cs-script.integrate",
+        "title": "CS-Script: Integrate wth CS-Script tools"
       },
       {
         "command": "cs-script.run_in_terminal",
