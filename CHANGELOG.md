@@ -1,9 +1,10 @@
 # Change Log
 
-## 2.3.0 (25 Dec, 2024)
+## 2.3.0 (26 Dec, 2024)
 
 - CS-Script tools are no longer distributed with the extension but deployed and managed independently.
 - Added `CS-Script: Integrate with CS-Script tools` command to detect and integrate external CS-Script tools.
+- Removed all VB use-cases.
 
 ## 2.2.3 (20 Jul, 2024)
 

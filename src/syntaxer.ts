@@ -7,6 +7,10 @@ import { save_as_temp, clear_temp_file_suffixes, settings } from "./utils";
 
 
 
+export function stop_syntaxer(): void {
+    Syntaxer.sentStopRequest();
+}
+
 export function start_syntaxer(): void {
 
     let runtime = "dotnet";

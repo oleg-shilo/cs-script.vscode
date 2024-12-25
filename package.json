@@ -34,19 +34,7 @@
     "onLanguage:csharp",
     "onLanguage:vb",
     "onLanguage:typescript",
-    "workspaceContains:script.csproj",
-    "onCommand:cs-script.debug",
-    "onCommand:cs-script.run",
-    "onCommand:cs-script.run_in_terminal",
-    "onCommand:cs-script.new_script",
-    "onCommand:cs-script.new_script_vb",
-    "onCommand:cs-script.print_project",
-    "onCommand:cs-script.load_project",
-    "onCommand:cs-script.about",
-    "onCommand:cs-script.css_config",
-    "onCommand:cs-script.build_exe",
-    "onCommand:cs-script.engine_help",
-    "onCommand:cs-script.check"
+    "workspaceContains:script.csproj"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -96,6 +84,11 @@
           "type": "boolean",
           "default": false,
           "description": "Allows staring CS-Script specific debugging while workspace is loaded and launch.json based debugging is available. By default CS-Script debugging is only enabled for C# files (but not folders) loaded in VSCode. If this property is enabled you can use both CS-Script and workspace debugging. Enabling this setting effectively disables `fallback_to_launch_json`"
+        },
+        "cs-script.suppress_script_intellisense_for_workspaces": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allows CS-Script specific autocompletion and other intellisense services. YOu amy want to disable it if you see it interfering with VSCode native services (e.g. traditional C# projects)."
         },
         "cs-script.engine.cscs_path": {
           "type": "string",
@@ -192,10 +185,6 @@
       {
         "command": "cs-script.new_script",
         "title": "CS-Script: New C# script"
-      },
-      {
-        "command": "cs-script.new_script_vb",
-        "title": "CS-Script: New VB.NET script"
       },
       {
         "command": "cs-script.build_exe",
@@ -300,11 +289,6 @@
         {
           "when": "resourceLangId == csharp",
           "command": "cs-script.new_script",
-          "group": "cs-script.2"
-        },
-        {
-          "when": "resourceLangId == vb",
-          "command": "cs-script.new_script_vb",
           "group": "cs-script.2"
         },
         {

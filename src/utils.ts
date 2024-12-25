@@ -10,7 +10,7 @@ import * as fs from "fs";
 import * as fsx from "fs-extra";
 import * as child_process from "child_process";
 import { StatusBarAlignment, StatusBarItem, TextEditor, window, Disposable, commands, MarkdownString, ParameterInformation, SignatureInformation, Uri } from "vscode";
-import { start_syntaxer, Syntaxer } from "./syntaxer";
+import { start_syntaxer, stop_syntaxer, Syntaxer } from "./syntaxer";
 import { start_build_server } from "./cs-script";
 
 export class vsc_config {
@@ -36,10 +36,6 @@ let exec = require('child_process').exec;
 let execSync = require('child_process').execSync;
 
 let mkdirp = require('mkdirp');
-// let ext_context: vscode.ExtensionContext;
-// let min_required_mono = '5.0.1';
-let ver_file: string;
-// let cscs_exe: string;
 let _user_dir: string;
 export let statusBarItem: StatusBarItem;
 
@@ -382,66 +378,6 @@ function check_syntaxer_ready(ms: number): void {
         , ms);
 }
 
-export function deploy_engine(force: boolean): void {
-    try {
-
-        // do not deploy if it is external link to css_config.dll
-        // all copy_file* calls are  async operations
-        let need_to_deploy = true;
-
-        if (fs.existsSync(ver_file)) {
-            try {
-                let version = fs.readFileSync(ver_file, 'utf8');
-                need_to_deploy = (version != ext_version);
-            } catch (error) {
-            }
-        }
-
-        if (!settings.cscs.startsWith(user_dir()))
-            need_to_deploy = false;
-
-        if (force)
-            need_to_deploy = true;
-
-        if (need_to_deploy) {
-            vscode.window.showInformationMessage('Preparing new version of CS-Script for deployment.');
-            statusBarItem.text = '$(versions) Deploying CS-Script...';
-            statusBarItem.show();
-            run_async(deploy_files); // will set _ready = true;
-        }
-        else {
-            start_syntaxer();
-            _ready = true;
-        }
-
-    } catch (error) {
-        console.log(error);
-        vscode.window.showErrorMessage('CS-Script: ' + String(error));
-    }
-}
-
-export function compare_versions(a: string, b: string): Number {
-    let parts_a = a.split('.');
-    let parts_b = b.split('.');
-
-    let i = 0;
-    for (; i < Math.min(parts_a.length, parts_b.length); i++) {
-        let v_a = parseInt(parts_a[i]);
-        let v_b = parseInt(parts_b[i]);
-        if (v_a > v_b)
-            return 1;
-        if (v_a < v_b)
-            return -1;
-    }
-
-    if (parts_a.length > parts_b.length)
-        return 1;
-    if (parts_a.length < parts_b.length)
-        return -1;
-    else
-        return 0;
-}
-
 async function disable_legacy_integration() {
     if (settings.cscs.startsWith(user_dir())) {
         settings.cscs = "<default>";
@@ -449,12 +385,33 @@ async function disable_legacy_integration() {
     }
 }
 
+export async function start_services(): Promise<void> {
+
+    return new Promise((resolve) => {
+
+        child_process.execFile('css', ['-self'],
+            (error, stdout, stderr) => {
+                if (error == null) {
+                    var cscs = stdout.trim();
+                    settings.is_global_css = (settings.cscs == cscs);
+                }
+            });
+
+        start_build_server();
+        start_syntaxer();
+        check_syntaxer_ready(500);
+
+        resolve();
+    });
+}
+
 export function integrate() {
     integrate_with_environment()
         .then(() => {
             if (settings.CssIntegrated()) {
-                start_build_server();
-                ShowIntegrationInfo()
+                stop_syntaxer(); // ensure any old version is stopped
+                start_services();
+                ShowIntegrationInfo();
             }
             else {
                 let isWarningDisabled = vscode.workspace.getConfiguration("cs-script").get('disableIntegrationWarning', false);
@@ -482,114 +439,12 @@ export async function integrate_with_environment(): Promise<void> {
                     settings.syntaxer = syntaxer;
 
                     _environment_ready = true;
+                    _ready = true;
                 }
 
                 resolve();
             });
     });
-    return;
-}
-
-export function deploy_files(): void {
-    try {
-
-        let dotnet_dir = path.join(user_dir(), "dotnet");
-        let syntaxer_dir = path.join(dotnet_dir, "syntaxer");
-        let src_dir = path.join(ext_dir, 'bin', 'dotnet');
-
-        Syntaxer.sentStopRequest();
-
-        let deleted_syntaxer_old = delete_dir(syntaxer_dir);
-        let deleted_old = delete_dir(dotnet_dir);
-
-        copy_dir_to_sync(src_dir, dotnet_dir);
-
-        ensure_default_config(path.join(user_dir(), 'dotnet', 'cscs.dll'));
-
-        start_syntaxer(); // will also deploy embedded Roslyn binaries
-
-        check_syntaxer_ready(500);
-
-        fs.writeFileSync(ver_file, ext_version, { encoding: 'utf8' });
-
-        if (deleted_old && deleted_syntaxer_old) {
-            vscode.window.showInformationMessage('New version of CS-Script binaries has been deployed.');
-        } else {
-
-            let lockedDir = "<...>";
-            if (deleted_syntaxer_old)
-                lockedDir = syntaxer_dir;
-            if (deleted_old)
-                lockedDir = dotnet_dir;
-
-            if (deleted_syntaxer_old)
-                vscode.window.showInformationMessage(
-                    'New version of CS-Script binaries has been deployed.\n' +
-                    'However "' + lockedDir + '" directory was not cleaned properly because it was locked.\n' +
-                    'It is recommended that you close VSCode and remove the directory manually.');
-        }
-        _ready = true;
-
-        // commands.executeCommand('cs-script.refresh_tree');
-        // vscode.window.showErrorMessage('CS-Script: Roslyn provider has been deployed');
-
-    } catch (error) {
-        console.log(error);
-        vscode.window.showErrorMessage('CS-Script: ' + String(error));
-    }
-}
-
-export function prepare_new_script(): string {
-    let template_file = path.join(user_dir(), 'new_script.tmpl');
-
-    let template =
-        'using System;' + os.EOL +
-        '$backup_comment$' + os.EOL +
-
-        'Console.WriteLine($"Hello {user()}...");' + os.EOL +
-        os.EOL +
-        'string user()' + os.EOL +
-        '    => Environment.UserName;';
-
-    // if (!fs.existsSync(template_file))
-    fs.writeFileSync(template_file, template, { encoding: 'utf8' });
-
-    try {
-        template = fs.readFileSync(template_file, { encoding: 'utf8' });
-    } catch (error) {
-    }
-
-    return template
-}
-
-export function prepare_new_script_vb(): string {
-    let template_file = path.join(user_dir(), 'new_script_vb.tmpl');
-
-    let template =
-        "' //css_ref System" + os.EOL +
-        "' //css_ref System.web" + os.EOL +
-        "' //css_ref System.Windows.Forms" + os.EOL +
-        "$backup_comment$" + os.EOL +
-        "Imports System" + os.EOL +
-        "" + os.EOL +
-        "Imports System.Windows.Forms" + os.EOL +
-        "" + os.EOL +
-        "Module Module1" + os.EOL +
-        "    Sub Main()" + os.EOL +
-        "        Console.WriteLine(\"Hello World! (VB)\")" + os.EOL +
-        "        MessageBox.Show(\"Hello World! (VB)\")" + os.EOL +
-        "    End Sub" + os.EOL +
-        "End Module";
-
-    if (!fs.existsSync(template_file))
-        fs.writeFileSync(template_file, template, { encoding: 'utf8' });
-
-    try {
-        template = fs.readFileSync(template_file, { encoding: 'utf8' });
-    } catch (error) {
-    }
-
-    return template
 }
 
 export function clear_temp_file_suffixes(content: string): string {
@@ -737,6 +592,7 @@ export class ErrorInfo {
 // Writable extension settings
 export class Settings {
 
+    public is_global_css: boolean = false; // cscs might be a valid path but not the global one
     public show_load_proj_info: boolean = true;
     public show_readme: boolean = true;
     public need_check_roslyn_on_OSX: boolean = true;
@@ -791,7 +647,7 @@ export class Settings {
         return this.cscs_path && this.cscs_path != "<default>" && this.cscs_path != "";
     }
 
-    set cscs(path: string) {
+    public set cscs(path: string) {
         this.cscs_path = path;
         Settings.saveVscSetting("cs-script.engine.cscs_path", path);
     }
@@ -808,7 +664,7 @@ export class Settings {
         return this.syntaxer_path;
     }
 
-    set syntaxer(path: string) {
+    public set syntaxer(path: string) {
         this.syntaxer_path = path;
         Settings.saveVscSetting("cs-script.engine.syntaxer_path", path);
     }
@@ -1078,17 +934,17 @@ export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     ext_version = vscode.extensions.getExtension('oleg-shilo.cs-script')?.packageJSON.version
     omnisharp_dir = path.join(vscode.extensions.getExtension('ms-dotnettools.csharp')?.extensionPath!, '.omnisharp', 'omnisharp');
 
-    ver_file = path.join(user_dir(), 'vscode.css_version.txt');
-
     settings = Settings.Load();
 
     disable_legacy_integration();
 
-    if (!settings.CssIntegrated())
+    if (!settings.CssIntegrated()) {
         integrate();
-
-    // deploy_engine(false);
-    // disable_roslyn_on_osx();
+    } else {
+        _environment_ready = true;
+        _ready = true;
+        start_services();
+    }
     return diagnosticCollection;
 }
 
@@ -1115,7 +971,13 @@ function ShowIntegrationInfo() {
         '- Script engine: `dotnet tool update --global cs-script.cli`' + os.EOL +
         '- Syntaxer: `dotnet tool update --global cs-syntaxer`' + os.EOL +
         '' + os.EOL +
-        'The configure tools by executing the extension command "CS-Script: Integrate with CS-Script tools"' + os.EOL;
+        'The configure tools by executing the extension command "CS-Script: Integrate with CS-Script tools"' + os.EOL +
+        '' + os.EOL +
+        '---------------' + os.EOL +
+        '' + os.EOL +
+        'You can always check the version of the CS-SCript tools from the terminal by executing the command:' + os.EOL +
+        'Script engine: `css`' + os.EOL +
+        'Syntaxer: `syntaxer`' + os.EOL;
 
     fs.writeFileSync(file, content, { encoding: 'utf8' });
     commands.executeCommand("vscode.open", Uri.file(file));

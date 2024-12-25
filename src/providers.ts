@@ -10,7 +10,21 @@ import { ErrorInfo, select_line, vsc_config } from './utils';
 import { save_script_project } from './cs-script';
 
 
-function isWorkspace(): boolean { return workspace.rootPath != undefined; }
+function isSuppressedWorkspace(): boolean {
+
+    let result = false;
+
+    let isWorkspace = (workspace.updateWorkspaceFolders && workspace.updateWorkspaceFolders.length != 0);
+
+    if (isWorkspace) {
+        let suppressedInConfig = vsc_config.get("cs-script.suppress_script_intellisense_for_workspaces", false);
+
+        if (suppressedInConfig)
+            result = true;
+    }
+
+    return result;
+}
 
 function isCssDirective(document: TextDocument, position: Position): boolean {
     return getCssDirective(document, position) != null;
@@ -86,10 +100,10 @@ export class CSScriptHoverProvider implements HoverProvider {
 
         let result: Hover;
 
-        let is_workspace = isWorkspace();
+        let ignore_workspace = isSuppressedWorkspace();
         let is_css_directive = isCssDirective(document, position);
 
-        if (!is_workspace || is_css_directive) {
+        if (!ignore_workspace || is_css_directive) {
             return new Promise((resolve, reject) =>
 
                 Syntaxer.getTooltip(document.getText(), document.fileName, document.offsetAt(position),
@@ -136,11 +150,11 @@ export class CSScriptCompletionItemProvider implements CompletionItemProvider {
 
         let items: CompletionItem[] = [];
 
-        let is_workspace = isWorkspace();
+        let ignore_workspace = isSuppressedWorkspace();
         let is_css_directive = isCssDirective(document, position);
         let eol = document.eol == EndOfLine.CRLF ? "\r\n" : "\n";
 
-        if (!is_workspace || is_css_directive) {
+        if (!ignore_workspace || is_css_directive) {
 
             return new Promise((resolve, reject) =>
                 Syntaxer.getCompletions(document.getText(), document.fileName, document.offsetAt(position),
@@ -260,10 +274,10 @@ export class CSScriptDocFormattingProvider implements DocumentFormattingEditProv
     public provideDocumentFormattingEdits(document: TextDocument, options: FormattingOptions, token: CancellationToken): ProviderResult<TextEdit[]> {
 
         let result: TextEdit[] = [];
-        let is_workspace = isWorkspace();
+        let ignore_workspace = isSuppressedWorkspace();
         let enabled = vsc_config.get("cs-script.enable_code_formatting", true);
 
-        if (!is_workspace && enabled)
+        if (!ignore_workspace && enabled)
             return new Promise((resolve, reject) => {
 
                 let editor = window.activeTextEditor;
@@ -344,9 +358,9 @@ export class CSScriptCodeActionProvider implements CodeActionProvider {
 
         let result: CodeAction[] = [];
 
-        let is_workspace = isWorkspace();
+        let ignore_workspace = isSuppressedWorkspace();
 
-        if (!is_workspace) {
+        if (!ignore_workspace) {
 
             return new Promise((resolve, reject) => {
 
@@ -478,9 +492,9 @@ export class CSScriptSignatureHelpProvider implements SignatureHelpProvider {
 
         let result: SignatureHelp;
 
-        let is_workspace = isWorkspace();
+        let ignore_workspace = isSuppressedWorkspace();
 
-        if (!is_workspace) {
+        if (!ignore_workspace) {
             let eol = document.eol == EndOfLine.CRLF ? "\r\n" : "\n";
 
             return new Promise((resolve, reject) =>
@@ -527,9 +541,9 @@ export class CSScriptReferenceProvider implements ReferenceProvider {
 
         let result: Location[] = [];
 
-        let is_workspace = isWorkspace();
+        let ignore_workspace = isSuppressedWorkspace();
 
-        if (!is_workspace) {
+        if (!ignore_workspace) {
 
             return new Promise((resolve, reject) =>
 
@@ -560,9 +574,9 @@ export class CSScriptRenameProvider implements RenameProvider {
 
     public provideRenameEdits(document: TextDocument, position: Position, newName: string, token: CancellationToken): ProviderResult<WorkspaceEdit> {
 
-        let is_workspace = isWorkspace();
+        let ignore_workspace = isSuppressedWorkspace();
 
-        if (!is_workspace) {
+        if (!ignore_workspace) {
 
             let word = document.getWordRangeAtPosition(position);
             let word_width = word!.end.character - word!.start.character;
@@ -612,7 +626,6 @@ export class CSScriptRenameProvider implements RenameProvider {
         }
         return null;
     }
-
 }
 
 export class CSScriptDefinitionProvider implements DefinitionProvider {
@@ -622,10 +635,10 @@ export class CSScriptDefinitionProvider implements DefinitionProvider {
         syntaxer_navigate_selectedLine = -1;
         let result: Location;
 
-        let is_workspace = isWorkspace();
+        let ignore_workspace = isSuppressedWorkspace();
         let is_css_directive = isCssDirective(document, position);
 
-        if (!is_workspace || is_css_directive) {
+        if (!ignore_workspace || is_css_directive) {
 
             return new Promise((resolve, reject) =>
 

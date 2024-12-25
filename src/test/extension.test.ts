@@ -11,7 +11,6 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as cs_script from '../cs-script';
 import { ErrorInfo } from '../utils';
-import * as utils from '../utils';
 
 // Defines a Mocha test suite to group tests of similar kind together
 suite("Extension Tests", () => {
@@ -48,26 +47,6 @@ suite("Extension Tests", () => {
         let error = ErrorInfo.parse(build_out);
 
         assert.equal(null, error);
-    });
-
-    test("Can handle compare versions", () => {
-        assert.equal(utils.compare_versions('1.2.3.4', '1.2.3.4'), 0);
-        assert.equal(utils.compare_versions('001.2.3', '1.002.3-alpha'), 0);
-
-        assert.equal(utils.compare_versions('1.2.3', '1.2.3.1'), -1);
-        assert.equal(utils.compare_versions('1.2.3.2', '1.2.3.1'), 1);
-
-        assert.equal(utils.compare_versions('2.2.3.4', '1.2.3.4'), 1);
-        assert.equal(utils.compare_versions('1.2.3.4', '2.2.3.4'), -1);
-
-        assert.equal(utils.compare_versions('1.3.3.4', '1.2.3.4'), 1);
-        assert.equal(utils.compare_versions('1.2.3.4', '1.3.3.4'), -1);
-
-        assert.equal(utils.compare_versions('1.2.4.4', '1.2.3.4'), 1);
-        assert.equal(utils.compare_versions('1.2.3.4', '1.2.4.4'), -1);
-
-        assert.equal(utils.compare_versions('1.2.3.5', '1.2.3.4'), 1);
-        assert.equal(utils.compare_versions('1.2.3.4', '1.2.3.5'), -1);
     });
 
     test("Can handle file ref input", () => {

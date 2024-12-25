@@ -45,7 +45,7 @@ export function load_project() {
 
         let editor = window.activeTextEditor;
 
-        let workspaceIsAlreadyLoaded = Utils.IsSamePath(workspace.rootPath, csproj_dir);
+        let workspaceIsAlreadyLoaded = Utils.IsSamePath(workspace.workspaceFolders![0].uri.fsPath ?? '', csproj_dir);
 
         if (workspaceIsAlreadyLoaded) {
             if (editor != null && !Utils.IsScript(editor.document.fileName)) {
@@ -229,7 +229,7 @@ export function print_project_for(file: string | undefined): boolean {
         return true;
     }
     else {
-        window.showErrorMessage(`"${file}" is not a valid C# script file.`);
+        window.showErrorMessage(`"${file}" is not a valid C# script file. Ensure that the active document is a C# script file.`);
         return false;
     }
 }
@@ -402,7 +402,7 @@ export function about() {
             outputChannel.clear();
             outputChannel.appendLine("CS-Script.VSCode - v" + utils.ext_version);
             outputChannel.appendLine("-------------------------------------------------------");
-            outputChannel.appendLine(output.trim());
+            outputChannel.appendLine("Script engine: v" + output.trim());
             outputChannel.appendLine("-------------------------------------------------------");
             outputChannel.appendLine("Syntaxer");
             outputChannel.appendLine("   " + settings.syntaxer);
@@ -436,7 +436,12 @@ export function run_in_terminal() {
             terminal.sendText("cls");
 
         let extra_args = vsc_config.get("cs-script.extra_args");
-        terminal.sendText(`dotnet "${settings.cscs}" ${extra_args} "${file}"`);
+        if (extra_args != '') extra_args += " ";
+
+        if (settings.is_global_css)
+            terminal.sendText(`css ${extra_args}"${file}"`);
+        else
+            terminal.sendText(`dotnet "${settings.cscs}"${extra_args} "${file}"`);
 
         unlock();
     });
@@ -574,41 +579,41 @@ export function new_script() {
     });
 }
 // -----------------------------------
-export function new_script_vb() {
-    with_lock(() => {
+// export function new_script_vb() {
+//     with_lock(() => {
 
-        vscode.window.showErrorMessage(
-            "Executing VB.NET scripts is only supported for C# script hosted on Mono but this version CS-Script extension is configured to be run on .NET 5/.NET Core. VB support will be available in teh future releases");
-        return;
+//         vscode.window.showErrorMessage(
+//             "Executing VB.NET scripts is only supported for C# script hosted on Mono but this version CS-Script extension is configured to be run on .NET 5/.NET Core. VB support will be available in teh future releases");
+//         return;
 
-        let new_file_path = path.join(user_dir(), "new_script.vb");
+//         let new_file_path = path.join(user_dir(), "new_script.vb");
 
-        let backup_file = null;
-        if (fs.existsSync(new_file_path))
-            backup_file = new_file_path + ".bak";
+//         let backup_file = null;
+//         if (fs.existsSync(new_file_path))
+//             backup_file = new_file_path + ".bak";
 
-        if (backup_file && fs.existsSync(backup_file)) {
-            fs.unlinkSync(backup_file);
-            fs.renameSync(new_file_path, backup_file);
-        }
+//         if (backup_file && fs.existsSync(backup_file)) {
+//             fs.unlinkSync(backup_file);
+//             fs.renameSync(new_file_path, backup_file);
+//         }
 
-        let backup_comment = "";
-        if (backup_file)
-            backup_comment =
-                "' // The previous content of this file has been saved into \n" +
-                "' // " + backup_file + " \n";
+//         let backup_comment = "";
+//         if (backup_file)
+//             backup_comment =
+//                 "' // The previous content of this file has been saved into \n" +
+//                 "' // " + backup_file + " \n";
 
-        let content = utils.prepare_new_script_vb()
-            .replace("$backup_comment$", backup_comment);
+//         let content = utils.prepare_new_script_vb()
+//             .replace("$backup_comment$", backup_comment);
 
-        fs.writeFileSync(new_file_path, content);
+//         fs.writeFileSync(new_file_path, content);
 
-        if (fs.existsSync(new_file_path))
-            commands.executeCommand("vscode.open", Uri.file(new_file_path));
+//         if (fs.existsSync(new_file_path))
+//             commands.executeCommand("vscode.open", Uri.file(new_file_path));
 
-        unlock();
-    });
-}
+//         unlock();
+//     });
+// }
 // -----------------------------------
 export function build_exe() {
     with_lock(() => {
@@ -742,7 +747,7 @@ export async function save_script_project(dependencies_only: boolean): Promise<v
 
     // do not include current file in dirty_docs as it is either saved 10 lines above
     // or doesn't need to be saved because of `dependencies_only`
-    // Note 'where' filter is case sensetive
+    // Note 'where' filter is case sensitive
     let dirty_docs = unsaved_documents
         .where<string>(x => x != file)
         .select(x => x.toLocaleLowerCase());
@@ -810,7 +815,10 @@ export function run() {
         await save_script_project(false);
 
         let extra_args = vsc_config.get("cs-script.extra_args");
-        let command = `dotnet "${settings.cscs}" ${extra_args} "${file}"`;
+        if (extra_args != '') extra_args += " ";
+
+        let command = settings.is_global_css ? 'css' : `dotnet "${settings.cscs}"`;
+        command += ` ${extra_args}"${file}"`;
 
         if (showExecutionMessage) {
             outputChannel.appendLine("[Running] " + command);
