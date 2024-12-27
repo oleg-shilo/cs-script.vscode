@@ -1,10 +1,12 @@
 # Change Log
 
-## 2.3.0 (26 Dec, 2024)
+## 2.3.0 (27 Dec, 2024)
 
 - CS-Script tools are no longer distributed with the extension but deployed and managed independently.
+- Added the flow for auutomatically detecting the absence of CS-Script integration and invoking `CS-Script: Integrate...` command. 
 - Added `CS-Script: Integrate with CS-Script tools` command to detect and integrate external CS-Script tools.
 - Removed all VB use-cases.
+- Added option to reset script busy status from the warning prompt.
 
 ## 2.2.3 (20 Jul, 2024)
 
@@ -34,7 +36,7 @@
   - `cs-script.engine.cscs_path`
   - `cs-script.engine.syntaxer_path`
   - `cs-script.engine.syntaxer_port`
-- Created wiki to help setting up the environment for the CS-Script CLI integration with the major IDEs like VS Code: https://github.com/oleg-shilo/cs-script/wiki/CLI-Environment-Specification
+- Created wiki to help setting up the environment for the CS-Script CLI integration with the major IDEs like VS Code: [CLI Environment Specicfication](https://github.com/oleg-shilo/cs-script/wiki/CLI-Environment-Specification)
 
 ## 2.0.1 (20 Sep, 2021)
 

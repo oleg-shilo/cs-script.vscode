@@ -5,6 +5,8 @@ import * as process from "process";
 import * as child_process from "child_process";
 import { save_as_temp, clear_temp_file_suffixes, settings } from "./utils";
 
+// import * as vscode from "vscode";
+// let outputChannel = vscode.window.createOutputChannel("CS-Script");
 
 
 export function stop_syntaxer(): void {
@@ -20,6 +22,10 @@ export function start_syntaxer(): void {
     let PORT = settings.syntaxerPort;
 
     let args = [SERVER, `-port:${PORT}`, "-listen", `-client:${process.pid}`, "-timeout:60000", `-cscs_path:${CSCS}`];
+
+    // outputChannel.appendLine(`Starting syntaxer: ${runtime} ${args.join(" ")}`);
+    // outputChannel.show(true);
+
     child_process.execFile(runtime, args,
         (error, stdout, stderr) => {
             console.log(stderr);

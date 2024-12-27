@@ -90,12 +90,12 @@
           "default": false,
           "description": "Allows CS-Script specific autocompletion and other intellisense services. YOu amy want to disable it if you see it interfering with VSCode native services (e.g. traditional C# projects)."
         },
-        "cs-script.engine.cscs_path": {
+        "cs-script.engine.cscs": {
           "type": "string",
           "default": "<default>",
           "description": "Location of the script engine. `<default>` maps the path to the engine embedded in the extension."
         },
-        "cs-script.engine.syntaxer_path": {
+        "cs-script.engine.syntaxer": {
           "type": "string",
           "default": "<default>",
           "description": "Location of the CS-Syntaxer, which is a syntax provider for CS-Script. `<default>` maps the path to the provider embedded in the extension."

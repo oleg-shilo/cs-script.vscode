@@ -13,6 +13,8 @@ import { StatusBarAlignment, StatusBarItem, TextEditor, window, Disposable, comm
 import { start_syntaxer, stop_syntaxer, Syntaxer } from "./syntaxer";
 import { start_build_server } from "./cs-script";
 
+let outputChannel = vscode.window.createOutputChannel("CS-Script");
+
 export class vsc_config {
     public static get<T>(section_value: string, defaultValue?: T): T {
         let tokens = section_value.split('.')
@@ -86,12 +88,33 @@ String.prototype.pathNormalize = function () {
     return path.normalize(this.toString()).split(/[\\\/]/g).join(path.posix.sep);
 }
 
+// "cscs_path" and "syntaxer_path" are special fields of the settings object that are not to be saved in the settings.json file.
+// This is because they are derived from the global settings and not the plugin settings.
+// These fields are because they have to be saved in the VSCode settings as user needs to be able to modify these fields (as opposite to the rest ov the fields).
+// And yet these fields are in the Settings object because they are to be accessed by the extension the same way as any other fields.
 export function UpdateFromJSON(target, json) {
-    var obj = JSON.parse(json);
+    var obj = JSON.parse(json, (key, value) => {
+        // Exclude the 'password' field
+        if (key === "cscs_path" || key === "syntaxer_path") {
+            return undefined;
+        }
+        return value;
+    });
+
     for (var prop in obj)
         target[prop] = obj[prop];
     return target;
 }
+export function ToJSON(target) {
+    return JSON.stringify(target, (key, value) => {
+        // Exclude the 'password' field
+        if (key === "cscs_path" || key === "syntaxer_path") {
+            return undefined;
+        }
+        return value;
+    });
+}
+
 // --------------------
 // LINQ - light equivalent
 Array.prototype.firstOrDefault = function <T>(predicate: any): T {
@@ -223,7 +246,18 @@ export function lock(): boolean {
     }
 
     if (_busy) {
-        vscode.window.showInformationMessage('CS-Script is busy.');
+
+        let resetStatus = "Reset the busy status";
+
+        vscode.window.showInformationMessage('CS-Script is busy. Often the reason for this is the running script that takes longer than expected. ' +
+            'It is safe to reset the status and try again if you do not want to wait.', resetStatus)
+            .then(selection => {
+
+                if (selection === resetStatus) {
+                    commands.executeCommand("cs-script.reset_busy");
+                }
+            });
+
         return false;
     }
     _busy = true;
@@ -409,9 +443,9 @@ export function integrate() {
     integrate_with_environment()
         .then(() => {
             if (settings.CssIntegrated()) {
+                ShowIntegrationInfo();
                 stop_syntaxer(); // ensure any old version is stopped
                 start_services();
-                ShowIntegrationInfo();
             }
             else {
                 let isWarningDisabled = vscode.workspace.getConfiguration("cs-script").get('disableIntegrationWarning', false);
@@ -604,11 +638,17 @@ export class Settings {
     public static saveVscSetting(name, value) {
         try {
             vscode.workspace
-                .getConfiguration()
+                .getConfiguration("cs-script")
                 .update(name, value, vscode.ConfigurationTarget.Global); // Save to global settings
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to update setting: ${error.message}`);
         }
+    };
+
+    public static readVscSetting(name, defaultValue) {
+        return vscode.workspace
+            .getConfiguration("cs-script")
+            .get(name, defaultValue);
     };
 
     public static Save(_this: Settings, file?: string): void {
@@ -618,7 +658,7 @@ export class Settings {
         if (file != null) file_path = file;
         else if (_this._file != null) file_path = _this._file;
 
-        fs.writeFileSync(file_path, JSON.stringify(_this), { encoding: 'utf8' })
+        fs.writeFileSync(file_path, ToJSON(_this), { encoding: 'utf8' })
     }
 
     public static Load(file?: string): Settings {
@@ -644,39 +684,53 @@ export class Settings {
     }
 
     public CssIntegrated(): boolean {
-        return this.cscs_path && this.cscs_path != "<default>" && this.cscs_path != "";
+        return this.cscs &&
+            this.cscs != "<default>" &&
+            this.cscs != "" &&
+            fs.existsSync(this.cscs_path) &&
+            this.syntaxer &&
+            this.syntaxer != "<default>" &&
+            this.syntaxer != "" &&
+            fs.existsSync(this.syntaxer);
     }
 
     public set cscs(path: string) {
         this.cscs_path = path;
-        Settings.saveVscSetting("cs-script.engine.cscs_path", path);
+        vscode.workspace.getConfiguration().update("cs-script.engine.cscs", path, vscode.ConfigurationTarget.Global);
     }
 
     public get cscs(): string {
-        if (this.cscs_path == "<default>" || this.cscs_path == "")
-            this.cscs_path = vscode.workspace.getConfiguration("cs-script").get("engine.cscs_path", "<default>");
+
+        if (this.cscs_path == "") {
+            this.cscs_path = vscode.workspace.getConfiguration("cs-script").get("engine.cscs", "<default>");
+            outputChannel.appendLine(`CSS path: ${this.cscs_path}`);
+            outputChannel.show(true);
+        }
+
         return this.cscs_path;
     }
 
     public get syntaxer(): string {
-        if (this.syntaxer_path == "<default>" || this.syntaxer_path == "")
-            this.syntaxer_path = vscode.workspace.getConfiguration("cs-script").get("engine.syntaxer_path", "<default>");
+
+        if (this.syntaxer_path == "") {
+            this.syntaxer_path = vscode.workspace.getConfiguration("cs-script").get("engine.syntaxer", "<default>");
+            outputChannel.appendLine(`Syntaxer path: ${this.syntaxer_path}`);
+            outputChannel.show(true);
+        }
+
         return this.syntaxer_path;
     }
 
     public set syntaxer(path: string) {
         this.syntaxer_path = path;
-        Settings.saveVscSetting("cs-script.engine.syntaxer_path", path);
+        vscode.workspace
+            .getConfiguration("cs-script")
+            .update("engine.syntaxer", path, vscode.ConfigurationTarget.Global);
     }
 
     public get syntaxerPort() {
         return vscode.workspace.getConfiguration("cs-script").get("engine.syntaxer_port", 18003);
     }
-
-    // alternative approach
-    // let config = ext_context.globalState;
-    // let val = config.get("show_load_proj_info", true);
-    // config.update("show_load_proj_info", true);
 }
 
 export class Utils {
@@ -971,7 +1025,7 @@ function ShowIntegrationInfo() {
         '- Script engine: `dotnet tool update --global cs-script.cli`' + os.EOL +
         '- Syntaxer: `dotnet tool update --global cs-syntaxer`' + os.EOL +
         '' + os.EOL +
-        'The configure tools by executing the extension command "CS-Script: Integrate with CS-Script tools"' + os.EOL +
+        'Configure tools by executing the extension command "CS-Script: Integrate with CS-Script tools"' + os.EOL +
         '' + os.EOL +
         '---------------' + os.EOL +
         '' + os.EOL +
@@ -981,6 +1035,11 @@ function ShowIntegrationInfo() {
 
     fs.writeFileSync(file, content, { encoding: 'utf8' });
     commands.executeCommand("vscode.open", Uri.file(file));
+
+    outputChannel.appendLine('CS-Script tools are detected and integrated.');
+    outputChannel.appendLine('CSS path: ' + settings.cscs);
+    outputChannel.appendLine('Syntaxer path: ' + settings.syntaxer);
+    outputChannel.show(true);
 }
 
 function ShowIntegrationWarning() {
