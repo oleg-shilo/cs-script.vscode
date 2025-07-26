@@ -45,7 +45,7 @@ export function load_project() {
 
         let editor = window.activeTextEditor;
 
-        let workspaceIsAlreadyLoaded = Utils.IsSamePath(workspace.workspaceFolders![0].uri.fsPath ?? '', csproj_dir);
+        let workspaceIsAlreadyLoaded = workspace.workspaceFolders != null && Utils.IsSamePath(workspace.workspaceFolders![0].uri.fsPath ?? '', csproj_dir);
 
         if (workspaceIsAlreadyLoaded) {
             if (editor != null && !Utils.IsScript(editor.document.fileName)) {
