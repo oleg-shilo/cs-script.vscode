@@ -14,13 +14,11 @@
 Execution, debugging and editing C# scripts (powered by CS-Script engine) that target .NET Core.
 A single C# file is all that is required to run the script. </br>
 
-This extension depends on another VSCode extension "ms-dotnettools.csharp". Thus, if these extensions are installed but function incorrectly please log error reports at their corresponding websites.
-
 ---
 
-Note, the only dependency that you need to install to use this extension is .NET. The rest is included in the extension itself.
+This extension relyes on standard VSCode extensions for managing C# projects. Thus if they may impact your experience with CS-Script if they do not function properly. In any case, if you experience problems with this extension please log support request at [cs-script.vscode](oleg-shilo/cs-script.vscode).
 
-Though there are some strong benefits in managing CS-Script separately from the extension. A simple guide for that can be found [here](https://github.com/oleg-shilo/cs-script/wiki/CLI-Environment-Specification).
+Note, the only dependency outside of VSCode that you need to install is .NET SDK.
 
 ---
 

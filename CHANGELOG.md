@@ -1,5 +1,9 @@
 # Change Log
 
+## 2.3.1 (14 Oct, 2025)
+
+- Updated extension logo icon
+
 ## 2.3.0 (27 Dec, 2024)
 
 - CS-Script tools are no longer distributed with the extension but deployed and managed independently.
