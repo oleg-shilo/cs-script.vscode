@@ -1,5 +1,9 @@
 # Change Log
 
+## 2.3.2 (22 Nov, 2025)
+
+- Bump js-yaml
+
 ## 2.3.1 (14 Oct, 2025)
 
 - Updated extension logo icon

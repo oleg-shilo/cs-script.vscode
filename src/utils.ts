@@ -1025,6 +1025,10 @@ function ShowIntegrationInfo() {
         '- Script engine: `dotnet tool update --global cs-script.cli`' + os.EOL +
         '- Syntaxer: `dotnet tool update --global cs-syntaxer`' + os.EOL +
         '' + os.EOL +
+        'If you cannot update because script engine or syntaxer executables are locked, you can always terminate any running instance with:' + os.EOL +
+        '  `css -kill`' + os.EOL +
+        '  `syntaxer -kill`' + os.EOL +
+        '' + os.EOL +
         'Configure tools by executing the extension command "CS-Script: Integrate with CS-Script tools"' + os.EOL +
         '' + os.EOL +
         '---------------' + os.EOL +
