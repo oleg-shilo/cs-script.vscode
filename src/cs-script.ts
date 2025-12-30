@@ -658,8 +658,12 @@ export async function debug() {
                     debugging = true;
                     await vscode.debug.startDebugging(workspace.workspaceFolders[0], configs![0]);
                 }
+                return;
             }
         }
+        
+        let message = 'CS-Script debugging is suppressed because you have a workspace loaded. Scripts can only be debugged when they are opened as individual documents.';
+        vscode.window.showErrorMessage(message);
         return;
     }
 

@@ -41,13 +41,12 @@ let mkdirp = require('mkdirp');
 let _user_dir: string;
 export let statusBarItem: StatusBarItem;
 
-// let _environment_compatible = false;
 let _environment_ready = false;
 let _ready = false;
 let _busy = false;
 
 export let ext_version: string;
-export let omnisharp_dir: string;
+// export let omnisharp_dir: string;
 export let isWin: boolean = (os.platform() == 'win32');
 export let settings: Settings;
 export let diagnosticCollection: vscode.DiagnosticCollection;
@@ -965,28 +964,21 @@ export const BuiltInCommands = {
 export function ActivateDiagnostics(context: vscode.ExtensionContext) {
     console.log("Loading CS-Script extension from " + __dirname);
 
+    
+    let devKitInstalled = vscode.extensions.getExtension('ms-dotnettools.csharp') != null;
+    let dotRushInstalled = vscode.extensions.getExtension('nromanov.dotrush') != null;
+
     // check extension dependencies
-    if (vscode.extensions.getExtension('ms-vscode.csharp') == null &&
-        vscode.extensions.getExtension('ms-dotnettools.csharp') == null) {
-        let message = 'The required extension "C# for Visual Studio Code" is not found. Ensure it is installed.';
+    if (!devKitInstalled && !dotRushInstalled ) {
+        let message = 'Neither of the required extension "C# Dev Kit" or "DotRush" is not found. Ensure it is installed.';
         vscode.window.showErrorMessage(message);
-        throw message;
     }
-
-    // if (vscode.extensions.getExtension('ms-vscode.mono-debug') == null) {
-    //     let message = 'The required extension "Mono-Debug" is not found. Ensure it is installed.';
-    //     vscode.window.showErrorMessage(message);
-    //     throw message;
-    // }
-
-    // _environment_compatible = true;
 
     diagnosticCollection = vscode.languages.createDiagnosticCollection('c#');
     statusBarItem = vscode.window.createStatusBarItem(StatusBarAlignment.Left);
     context.subscriptions.push(diagnosticCollection);
-    // ext_context = context;
+    
     ext_version = vscode.extensions.getExtension('oleg-shilo.cs-script')?.packageJSON.version
-    omnisharp_dir = path.join(vscode.extensions.getExtension('ms-dotnettools.csharp')?.extensionPath!, '.omnisharp', 'omnisharp');
 
     settings = Settings.Load();
 

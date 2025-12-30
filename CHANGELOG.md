@@ -1,5 +1,10 @@
 # Change Log
 
+## 2.3.3 (30 Dec, 2025)
+
+- #46: DotRush support
+  Added allow loading extension even if the VSCode extension 'C# Dev Kit' extension is not present.
+
 ## 2.3.2 (22 Nov, 2025)
 
 - Bump js-yaml

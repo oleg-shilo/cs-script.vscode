@@ -2,7 +2,7 @@
   "name": "cs-script",
   "displayName": "CS-Script",
   "description": "Execution, debugging and editing C# code that targets .NET (.NET SDK is required)",
-  "version": "2.3.2",
+  "version": "2.3.3",
   "license": "MIT",
   "publisher": "oleg-shilo",
   "icon": "images/css_logo.png",
@@ -78,7 +78,7 @@
         "cs-script.fallback_to_launch_json": {
           "type": "boolean",
           "default": false,
-          "description": "Fallback to workspace launch.json based debugging (first found configuration) when CS-Script debugging is triggered while workspace is loaded. This setting has no effect when `suppress_script_debug_for_workspaces` is enabled."
+          "description": "Fallback to workspace launch.json based debugging (first found configuration). When CS-Script debugging is triggered while workspace is loaded. This setting has no effect when `suppress_script_debug_for_workspaces` is enabled."
         },
         "cs-script.suppress_script_debug_for_workspaces": {
           "type": "boolean",
