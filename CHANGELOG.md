@@ -1,5 +1,10 @@
 # Change Log
 
+## 2.3.4 (15 Mar, 2026)
+
+- Bump `minimatch` from 5.1.6 to 5.1.9
+- Bump `lodash` from 4.17.21 to 4.17.23
+
 ## 2.3.3 (30 Dec, 2025)
 
 - #46: DotRush support
