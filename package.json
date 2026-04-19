@@ -2,7 +2,7 @@
   "name": "cs-script",
   "displayName": "CS-Script",
   "description": "Execution, debugging and editing C# code that targets .NET (.NET SDK is required)",
-  "version": "2.3.4",
+  "version": "2.3.5",
   "license": "MIT",
   "publisher": "oleg-shilo",
   "icon": "images/css_logo.png",
@@ -400,7 +400,7 @@
     "@typescript-eslint/parser": "^4.9.0",
     "eslint": "^7.15.0",
     "glob": "^7.1.6",
-    "mocha": "^10.8.2",
+    "mocha": "^11.3.0",
     "typescript": "^4.1.2",
     "vscode-test": "^1.4.1"
   }

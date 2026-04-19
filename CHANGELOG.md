@@ -1,5 +1,10 @@
 # Change Log
 
+## 2.3.5 (19 Apr, 2026)
+
+- Bump `flatted` from 3.1.1 to 3.4.2.
+- Bump `mocha` from 10.8.2 to 11.3.0.
+
 ## 2.3.4 (15 Mar, 2026)
 
 - Bump `minimatch` from 5.1.6 to 5.1.9
