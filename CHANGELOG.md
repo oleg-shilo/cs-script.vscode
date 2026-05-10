@@ -1,5 +1,9 @@
 # Change Log
 
+## 2.3.6 (10 May, 2026)
+
+- Bump fast-uri from 3.1.0 to 3.1.2
+
 ## 2.3.5 (19 Apr, 2026)
 
 - Bump `flatted` from 3.1.1 to 3.4.2.
