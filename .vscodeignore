@@ -1,6 +1,9 @@
 .vscode/**
 .vscode-test/**
 out/test/**
+images/*.gif
+images/*.png
+!images/css_logo.png
 src/**
 .gitignore
 .yarnrc
@@ -9,3 +12,8 @@ vsc-extension-quickstart.md
 **/.eslintrc.json
 **/*.map
 **/*.ts
+**/*.cmd
+**/*.md
+!CHANGELOG.md
+!LICENSE.md
+!README.md
