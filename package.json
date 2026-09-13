@@ -400,7 +400,7 @@
     "@typescript-eslint/parser": "^8.62.0",
     "eslint": "^10.6.0",
     "glob": "^7.1.6",
-    "mocha": "^11.3.0",
+    "mocha": "^12.0.1",
     "typescript": "^4.1.2",
     "vscode-test": "^1.4.1"
   }
