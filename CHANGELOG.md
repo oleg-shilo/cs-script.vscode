@@ -1,9 +1,15 @@
 # Change Log
 
+## 2.3.8. (15 Sep, 2026)
+
+- Update of js-yaml from 4.3.1 to 4.3.2.
+- Updates of serialize-javascript from 6.0.2 to 7.1.1
+
 ## 2.3.7. (13 Aug, 2026)
+
 - #53: Bump js-yaml, @typescript-eslint/eslint-plugin, @typescript-eslint/parser and eslint
-- #54: Bump js-yaml from 4.3.0 to 4.3.1 
- 
+- #54: Bump js-yaml from 4.3.0 to 4.3.1
+
 ## 2.3.6 (10 May, 2026)
 
 - Bump fast-uri from 3.1.0 to 3.1.2
