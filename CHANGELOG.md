@@ -1,5 +1,10 @@
 # Change Log
 
+## 2.3.9. (9 Oct, 2026)
+
+- Updates brace-expansion from 5.0.6 to 5.0.12
+- Updates serialize-javascript from 7.1.1 to 7.1.2.
+
 ## 2.3.8. (15 Sep, 2026)
 
 - Update of js-yaml from 4.3.1 to 4.3.2.
