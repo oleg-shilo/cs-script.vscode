@@ -16,7 +16,7 @@ A single C# file is all that is required to run the script. </br>
 
 ---
 
-This extension relyes on standard VSCode extensions for managing C# projects. Thus if they may impact your experience with CS-Script if they do not function properly. In any case, if you experience problems with this extension please log support request at [cs-script.vscode](oleg-shilo/cs-script.vscode).
+This extension relies on standard VSCode extensions for managing C# projects. Thus if they may impact your experience with CS-Script if they do not function properly. In any case, if you experience problems with this extension please log support request at [cs-script.vscode](oleg-shilo/cs-script.vscode).
 
 Note, the only dependency outside of VSCode that you need to install is .NET SDK.
 
